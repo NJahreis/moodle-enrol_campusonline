@@ -11,6 +11,8 @@ variables:
   DB: 'mariadb'
 
 default:
+  tags:
+    - co-legacy-docker
   services:
     - name: selenium/standalone-chrome:3
       alias: behat
