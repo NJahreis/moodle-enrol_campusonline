@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2023100902;
+$plugin->version = 1;
 $plugin->requires = 2023100902;
 $plugin->component = 'local_campusonline_extension';
 $plugin->maturity = MATURITY_STABLE;

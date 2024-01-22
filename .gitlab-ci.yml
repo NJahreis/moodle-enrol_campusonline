@@ -70,14 +70,17 @@ package:snapshot:
     name: gcr.io/kaniko-project/executor:v1.14.0-debug
     entrypoint: [ "" ]
   stage: package
+  variables:
+    VERSION: $(echo $(git show -s --format=%cd --date=short c34f6a6a | sed 's/-//g')00)
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
   tags:
     - co-cloud
   script:
-    - cat target/version.php
+    - export VERSION=$(echo $(git show -s --format=%cd --date=short $CI_COMMIT_SHA | sed 's/-//g')00)
+    - echo $VERSION > target/version
     - echo "{\"auths\":{\"registry.campusonline.cloud\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - grep -o '\$plugin->version = [0-9]*' target/version.php | grep -o '[0-9]*' > target/version
+    - sed -i 's/your_new_number_here/'"$VERSION"'/g' target/version.php
     - APPVERSION="$(cat target/version)"
     - /kaniko/executor
       --context "target/"
