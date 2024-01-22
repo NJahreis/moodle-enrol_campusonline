@@ -99,7 +99,7 @@ notify:snapshot:
     - apk add curl
   script:
     - VERSION="$(cat target/version)"
-    - curl -X POST -F token=$CI_CO_APPS_TRIGGER_TOKEN -F ref=snapshot 
+    - curl -X POST -F token=$CI_CO_APPS_TRIGGER_TOKEN -F ref=main 
         --form variables[APP]="moodle" 
         --form variables[VERSION]="$VERSION" 
         "https://gitlab.campusonline.community/api/v4/projects/6/trigger/pipeline"
