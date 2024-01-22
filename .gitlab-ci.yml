@@ -38,8 +38,6 @@ build:snapshot:
       - .cache
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-  variables:
-
   before_script:
     # replacing version number in version.php
     - export VERSION=$(echo $(git show -s --format=%cd --date=short $CI_COMMIT_SHA | sed 's/-//g')00)
@@ -61,9 +59,11 @@ build:snapshot:
     - moodle-plugin-ci phplint
     - moodle-plugin-ci phpunit
     - moodle-plugin-ci behat --auto-rerun 0 --profile chrome
+    - mkdir -pv "$CI_PROJECT_DIR"/target
+    - cp -r "$CI_BUILD_DIR/"* "$CI_PROJECT_DIR/"target/
   artifacts:
     paths:
-      - "$CI_BUILD_DIR/*"
+      - "target/*"
 
 package:snapshot:
   image:
