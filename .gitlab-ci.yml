@@ -76,11 +76,11 @@ package:snapshot:
     - co-cloud
   script:
     - echo "{\"auths\":{\"registry.campusonline.cloud\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - cat "$CI_BUILD_DIR/version.php" | grep -oP '(?<=version = ).*?(?=;)' > target/version
+    - cat "target/version.php" | grep -oP '(?<=version = ).*?(?=;)' > target/version
     - APPVERSION="$(cat target/version)"
     - /kaniko/executor
-      --context "${CI_BUILD_DIR}/"
-      --dockerfile "${CI_BUILD_DIR}/updater.Dockerfile"
+      --context "target/"
+      --dockerfile "target/updater.Dockerfile"
       --destination "registry.campusonline.cloud/campusonline/campusonline-moodle-plugin-updater:${APPVERSION}"
   needs:
     - job: build:snapshot
