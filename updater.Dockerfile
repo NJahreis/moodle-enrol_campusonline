@@ -1,2 +1,3 @@
 FROM bitnami/kubectl:latest
-COPY * /tmp/plugin
+RUN mkdir -p /tmp/plugin
+COPY * /tmp/plugin/
