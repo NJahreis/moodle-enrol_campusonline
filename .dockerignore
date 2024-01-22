@@ -1,0 +1,5 @@
+.gitlab-ci.yml
+updater.Dockerfile
+.gitignore
+README.md
+*.zip
