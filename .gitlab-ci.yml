@@ -76,7 +76,7 @@ package:snapshot:
     - co-cloud
   script:
     - echo "{\"auths\":{\"registry.campusonline.cloud\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - cat "target/version.php" | grep -oP '(?<=version = ).*?(?=;)' > target/version
+    - grep -o '\$plugin->version = [0-9]*' target/version.php | grep -o '[0-9]*' > target/version
     - APPVERSION="$(cat target/version)"
     - /kaniko/executor
       --context "target/"
