@@ -76,7 +76,8 @@ package:snapshot:
   before_script:
     - apk add zip curl
   script:
-    - export VERSION=$(date +%Y%d%m)00
+    # TODO replace with incremental sequence number for last 2 digits
+    - export VERSION=$(date +%Y%d%m%H)
     - echo $VERSION > target/version
     - sed -i 's/your_new_number_here/'"$VERSION"'/g' target/version.php
     - mkdir campusonline_extension
