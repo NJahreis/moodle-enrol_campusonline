@@ -83,7 +83,7 @@ package:snapshot:
     - mkdir campusonline
     - cp -r target/* campusonline/
     - cd campusonline
-    - xargs -d '\n' rm < ../.exclude-from-zip
+    - xargs -a ../.exclude-from-zip rm -rf
     - cd ..
     - zip -r target/local_campusonline_extension.zip campusonline
   needs:
