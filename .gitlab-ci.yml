@@ -67,30 +67,31 @@ build:snapshot:
 
 package:snapshot:
   image:
-    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    name: alpine:latest
     entrypoint: [ "" ]
   stage: package
-  variables:
-    VERSION: $(echo $(git show -s --format=%cd --date=short c34f6a6a | sed 's/-//g')00)
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
   tags:
     - co-cloud
+  before_script:
+    - apk add zip
   script:
     - export VERSION=$(date +%Y%d%m)00
     - echo $VERSION > target/version
-    - echo "{\"auths\":{\"registry.campusonline.cloud\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     - sed -i 's/your_new_number_here/'"$VERSION"'/g' target/version.php
-    - APPVERSION="$(cat target/version)"
-    - /kaniko/executor
-      --context "target/"
-      --dockerfile "target/updater.Dockerfile"
-      --destination "registry.campusonline.cloud/campusonline/campusonline-moodle-plugin-updater:${APPVERSION}"
+    - mkdir campusonline
+    - cp -r target/* campusonline/
+    - cd campusonline
+    - xargs -d '\n' rm < .exclude-from-zip
+    - cd ..
+    - zip -r target/local_campusonline_extension.zip campusonline
   needs:
     - job: build:snapshot
   artifacts:
     paths:
       - target/version
+      - target/local_campusonline_extension.zip
 
 notify:snapshot:
   image: alpine:latest
