@@ -22,4 +22,24 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-print "{\"version\": \"2023100902\"}";
+namespace local_campusonline_extension;
+
+use html_writer;
+
+require_once(__DIR__ . '/../../config.php');
+
+echo html_writer::tag('h1', 'Plugin version');
+
+print get_config('local_campusonline_extension')->version;
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://coreview.tugraz.at/review/co/public/api/version');
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+curl_close($ch);
+
+echo html_writer::tag('h1', 'CAMPUSonline Public API Version');
+
+print "CAMPUSonline Public API Version: " . $response;
