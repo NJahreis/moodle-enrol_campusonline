@@ -1,7 +1,7 @@
 # CAMPUSonline Moodle Plugin
 
 
-
+- https://moodle.campusonline.community/local/campusonline_extension/
 
 
 ## Unofficial Guide to Moodle DEV
