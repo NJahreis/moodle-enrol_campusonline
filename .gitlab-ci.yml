@@ -80,12 +80,12 @@ package:snapshot:
     - export VERSION=$(date +%Y%d%m)00
     - echo $VERSION > target/version
     - sed -i 's/your_new_number_here/'"$VERSION"'/g' target/version.php
-    - mkdir campusonline
-    - cp -r target/* campusonline/
+    - mkdir campusonline_extension
+    - cp -r target/* campusonline_extension/
     - cd campusonline
     - xargs -a ../.exclude-from-zip rm -rf
     - cd ..
-    - zip -r target/local_campusonline_extension.zip campusonline
+    - zip -r target/local_campusonline_extension.zip campusonline_extension
   needs:
     - job: build:snapshot
   artifacts:
