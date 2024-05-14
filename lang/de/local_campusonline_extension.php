@@ -15,18 +15,13 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version metadata for the local_campusonline_extension plugin.
+ * Version metadata for the tool_campusonline plugin.
  *
  * @package   local_campusonline_extension
  * @copyright 2024, Lucas Reeh <lr86gm@gmail.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2024051401;
-$plugin->requires = 2023100902;
-$plugin->component = 'local_campusonline_extension';
-$plugin->release = '0.1';
-$plugin->maturity = MATURITY_ALPHA;
-$plugin->dependencies = [];
+// Basics.
+$string['pluginname'] = 'CAMPUSonline Extension';

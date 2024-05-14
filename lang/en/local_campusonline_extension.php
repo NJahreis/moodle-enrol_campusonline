@@ -22,4 +22,28 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+
+// Basics.
 $string['pluginname'] = 'CAMPUSonline Extension';
+
+// Settings page.
+$string['connectionsettings'] = 'Connection settings';
+$string['endpoint'] = 'CAMPUSonline endpoint';
+$string['endpoint_desc'] = 'Address of the CAMPUSonline oauth2 endpoint';
+$string['clientid'] = 'Client ID';
+$string['clientid_desc'] = 'Client ID to access CAMPUSonline';
+$string['clientsecret'] = 'Client secret';
+$string['clientsecret_desc'] = 'Secret key to access CAMPUSonline';
+
+$string['coursesyncsettings'] = 'Course sync settings';
+
+$string['enrolsyncsettings'] = 'Enrolment sync settings';
+
+$string['testsettings'] = 'Test these settings';
+$string['testconnection'] = 'Test connection';
+$string['backtosettings'] = 'Back to module settings';
+
+// Alerts.
+$string['success:connected'] = 'Successfully connected to CAMPUSonline endpoint.';
+$string['error:cannotconnect'] = 'Cannot connect to CAMPUSonline endpoint. Error: {$a}';
+$string['error:unknown'] = 'Unknown error.';
