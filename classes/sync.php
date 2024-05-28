@@ -17,13 +17,13 @@
 /**
  * Class sync
  *
- * @package    local_campusonline_extension
+ * @package    enrol_campusonline
  * @copyright  2024, TU Graz
  * @author     think-modular (stefan.weber@think-modular.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace local_campusonline_extension;
+namespace enrol_campusonline;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -43,10 +43,10 @@ class sync {
     public function __construct() {
 
         // Get settings.
-        $this->path = get_config('local_campusonline_extension', 'endpoint');
+        $this->path = get_config('enrol_campusonline', 'endpoint');
         $this->path = rtrim($this->path, '/');
-        $clientid = get_config('local_campusonline_extension', 'clientid');
-        $secret = get_config('local_campusonline_extension', 'clientsecret');
+        $clientid = get_config('enrol_campusonline', 'clientid');
+        $secret = get_config('enrol_campusonline', 'clientsecret');
 
         // Make request.
         $url = $this->path . '/public/sec/auth/realms/CAMPUSonline_SP/protocol/openid-connect/token';
@@ -77,7 +77,7 @@ class sync {
         } elseif (array_key_exists('access_token', $response_array)) {
             $this->token = $response_array['access_token'];
         } else {
-            $this->error = $response_array['error'] . ': ' . get_string('error:unknown', 'local_campusonline_extension');
+            $this->error = $response_array['error'] . ': ' . get_string('error:unknown', 'enrol_campusonline');
         }
     }
 
@@ -100,13 +100,166 @@ class sync {
      */
     public function getCourses() {
 
+        // Get courses.
         $endpoint = 'co-tm-core/course/api/courses';
         $query = [
-            'semester_key' => '2022W',
+            'semester_key' => get_config('enrol_campusonline', 'semester'),
             'only_elearning_courses' => 'true',
         ];
+        $result = $this->restCall($endpoint, $query);
 
-        return $this->restCall($endpoint, $query);
+        // Analyze response.
+        if (property_exists($result, 'items')) {
+            $courses = $result->items;
+        } else {
+            $courses = array();
+        }
+
+        return $courses;
+    }
+
+    /**
+     * Gets enrolments for a course from CAMPUSonline.
+     *
+     * @param object $course
+     *
+     * @return array $enrolments
+     */
+    public function getEnrolments($course) {
+
+        // Get courses.
+        $endpoint = 'co-tm-core/course/api/registrations';
+        $query = [
+            'course_uid' => $course->idnumber,
+        ];
+        $result = $this->restCall($endpoint, $query);
+
+        // Analyze response.
+        if (property_exists($result, 'items')) {
+            $enrolments = $result->items;
+        } else {
+            $enrolments = array();
+        }
+
+        return $enrolments;
+    }
+
+    /**
+     * Syncs courses.
+     *
+     * @param progress_trace $trace
+     *
+     * @return void
+     */
+    public function syncCourses($trace = null) {
+
+        global $CFG, $DB;
+
+        require_once("$CFG->dirroot/course/lib.php");
+
+        // Get courses.
+        $courses = $this->getCourses();
+
+        if ($trace) {
+            $number = count($courses);
+            $trace->output("Syncing $number courses ...");
+        }
+
+        // Sync courses.
+        foreach ($courses as $coursedata) {
+
+            // Prepare new course data.
+            $newcourse = array();
+            $newcourse['idnumber'] = $coursedata->uid;
+            $newcourse['shortname'] = locallib::getCourseField('shortname', $coursedata);
+            $newcourse['fullname'] = locallib::getCourseField('fullname', $coursedata);
+            $newcourse['category'] = locallib::getCourseCategory($coursedata);
+
+            if (!$course = $DB->get_record('course', ['idnumber' => $coursedata->uid])) {
+
+                // Create new course.
+                $course = new \stdClass();
+                foreach ($newcourse as $key => $value) {
+                    $course->$key = $value;
+                }
+
+                // Log course creation.
+                $log = new \stdClass();
+                $log->timestamp = time();
+                $log->event = 'create_course';
+                if (create_course($course)) {
+                    $log->courseid = $course->id;
+                    $log->status = 0;
+                    $message = " - Created course for CAMPUSonline UID $course->idnumber (Moodle course id $course->id).";
+                    $log->message = $message;
+                    $trace->output($message);
+                } else {
+                    $log->status = 2;
+                    $log->message = 'error creating course';
+                }
+                $DB->insert_record('enrol_campusonline_logs', $log);
+
+            } else {
+
+                // Check if update is necessary.
+                $needsupdate = false;
+                foreach ($newcourse as $key => $value) {
+                    if ($course->$key != $value) {
+                        $trace->output($value);
+                        $trace->output($course->$key);
+                        $needsupdate = true;
+                        break;
+                    }
+                }
+
+                // Update.
+                if ($needsupdate) {
+
+                    // Skip.
+                    if (get_config('enrol_campusonline', 'updateexistingcourses') == 0) {
+                        $message = " - Skipped existing course with idnumber $course->idnumber (Moodle course id $course->id).";
+                        $trace->output($message);
+                        continue;
+                    }
+
+                    // Update course.
+                    foreach ($newcourse as $key => $value) {
+                        $course->$key = $value;
+                    }
+                    $DB->update_record('course', $course);
+
+                    // Log update.
+                    $log = new \stdClass();
+                    $log->timestamp = time();
+                    $log->event = 'update_course';
+                    $log->courseid = $course->id;
+                    $log->status = 0;
+                    $message = " - Updated course with idnumber $course->idnumber (Moodle course id $course->id).";
+                    $trace->output($message);
+                    $log->message = $message;
+                    $DB->insert_record('enrol_campusonline_logs', $log);
+                }
+            }
+
+            // Sync enrolments.
+            $enrolments = $this->getEnrolments($course);
+        }
+    }
+
+    /**
+     * Syncs enrolments.
+     *
+     * @param progress_trace $trace
+     *
+     * @return void
+     */
+    public function syncEnrolments($trace = null) {
+
+        global $CFG, $DB;
+
+        if ($trace) {
+            $trace->output('Syncing enrolments ...');
+        }
 
     }
 

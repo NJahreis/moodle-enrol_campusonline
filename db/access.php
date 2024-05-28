@@ -15,18 +15,30 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version metadata for the enrol_campusonline plugin.
+ * CAMPUSOnline enrolment plugin.
  *
- * @package   enrol_campusonline
- * @copyright 2024, Lucas Reeh <lr86gm@gmail.com>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    enrol_campusonline
+ * @copyright  2024, TU Graz
+ * @author     think-modular (stefan.weber@think-modular.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2024052804;
-$plugin->requires = 2023100902;
-$plugin->component = 'enrol_campusonline';
-$plugin->release = '0.3';
-$plugin->maturity = MATURITY_ALPHA;
-$plugin->dependencies = [];
+$capabilities = array(
+    'enrol/campusonline:unenrol' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
+        )
+    ),
+    'enrol/campusonline:config' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+        )
+    ),
+);

@@ -26,7 +26,10 @@ require_once('../../config.php');
 require_login();
 require_admin();
 
-use local_campusonline_extension\sync;
+use enrol_campusonline\sync;
+use enrol_campusonline\locallib;
+
+global $DB;
 
 // Get function.
 $function = required_param('function', PARAM_RAW);
@@ -35,8 +38,15 @@ $function = required_param('function', PARAM_RAW);
 $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/idpush/logs.php');
-$PAGE->set_title(get_string('pluginname', 'local_campusonline_extension'));
-$PAGE->set_heading(get_string($function, 'local_campusonline_extension'));
+$PAGE->set_title(get_string('pluginname', 'enrol_campusonline'));
+$PAGE->set_heading(get_string($function, 'enrol_campusonline'));
+
+// Begin output.
+echo $OUTPUT->header();
+
+echo '<a class="btn btn-secondary m-1"
+    href=' . new moodle_url('/admin/settings.php?section=enrolsettingscampusonline') . '>' .
+    get_string('backtosettings', 'enrol_campusonline') . '</a>';
 
 // Init sync.
 $sync = new sync;
@@ -57,22 +67,42 @@ if ($function == 'connection') {
     redirect(new moodle_url('/admin/settings.php?section=local_campusonline_extension_connection'));
 
 // Preview course sync.
+} elseif ($function == 'showrawcoursedata') {
+
+    $courses = $sync->getCourses();
+
+    echo '<h3>' . get_string('coursecount', 'enrol_campusonline', count($courses)) . '</h3>';
+    echo '<pre>';
+    print_r($courses);
+    echo '</pre>';
+
+// Show actual course data.
 } elseif ($function == 'previewcourses') {
 
+    $table = new html_table();
+    $table->head = ['idnumber', 'shortname', 'fullname', 'coursecategory'];
+    $table->align = array('right', 'left', 'left');
 
-    $content = $sync->getCourses();
+    $data = array();
+    $courses = $sync->getCourses();
+    foreach ($courses as $course) {
+        $coursedata['idnumber'] = $course->uid;
+        $coursedata['shortname'] = locallib::getCourseField('shortname', $course);
+        $coursedata['fullname'] = locallib::getCourseField('fullname', $course);
+        $categoryid = locallib::getCourseCategory($course);
+        $coursedata['coursecategory'] = $DB->get_field('course_categories', 'name', ['id' => $categoryid]);
+        $data[] = $coursedata;
+    }
 
+    $table->data = $data;
+
+    echo '<h3>' . get_string('coursecount', 'enrol_campusonline', count($courses)) . '</h3>';
+    echo html_writer::table($table);
+
+// For development only. TODO: remove
+} elseif ($function == 'sync_courses') {
+    $sync->syncCourses();
 }
-
-echo $OUTPUT->header();
-
-echo '<a class="btn btn-secondary m-1"
-    href=' . new moodle_url('/admin/settings.php?section=local_campusonline_extension_connection') . '>' .
-    get_string('backtosettings', 'local_campusonline_extension') . '</a>';
-
-echo "<pre>";
-print_r($content);
-echo "</pre>";
 
 
 echo $OUTPUT->footer();

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    local_campusonline_extension
+ * @package    enrol_campusonline
  * @copyright  2024, TU Graz
  * @author     think-modular (stefan.weber@think-modular.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -23,76 +23,122 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-if ($hassiteconfig) {
-    $settings = new admin_category('local_campusonline_extension_settings', get_string('pluginname', 'local_campusonline_extension'));
-    $ADMIN->add('localplugins', $settings);
+if ($ADMIN->fulltree) {
 
-    // Setup settings pages.
-    $pagesetup = [
-        'connection' => new admin_settingpage(
-            'local_campusonline_extension_connection',
-            get_string('connectionsettings', 'local_campusonline_extension'),
-        ),
-        'coursesyncsettings' => new admin_settingpage(
-            'local_campusonline_extension_course"',
-            get_string('coursesyncsettings', 'local_campusonline_extension')
-        ),
-        'enrolsyncsettings' => new admin_settingpage(
-            'local_campusonline_extension_enrol"',
-            get_string('enrolsyncsettings', 'local_campusonline_extension')
-        ),
-    ];
+    // Connection settings.
+    $button = '<a class="btn btn-secondary m-1"
+        href=' . new moodle_url('/enrol/campusonline/test.php?function=connection') . '>' .
+        get_string('testconnection', 'enrol_campusonline') . '</a>';
+    $settings->add(new admin_setting_heading(
+        'enrol_campusonline/connectionsettings',
+        get_string('connectionsettings', 'enrol_campusonline'),
+        $button));
+    // CO endpoint.
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/endpoint',
+        get_string('endpoint', 'enrol_campusonline'),
+        get_string('endpoint_desc', 'enrol_campusonline'),
+        '',
+    ));
+    // Client ID.
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/clientid',
+        get_string('clientid', 'enrol_campusonline'),
+        get_string('clientid_desc', 'enrol_campusonline'),
+        '',
+    ));
+    // Client secret.
+    $settings->add(new admin_setting_configpasswordunmask(
+        'enrol_campusonline/clientsecret',
+        get_string('clientsecret', 'enrol_campusonline'),
+        get_string('clientsecret_desc', 'enrol_campusonline'),
+        '',
+    ));
 
-    // Add pages to admin tree.
-    $pages = (object)[1];
-    foreach ($pagesetup as $page) {
-        $ADMIN->add('local_campusonline_extension_settings', $page);
-        $pages->{str_replace('local_campusonline_extension_', '', $page->name)} = $page;
-    }
+    // General sync settings.
+    $button = '<a target="_blank" class="btn btn-secondary m-1"
+    href=' . new moodle_url('/admin/tool/task/scheduledtasks.php?action=edit&task=enrol_campusonline%5Ctask%5Csync_task') . '>' .
+    get_string('configuretask', 'enrol_campusonline') . '</a>';
+    $settings->add(new admin_setting_heading(
+        'enrol_campusonline/syncsettings',
+        get_string('syncsettings', 'enrol_campusonline'),
+        $button,));
+    // Semester.
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/semester',
+        get_string('semester', 'enrol_campusonline'),
+        get_string('semester_desc', 'enrol_campusonline'),
+        '2022W',
+    ));
+    // Root course category.
+    $options = core_course_category::make_categories_list();
+    array_unshift($options, 'TOP');
+    $settings->add(new admin_setting_configselect(
+        'enrol_campusonline/rootcoursecategory',
+        get_string('rootcoursecategory', 'enrol_campusonline'),
+        '',
+        0,
+        $options,
+    ));
+    // Allow overwrite of coursename.
+    $settings->add(new admin_setting_configcheckbox(
+        'enrol_campusonline/updateexistingcourses',
+        get_string('updateexistingcourses', 'enrol_campusonline'),
+        get_string('updateexistingcourses_desc', 'enrol_campusonline'),
+        1,
+    ));
 
-    // Only show in admin settings.
-    if ($ADMIN->fulltree) {
+    // Course sync settings.
+    $buttons = '<a class="btn btn-secondary m-1"
+    href=' . new moodle_url('/enrol/campusonline/test.php?function=showrawcoursedata') . '>' .
+    get_string('showrawcoursedata', 'enrol_campusonline') . '</a>';
+    $buttons .= '<a class="btn btn-secondary m-1"
+    href=' . new moodle_url('/enrol/campusonline/test.php?function=previewcourses') . '>' .
+    get_string('previewcourses', 'enrol_campusonline') . '</a>';
+    $settings->add(new admin_setting_heading(
+        'enrol_campusonline/coursesyncsettings',
+        get_string('coursesyncsettings', 'enrol_campusonline'),
+        $buttons . get_string('coursesyncsettings_desc', 'enrol_campusonline'),
+    ));
+    // Course fullname.
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/coursefullname',
+        get_string('fullname'),
+        '',
+        '{title}',
+    ));
+    // Course shortname.
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/courseshortname',
+        get_string('shortname'),
+        '',
+        '{semesterKey} - {courseCode}',
+    ));
 
-        // CO endpoint.
-        $pages->connection->add(new admin_setting_configtext(
-            'local_campusonline_extension/endpoint',
-            get_string('endpoint', 'local_campusonline_extension'),
-            get_string('endpoint_desc', 'local_campusonline_extension'),
-            '',
-        ));
+    // Enrolment sync settings.
+    $settings->add(new admin_setting_heading(
+        'enrol_campusonline/enrolmentsyncsettings',
+        get_string('enrolmentsyncsettings', 'enrol_campusonline'),
+        '',
+    ));
 
-        // Client ID.
-        $pages->connection->add(new admin_setting_configtext(
-            'local_campusonline_extension/clientid',
-            get_string('clientid', 'local_campusonline_extension'),
-            get_string('clientid_desc', 'local_campusonline_extension'),
-            '',
-        ));
+    // Log settings.
+    $button = '<a target="_blank" class="btn btn-secondary m-1"
+    href=' . new moodle_url('/enrol/campusonline/logs.php') . '>' .
+    get_string('viewlogs', 'enrol_campusonline') . '</a>';
+    $settings->add(new admin_setting_heading(
+        'enrol_campusonline/logsettings',
+        get_string('logsettings', 'enrol_campusonline'),
+        $button,
+    ));
+    // Course shortname.
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/logduration',
+        get_string('logduration', 'enrol_campusonline'),
+        '',
+        7,
+        PARAM_INT,
+    ));
 
-        // Client secret.
-        $pages->connection->add(new admin_setting_configpasswordunmask(
-            'local_campusonline_extension/clientsecret',
-            get_string('clientsecret', 'local_campusonline_extension'),
-            get_string('clientsecret_desc', 'local_campusonline_extension'),
-            '',
-        ));
-
-        // Test settings.
-        $buttons = '<a class="btn btn-secondary m-1"
-        href=' . new moodle_url('/local/campusonline_extension/test.php?function=connection') . '>' .
-        get_string('testconnection', 'local_campusonline_extension') . '</a>';
-        $buttons .= '<a class="btn btn-secondary m-1"
-        href=' . new moodle_url('/local/campusonline_extension/test.php?function=previewcourses') . '>' .
-        get_string('previewcourses', 'local_campusonline_extension') . '</a>';
-
-        $pages->connection->add(new admin_setting_heading(
-            'local_campusonline_extension/testsettings',
-            get_string('testsettings', 'local_campusonline_extension'),
-            $buttons,
-        ));
-
-
-
-    }
 
 }
