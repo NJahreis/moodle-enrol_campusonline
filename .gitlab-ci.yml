@@ -80,12 +80,12 @@ package:snapshot:
     - export VERSION=$(date +%Y%d%m)$(($(date +'%-H * 60 + %-M' | bc) / 14))
     - echo $VERSION > target/version
     - sed -i 's/your_new_number_here/'"$VERSION"'/g' target/version.php
-    - mkdir campusonline_extension
-    - cp -r target/* campusonline_extension/
-    - cd campusonline_extension
+    - mkdir enrol_campusonline
+    - cp -r target/* enrol_campusonline/
+    - cd enrol_campusonline
     - xargs -a ../.exclude-from-zip rm -rf
     - cd ..
-    - zip -r target/local_campusonline_extension.zip campusonline_extension
+    - zip -r target/enrol_campusonline.zip enrol_campusonline
     - curl --fail -X POST -F token=$CI_CO_APPS_TRIGGER_TOKEN -F ref=main
       --form variables[APP]="moodle"
       --form variables[VERSION]="$VERSION"
@@ -94,4 +94,4 @@ package:snapshot:
     - job: build:snapshot
   artifacts:
     paths:
-      - target/local_campusonline_extension.zip
+      - target/enrol_campusonline.zip
