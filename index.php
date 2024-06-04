@@ -17,12 +17,12 @@
 /**
  * index file
  *
- * @package   local_campusonline_extension
+ * @package   enrol_campusonline
  * @copyright 2024, Lucas Reeh <lr86gm@gmail.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace local_campusonline_extension;
+namespace enrol_campusonline;
 
 use html_writer;
 
@@ -30,7 +30,7 @@ require_once(__DIR__ . '/../../config.php');
 
 echo html_writer::tag('h1', 'Plugin version');
 
-print get_config('local_campusonline_extension')->version;
+print get_config('enrol_campusonline')->version;
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, 'https://coreview.tugraz.at/review/co/public/api/version');

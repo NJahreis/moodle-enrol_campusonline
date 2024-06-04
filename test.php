@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    local_campusonline_extension
+ * @package    enrol_campusonline
  * @copyright  2024, TU Graz
  * @author     think-modular (stefan.weber@think-modular.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -52,19 +52,16 @@ echo '<a class="btn btn-secondary m-1"
 $sync = new sync;
 
 // Test connection.
-if ($function == 'connection') {
+if ($function == 'testconnection') {
 
     if ($sync->isConnected()) {
-        \core\notification::add(get_string('success:connected', 'local_campusonline_extension'),
+        \core\notification::add(get_string('success:connected', 'enrol_campusonline'),
             \core\output\notification::NOTIFY_SUCCESS);
     } else {
         $error = $sync->getError();
-        \core\notification::add(get_string('error:cannotconnect', 'local_campusonline_extension', $error),
+        \core\notification::add(get_string('error:cannotconnect', 'enrol_campusonline', $error),
             \core\output\notification::NOTIFY_ERROR);
     }
-
-    // Redirect to settings page.
-    redirect(new moodle_url('/admin/settings.php?section=local_campusonline_extension_connection'));
 
 // Preview course sync.
 } elseif ($function == 'showrawcoursedata') {

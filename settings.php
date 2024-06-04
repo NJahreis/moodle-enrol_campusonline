@@ -27,7 +27,7 @@ if ($ADMIN->fulltree) {
 
     // Connection settings.
     $button = '<a class="btn btn-secondary m-1"
-        href=' . new moodle_url('/enrol/campusonline/test.php?function=connection') . '>' .
+        href=' . new moodle_url('/enrol/campusonline/test.php?function=testconnection') . '>' .
         get_string('testconnection', 'enrol_campusonline') . '</a>';
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/connectionsettings',
