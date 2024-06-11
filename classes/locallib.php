@@ -30,6 +30,48 @@ defined('MOODLE_INTERNAL') || die;
 class locallib {
 
     /**
+     * Add our enrolment method to a course.
+     *
+     * @param object $course
+     *
+     * @return void
+     */
+    public static function addEnrolmentMethod($course) {
+
+        global $DB;
+
+        if (!$enrol = $DB->get_record('enrol', ['courseid' => $course->id, 'enrol' => 'campusonline'])) {
+
+            // Create enrolment method.
+            $enrol = new \stdClass();
+            $enrol->enrol = 'campusonline';
+            $enrol->status = 0;
+            $enrol->courseid = $course->id;
+            $enrol->timecreated = time();
+            $enrol->timemodified = time();
+            $enrol->id = $DB->insert_record('enrol', $enrol);
+
+        } elseif ($enrol->status == 1) {
+
+            // Set to active.
+            $enrol->status = 0;
+            $enrol->timemodified = time();
+            $DB->update_record('enrol', $enrol);
+        }
+    }
+
+    /**
+     * Removes old logs.
+     */
+    public static function cleanupLogs() {
+        global $DB;
+
+        $duration = get_config('enrol_campusonline', 'logduration');
+        $time = time() - $duration * 24 * 60 * 60;
+        $DB->delete_records_select('enrol_campusonline_logs', "timestamp < $time");
+    }
+
+    /**
      * Gets a category for a course.
      *
      * @param object $course

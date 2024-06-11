@@ -44,7 +44,7 @@ class sync {
     public function __construct() {
 
         // Remove old logs.
-        $this->cleanupLogs();
+        locallib::cleanupLogs();
 
         // Get settings.
         $this->path = get_config('enrol_campusonline', 'endpoint');
@@ -126,69 +126,6 @@ class sync {
     }
 
     /**
-     * Gets persons from CAMPUSonline for preview.
-     */
-    public function getPersons($limit = null) {
-
-        // Get employees.
-        $endpoint = 'co-brm-core/org/api/employee-persons';
-        $query = [
-            'limit' => $limit,
-        ];
-        $result = $this->restCall($endpoint, $query);
-
-        // Analyze response.
-        if (property_exists($result, 'items')) {
-            $persons = $result->items;
-        } else {
-            $persons = array();
-        }
-
-        // Get students.
-        $endpoint = '/co-sm-core/study/api/student-persons/';
-        $query = [
-            'limit' => $limit,
-        ];
-        $result = $this->restCall($endpoint, $query);
-        if (property_exists($result, 'items')) {
-            $persons = array_merge($result->items, $persons);
-        }
-
-        return $persons;
-    }
-
-    /**
-     * Add our enrolment method to a course.
-     *
-     * @param object $course
-     *
-     * @return void
-     */
-    public function addEnrolmentMethod($course) {
-
-        global $DB;
-
-        if (!$enrol = $DB->get_record('enrol', ['courseid' => $course->id, 'enrol' => 'campusonline'])) {
-
-            // Create enrolment method.
-            $enrol = new \stdClass();
-            $enrol->enrol = 'campusonline';
-            $enrol->status = 0;
-            $enrol->courseid = $course->id;
-            $enrol->timecreated = time();
-            $enrol->timemodified = time();
-            $enrol->id = $DB->insert_record('enrol', $enrol);
-
-        } elseif ($enrol->status == 1) {
-
-            // Set to active.
-            $enrol->status = 0;
-            $enrol->timemodified = time();
-            $DB->update_record('enrol', $enrol);
-        }
-    }
-
-    /**
      * Gets enrolments for a course from CAMPUSonline.
      *
      * @param object $course
@@ -264,6 +201,38 @@ class sync {
     }
 
     /**
+     * Gets persons from CAMPUSonline for preview.
+     */
+    public function getPersons($limit = null) {
+
+        // Get employees.
+        $endpoint = 'co-brm-core/org/api/employee-persons';
+        $query = [
+            'limit' => $limit,
+        ];
+        $result = $this->restCall($endpoint, $query);
+
+        // Analyze response.
+        if (property_exists($result, 'items')) {
+            $persons = $result->items;
+        } else {
+            $persons = array();
+        }
+
+        // Get students.
+        $endpoint = '/co-sm-core/study/api/student-persons/';
+        $query = [
+            'limit' => $limit,
+        ];
+        $result = $this->restCall($endpoint, $query);
+        if (property_exists($result, 'items')) {
+            $persons = array_merge($result->items, $persons);
+        }
+
+        return $persons;
+    }
+
+    /**
      * Syncs courses.
      *
      * @param progress_trace $trace
@@ -322,7 +291,7 @@ class sync {
                 $DB->insert_record('enrol_campusonline_logs', $log);
 
                 // Add our enrolment method.
-                $this->addEnrolmentMethod($course);
+                locallib::addEnrolmentMethod($course);
 
             } else {
 
@@ -489,17 +458,6 @@ class sync {
                 }
             }
         }
-    }
-
-    /**
-     * Removes old logs.
-     */
-    private function cleanupLogs() {
-        global $DB;
-
-        $duration = get_config('enrol_campusonline', 'logduration');
-        $time = time() - $duration * 24 * 60 * 60;
-        $DB->delete_records_select('enrol_campusonline_logs', "timestamp < $time");
     }
 
     /**
