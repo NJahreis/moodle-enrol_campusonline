@@ -36,48 +36,54 @@ class sync {
     protected $path;
     protected $token;
     protected $error;
+    public $lectureship_functions;
 
     /**
      * Constructor.
      */
     public function __construct() {
 
+        // Remove old logs.
+        $this->cleanupLogs();
+
         // Get settings.
         $this->path = get_config('enrol_campusonline', 'endpoint');
-        $this->path = rtrim($this->path, '/');
         $clientid = get_config('enrol_campusonline', 'clientid');
         $secret = get_config('enrol_campusonline', 'clientsecret');
 
         // Make request.
-        $url = $this->path . '/public/sec/auth/realms/CAMPUSonline_SP/protocol/openid-connect/token';
-        $client = new Client([
-            'base_uri' => $url,
-            'timeout' => 10.0,
-            'connect_timeout' => 2.0,
-        ]);
-        $response = $client->request('POST', $url, [
-            'headers' => [
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ],
-            'form_params' => [
-                'grant_type' => 'client_credentials',
-                'client_id' => $clientid,
-                'client_secret' => $secret
-            ]
-        ]);
+        if ($this->path && $clientid && $secret) {
+            $this->path = rtrim($this->path, '/');
+            $url = $this->path . '/public/sec/auth/realms/CAMPUSonline_SP/protocol/openid-connect/token';
+            $client = new Client([
+                'base_uri' => $url,
+                'timeout' => 10.0,
+                'connect_timeout' => 2.0,
+            ]);
+            $response = $client->request('POST', $url, [
+                'headers' => [
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
+                'form_params' => [
+                    'grant_type' => 'client_credentials',
+                    'client_id' => $clientid,
+                    'client_secret' => $secret
+                ]
+            ]);
 
-        // Analyze response.
-        $response_body = $response->getBody()->getContents();
-        $response_object = json_decode($response_body, false);
-        $response_array = (array)$response_object;
+            // Analyze response.
+            $response_body = $response->getBody()->getContents();
+            $response_object = json_decode($response_body, false);
+            $response_array = (array)$response_object;
 
-        // Analyze response.
-        if (array_key_exists('error', $response_array)) {
-            $this->error = $response_array['error'] . ': ' . $response_array['error_description'];
-        } elseif (array_key_exists('access_token', $response_array)) {
-            $this->token = $response_array['access_token'];
-        } else {
-            $this->error = $response_array['error'] . ': ' . get_string('error:unknown', 'enrol_campusonline');
+            // Analyze response.
+            if (array_key_exists('error', $response_array)) {
+                $this->error = $response_array['error'] . ': ' . $response_array['error_description'];
+            } elseif (array_key_exists('access_token', $response_array)) {
+                $this->token = $response_array['access_token'];
+            } else {
+                $this->error = $response_array['error'] . ': ' . get_string('error:unknown', 'enrol_campusonline');
+            }
         }
     }
 
@@ -119,16 +125,84 @@ class sync {
     }
 
     /**
-     * Gets enrolments for a course from CAMPUSonline.
+     * Gets lectureship functions from CAMPUSonline.
+     */
+    public function getLectureshipFunctions() {
+        $endpoint = 'co-tm-core/course/api/lectureship-functions';
+        $result = $this->restCall($endpoint);
+
+        // Analyze response.
+        $lectureship_functions = array();
+        if (property_exists($result, 'items')) {
+            foreach ($result->items as $item) {
+                $lectureship_functions[] = $item->key;
+            }
+        }
+
+        return $lectureship_functions;
+    }
+
+    /**
+     * Gets data for a student from CAMPUSonline.
+     *
+     * @param string $uid
+     *
+     * @return array $studentdata
+     */
+    public function getStudent($uid) {
+
+        // Get student.
+        $endpoint = "/co-sm-core/study/api/student-persons/";
+        $result = $this->restCall($endpoint);
+
+        // Analyze response.
+        if (property_exists($result, 'items')) {
+            $studentdata = $result->items[0];
+        } else {
+            $studentdata = array();
+        }
+
+        return $studentdata;
+
+    }
+
+    /**
+     * Gets student enrolments for a course from CAMPUSonline.
      *
      * @param object $course
      *
      * @return array $enrolments
      */
-    public function getEnrolments($course) {
+    public function getStudentEnrolments($course) {
 
-        // Get courses.
+        // Get enrolments.
         $endpoint = 'co-tm-core/course/api/registrations';
+        $query = [
+            'course_uid' => $course->idnumber,
+        ];
+        $result = $this->restCall($endpoint, $query);
+
+        // Analyze response.
+        if (property_exists($result, 'items')) {
+            $enrolments = $result->items;
+        } else {
+            $enrolments = array();
+        }
+
+        return $enrolments;
+    }
+
+    /**
+     * Gets teacher enrolments for a course from CAMPUSonline.
+     *
+     * @param object $course
+     *
+     * @return array $enrolments
+     */
+    public function getTeacherEnrolments($course) {
+
+        // Get enrolments.
+        $endpoint = 'co-tm-core/course/api/lectureships';
         $query = [
             'course_uid' => $course->idnumber,
         ];
@@ -256,22 +330,125 @@ class sync {
     public function syncEnrolments($course, $trace = null) {
 
         global $CFG, $DB;
-
         require_once("$CFG->dirroot/user/lib.php");
 
-        $enrolments = $this->getEnrolments($course);
-
         if ($trace) {
-            $trace->output('Syncing enrolments for course: '. $course->idnumber);
+            $trace->output("  Syncing enrolments for course: $course->idnumber");
         }
+
+        $enrolments = $this->getTeacherEnrolments($course);
+
+        var_dump($enrolments);
+
+
+        $enrolments = $this->getStudentEnrolments($course);
+
+        var_dump($enrolments);
+
+        return;
 
         foreach ($enrolments as $enrolmentdata) {
 
-            $useridnumber = $DB->get_record('course', ['idnumber' => $enrolmentdata->uid]);
+            // Create new user.
+            if (!$user = $DB->get_record('user', ['idnumber' => $enrolmentdata->personUid])) {
+
+                // Get student data.
+                $uid = $enrolmentdata->personUid;
+                echo "Getting student $uid";
+                $student = $this->getStudent($uid);
+
+
+
+                $user = new \stdClass();
+                foreach ($newuser as $key => $value) {
+                    $course->$key = $value;
+                }
+
+            // Create user.
+            } else {
+
+            }
+
+            if (!$course = $DB->get_record('course', ['idnumber' => $coursedata->uid])) {
+
+                // Create new course.
+                $course = new \stdClass();
+                foreach ($newcourse as $key => $value) {
+                    $course->$key = $value;
+                }
+
+                // Log course creation.
+                $log = new \stdClass();
+                $log->timestamp = time();
+                $log->event = 'create_course';
+                if (create_course($course)) {
+                    $log->courseid = $course->id;
+                    $log->status = 0;
+                    $message = "Created course for CAMPUSonline UID $course->idnumber (Moodle course id $course->id).";
+                    $log->message = $message;
+                    $trace->output(" - $message");
+                } else {
+                    $log->status = 2;
+                    $log->message = 'error creating course';
+                }
+                $DB->insert_record('enrol_campusonline_logs', $log);
+
+            } else {
+
+                // Check if update is necessary.
+                $needsupdate = false;
+                foreach ($newcourse as $key => $value) {
+                    if ($course->$key != $value) {
+                        $trace->output($value);
+                        $trace->output($course->$key);
+                        $needsupdate = true;
+                        break;
+                    }
+                }
+
+                // Update.
+                if ($needsupdate) {
+
+                    // Skip.
+                    if (get_config('enrol_campusonline', 'updateexistingcourses') == 0) {
+                        $message = " - Skipped existing course with idnumber $course->idnumber (Moodle course id $course->id).";
+                        $trace->output($message);
+                        continue;
+                    }
+
+                    // Update course.
+                    foreach ($newcourse as $key => $value) {
+                        $course->$key = $value;
+                    }
+                    $DB->update_record('course', $course);
+
+                    // Log update.
+                    $log = new \stdClass();
+                    $log->timestamp = time();
+                    $log->event = 'update_course';
+                    $log->courseid = $course->id;
+                    $log->status = 0;
+                    $message = "Updated course with idnumber $course->idnumber (Moodle course id $course->id).";
+                    $trace->output(" - $message");
+                    $log->message = $message;
+                    $DB->insert_record('enrol_campusonline_logs', $log);
+                }
+            }
 
             echo $useridnumber;
 
         }
+    }
+
+    /**
+     * Removes old logs.
+     */
+    private function cleanupLogs() {
+        global $DB;
+
+        $duration = get_config('enrol_campusonline', 'logduration');
+        $time = time() - $duration * 24 * 60 * 60;
+        $DB->delete_records_select('enrol_campusonline_logs', "timestamp < $time");
     }
 
     /**
@@ -282,7 +459,7 @@ class sync {
      *
      * @return object
      */
-    private function restCall($endpoint, $query) {
+    private function restCall($endpoint, $query = null) {
 
         // Set params.
         $url = $this->path . '/' . $endpoint;

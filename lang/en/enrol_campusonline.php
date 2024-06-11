@@ -56,6 +56,13 @@ $string['coursesyncsettings_desc'] = '
 
 $string['enrolmentsyncsettings'] = 'Enrolment sync settings';
 
+$string['rolemappings'] = 'Role mappings';
+$string['rolemappings_desc'] = 'Select Moodle roles to use for CAMPUSonline students and lectureship roles.';
+$string['rolemappings_notconnected'] = 'Could not connect to CAMPUSOnline. Check your connection settings and reload this page, to add mappings for CAMPUSonline roles.';
+$string['donotsyncrole'] = '- do not sync this role -';
+$string['studentrole'] = 'Students';
+$string['lectureshiproles'] = 'Select Moodle roles to use for CAMPUSonline lectureship roles.';
+
 $string['logsettings'] = 'Log settings';
 $string['logduration'] = 'Keep logs for (days)';
 $string['viewlogs'] = 'View logs';

@@ -23,6 +23,8 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+use enrol_campusonline\sync;
+
 if ($ADMIN->fulltree) {
 
     // Connection settings.
@@ -121,6 +123,49 @@ if ($ADMIN->fulltree) {
         get_string('enrolmentsyncsettings', 'enrol_campusonline'),
         '',
     ));
+
+    // Role mappings.
+    $settings->add(new admin_setting_heading(
+        'enrol_campusonline/rolemappings',
+        get_string('rolemappings', 'enrol_campusonline'),
+        get_string('rolemappings_desc', 'enrol_campusonline'),
+    ));
+    // Student role.
+    $rolesraw = role_get_names();
+    $roles = ['0' => get_string('donotsyncrole', 'enrol_campusonline')];
+    foreach ($rolesraw as $role) {
+        $roles[$role->id] = $role->localname;
+    }
+    $settings->add(new admin_setting_configselect(
+        'enrol_campusonline/studentrole',
+        get_string('studentrole', 'enrol_campusonline'),
+        '',
+        3,
+        $roles,
+    ));
+
+    // Lectureship roles.
+    $sync = new sync;
+    if ($sync->isConnected()) {
+        $functions = $sync->getLectureshipFunctions();
+        foreach ($functions as $function) {
+            $settings->add(new admin_setting_configselect(
+                'enrol_campusonline/role_' . $function,
+                $function,
+                '',
+                3,
+                $roles,
+            ));
+        }
+    } else {
+        $settings->add(new admin_setting_heading(
+            'enrol_campusonline/rolemappings',
+            get_string('rolemappings', 'enrol_campusonline'),
+            get_string('rolemappings_notconnected', 'enrol_campusonline'),
+        ));
+    }
+
+
 
     // Log settings.
     $button = '<a target="_blank" class="btn btn-secondary m-1"
