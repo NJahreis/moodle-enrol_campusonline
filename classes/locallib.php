@@ -93,5 +93,4 @@ class locallib {
 
         return $value;
     }
-
 }

@@ -59,6 +59,9 @@ $string['enrolmentsyncsettings'] = 'Enrolment sync settings';
 $string['logsettings'] = 'Log settings';
 $string['logduration'] = 'Keep logs for (days)';
 $string['viewlogs'] = 'View logs';
+$string['logs'] = 'Logs';
+$string['event'] = 'Event';
+$string['deletedcourse'] = 'deleted course (id: {$a})';
 
 $string['showrawcoursedata'] = 'Show raw data from CAMPUSonline';
 $string['previewcourses'] = 'Preview courses with these settings';

@@ -190,9 +190,9 @@ class sync {
                 if (create_course($course)) {
                     $log->courseid = $course->id;
                     $log->status = 0;
-                    $message = " - Created course for CAMPUSonline UID $course->idnumber (Moodle course id $course->id).";
+                    $message = "Created course for CAMPUSonline UID $course->idnumber (Moodle course id $course->id).";
                     $log->message = $message;
-                    $trace->output($message);
+                    $trace->output(" - $message");
                 } else {
                     $log->status = 2;
                     $log->message = 'error creating course';
@@ -234,15 +234,15 @@ class sync {
                     $log->event = 'update_course';
                     $log->courseid = $course->id;
                     $log->status = 0;
-                    $message = " - Updated course with idnumber $course->idnumber (Moodle course id $course->id).";
-                    $trace->output($message);
+                    $message = "Updated course with idnumber $course->idnumber (Moodle course id $course->id).";
+                    $trace->output(" - $message");
                     $log->message = $message;
                     $DB->insert_record('enrol_campusonline_logs', $log);
                 }
             }
 
             // Sync enrolments.
-            $enrolments = $this->getEnrolments($course);
+            $this->syncEnrolments($course, $trace);
         }
     }
 
@@ -253,14 +253,25 @@ class sync {
      *
      * @return void
      */
-    public function syncEnrolments($trace = null) {
+    public function syncEnrolments($course, $trace = null) {
 
         global $CFG, $DB;
 
+        require_once("$CFG->dirroot/user/lib.php");
+
+        $enrolments = $this->getEnrolments($course);
+
         if ($trace) {
-            $trace->output('Syncing enrolments ...');
+            $trace->output('Syncing enrolments for course: '. $course->idnumber);
         }
 
+        foreach ($enrolments as $enrolmentdata) {
+
+            $useridnumber = $DB->get_record('course', ['idnumber' => $enrolmentdata->uid]);
+
+            echo $useridnumber;
+
+        }
     }
 
     /**

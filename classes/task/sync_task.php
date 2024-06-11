@@ -70,6 +70,5 @@ class sync_task extends \core\task\scheduled_task {
 
         // Sync courses and enrollments.
         $sync->syncCourses($trace);
-        $sync->syncEnrolments($trace);
     }
 }
