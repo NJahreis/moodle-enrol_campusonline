@@ -27,7 +27,7 @@ use enrol_campusonline\sync;
 
 if ($ADMIN->fulltree) {
 
-    // Connection settings.
+    // ----- Connection settings -----
     $button = '<a class="btn btn-secondary m-1"
         href=' . new moodle_url('/enrol/campusonline/test.php?function=testconnection') . '>' .
         get_string('testconnection', 'enrol_campusonline') . '</a>';
@@ -57,7 +57,7 @@ if ($ADMIN->fulltree) {
         '',
     ));
 
-    // General sync settings.
+    // ----- General sync settings -----
     $button = '<a target="_blank" class="btn btn-secondary m-1"
     href=' . new moodle_url('/admin/tool/task/scheduledtasks.php?action=edit&task=enrol_campusonline%5Ctask%5Csync_task') . '>' .
     get_string('configuretask', 'enrol_campusonline') . '</a>';
@@ -90,7 +90,7 @@ if ($ADMIN->fulltree) {
         1,
     ));
 
-    // Course sync settings.
+    // ----- Course sync settings -----
     $buttons = '<a class="btn btn-secondary m-1"
     href=' . new moodle_url('/enrol/campusonline/test.php?function=showrawcoursedata') . '>' .
     get_string('showrawcoursedata', 'enrol_campusonline') . '</a>';
@@ -117,14 +117,14 @@ if ($ADMIN->fulltree) {
         '{semesterKey} - {courseCode}',
     ));
 
-    // Enrolment sync settings.
+    // ----- Enrolment sync settings -----
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/enrolmentsyncsettings',
         get_string('enrolmentsyncsettings', 'enrol_campusonline'),
         '',
     ));
 
-    // Role mappings.
+    // ----- Role mappings -----
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/rolemappings',
         get_string('rolemappings', 'enrol_campusonline'),
@@ -143,7 +143,6 @@ if ($ADMIN->fulltree) {
         3,
         $roles,
     ));
-
     // Lectureship roles.
     $sync = new sync;
     if ($sync->isConnected()) {
@@ -165,9 +164,7 @@ if ($ADMIN->fulltree) {
         ));
     }
 
-
-
-    // Log settings.
+    // ----- Log settings -----
     $button = '<a target="_blank" class="btn btn-secondary m-1"
     href=' . new moodle_url('/enrol/campusonline/logs.php') . '>' .
     get_string('viewlogs', 'enrol_campusonline') . '</a>';
@@ -176,7 +173,7 @@ if ($ADMIN->fulltree) {
         get_string('logsettings', 'enrol_campusonline'),
         $button,
     ));
-    // Course shortname.
+    // Log duration.
     $settings->add(new admin_setting_configtext(
         'enrol_campusonline/logduration',
         get_string('logduration', 'enrol_campusonline'),
@@ -184,6 +181,4 @@ if ($ADMIN->fulltree) {
         7,
         PARAM_INT,
     ));
-
-
 }

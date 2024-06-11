@@ -102,15 +102,16 @@ class sync {
     }
 
     /**
-     * Gets courses.
+     * Gets courses for preview.
      */
-    public function getCourses() {
+    public function getCourses($limit = null) {
 
         // Get courses.
         $endpoint = 'co-tm-core/course/api/courses';
         $query = [
             'semester_key' => get_config('enrol_campusonline', 'semester'),
             'only_elearning_courses' => 'true',
+            'limit' => $limit,
         ];
         $result = $this->restCall($endpoint, $query);
 
@@ -122,6 +123,107 @@ class sync {
         }
 
         return $courses;
+    }
+
+    /**
+     * Gets persons from CAMPUSonline for preview.
+     */
+    public function getPersons($limit = null) {
+
+        // Get employees.
+        $endpoint = 'co-brm-core/org/api/employee-persons';
+        $query = [
+            'limit' => $limit,
+        ];
+        $result = $this->restCall($endpoint, $query);
+
+        // Analyze response.
+        if (property_exists($result, 'items')) {
+            $persons = $result->items;
+        } else {
+            $persons = array();
+        }
+
+        // Get students.
+        $endpoint = '/co-sm-core/study/api/student-persons/';
+        $query = [
+            'limit' => $limit,
+        ];
+        $result = $this->restCall($endpoint, $query);
+        if (property_exists($result, 'items')) {
+            $persons = array_merge($result->items, $persons);
+        }
+
+        return $persons;
+    }
+
+    /**
+     * Add our enrolment method to a course.
+     *
+     * @param object $course
+     *
+     * @return void
+     */
+    public function addEnrolmentMethod($course) {
+
+        global $DB;
+
+        if (!$enrol = $DB->get_record('enrol', ['courseid' => $course->id, 'enrol' => 'campusonline'])) {
+
+            // Create enrolment method.
+            $enrol = new \stdClass();
+            $enrol->enrol = 'campusonline';
+            $enrol->status = 0;
+            $enrol->courseid = $course->id;
+            $enrol->timecreated = time();
+            $enrol->timemodified = time();
+            $enrol->id = $DB->insert_record('enrol', $enrol);
+
+        } elseif ($enrol->status == 1) {
+
+            // Set to active.
+            $enrol->status = 0;
+            $enrol->timemodified = time();
+            $DB->update_record('enrol', $enrol);
+        }
+    }
+
+    /**
+     * Gets enrolments for a course from CAMPUSonline.
+     *
+     * @param object $course
+     *
+     * @return array $enrolments
+     */
+    public function getEnrolments($course) {
+
+        // Get student enrolments.
+        $endpoint = 'co-tm-core/course/api/registrations';
+        $query = [
+            'course_uid' => $course->idnumber,
+        ];
+        $result = $this->restCall($endpoint, $query);
+
+        // Analyze response.
+        if (property_exists($result, 'items')) {
+            $enrolments = $result->items;
+        } else {
+            $enrolments = array();
+        }
+
+        // Get teacher enrolments.
+        $endpoint = 'co-tm-core/course/api/lectureships';
+        $query = [
+            'course_uid' => $course->idnumber,
+        ];
+        $result = $this->restCall($endpoint, $query);
+
+        // Analyze response.
+        if (property_exists($result, 'items')) {
+            $enrolments = array_merge($result->items, $enrolments);
+        }
+
+        return $enrolments;
     }
 
     /**
@@ -146,76 +248,19 @@ class sync {
      * Gets data for a student from CAMPUSonline.
      *
      * @param string $uid
+     * @param bool $is_student
      *
      * @return array $studentdata
      */
-    public function getStudent($uid) {
+    public function getPerson($uid, $is_student) {
 
-        // Get student.
-        $endpoint = "/co-sm-core/study/api/student-persons/";
-        $result = $this->restCall($endpoint);
-
-        // Analyze response.
-        if (property_exists($result, 'items')) {
-            $studentdata = $result->items[0];
+        // Get person.
+        if ($is_student) {
+            $endpoint = "/co-sm-core/study/api/student-persons/$uid";
         } else {
-            $studentdata = array();
+            $endpoint = "/co-brm-core/org/api/employee-persons/$uid";
         }
-
-        return $studentdata;
-
-    }
-
-    /**
-     * Gets student enrolments for a course from CAMPUSonline.
-     *
-     * @param object $course
-     *
-     * @return array $enrolments
-     */
-    public function getStudentEnrolments($course) {
-
-        // Get enrolments.
-        $endpoint = 'co-tm-core/course/api/registrations';
-        $query = [
-            'course_uid' => $course->idnumber,
-        ];
-        $result = $this->restCall($endpoint, $query);
-
-        // Analyze response.
-        if (property_exists($result, 'items')) {
-            $enrolments = $result->items;
-        } else {
-            $enrolments = array();
-        }
-
-        return $enrolments;
-    }
-
-    /**
-     * Gets teacher enrolments for a course from CAMPUSonline.
-     *
-     * @param object $course
-     *
-     * @return array $enrolments
-     */
-    public function getTeacherEnrolments($course) {
-
-        // Get enrolments.
-        $endpoint = 'co-tm-core/course/api/lectureships';
-        $query = [
-            'course_uid' => $course->idnumber,
-        ];
-        $result = $this->restCall($endpoint, $query);
-
-        // Analyze response.
-        if (property_exists($result, 'items')) {
-            $enrolments = $result->items;
-        } else {
-            $enrolments = array();
-        }
-
-        return $enrolments;
+        return $this->restCall($endpoint);
     }
 
     /**
@@ -225,7 +270,7 @@ class sync {
      *
      * @return void
      */
-    public function syncCourses($trace = null) {
+    public function syncCourses($trace) {
 
         global $CFG, $DB;
 
@@ -242,14 +287,17 @@ class sync {
         // Sync courses.
         foreach ($courses as $coursedata) {
 
+            $uid = $coursedata->uid;
+            $trace->output(" - Syncing CAMPUSonline course $uid");
+
             // Prepare new course data.
             $newcourse = array();
-            $newcourse['idnumber'] = $coursedata->uid;
+            $newcourse['idnumber'] = $uid;
             $newcourse['shortname'] = locallib::getCourseField('shortname', $coursedata);
             $newcourse['fullname'] = locallib::getCourseField('fullname', $coursedata);
             $newcourse['category'] = locallib::getCourseCategory($coursedata);
 
-            if (!$course = $DB->get_record('course', ['idnumber' => $coursedata->uid])) {
+            if (!$course = $DB->get_record('course', ['idnumber' => $uid])) {
 
                 // Create new course.
                 $course = new \stdClass();
@@ -257,14 +305,14 @@ class sync {
                     $course->$key = $value;
                 }
 
-                // Log course creation.
+                // Create course and log course creation.
                 $log = new \stdClass();
                 $log->timestamp = time();
                 $log->event = 'create_course';
                 if (create_course($course)) {
                     $log->courseid = $course->id;
                     $log->status = 0;
-                    $message = "Created course for CAMPUSonline UID $course->idnumber (Moodle course id $course->id).";
+                    $message = "Created Moodle course $course->id for CAMPUSonline course $uid.";
                     $log->message = $message;
                     $trace->output(" - $message");
                 } else {
@@ -272,6 +320,9 @@ class sync {
                     $log->message = 'error creating course';
                 }
                 $DB->insert_record('enrol_campusonline_logs', $log);
+
+                // Add our enrolment method.
+                $this->addEnrolmentMethod($course);
 
             } else {
 
@@ -291,7 +342,7 @@ class sync {
 
                     // Skip.
                     if (get_config('enrol_campusonline', 'updateexistingcourses') == 0) {
-                        $message = " - Skipped existing course with idnumber $course->idnumber (Moodle course id $course->id).";
+                        $message = " - Skipped existing Moodle course $course->id for CAMPUSonline course $uid.";
                         $trace->output($message);
                         continue;
                     }
@@ -308,7 +359,7 @@ class sync {
                     $log->event = 'update_course';
                     $log->courseid = $course->id;
                     $log->status = 0;
-                    $message = "Updated course with idnumber $course->idnumber (Moodle course id $course->id).";
+                    $message = "Updated Moodle course $course->id with data from CAMPUSonline course $uid.";
                     $trace->output(" - $message");
                     $log->message = $message;
                     $DB->insert_record('enrol_campusonline_logs', $log);
@@ -323,120 +374,120 @@ class sync {
     /**
      * Syncs enrolments.
      *
+     * @param object $course
      * @param progress_trace $trace
      *
      * @return void
      */
-    public function syncEnrolments($course, $trace = null) {
+    public function syncEnrolments($course, $trace) {
 
         global $CFG, $DB;
         require_once("$CFG->dirroot/user/lib.php");
+        $courseid = $course->id;
 
-        if ($trace) {
-            $trace->output("  Syncing enrolments for course: $course->idnumber");
+        // Check if enrolment method is active.
+        if (!$enrol = $DB->get_record('enrol', ['courseid' => $courseid, 'enrol' => 'campusonline', 'status' => 0])) {
+            $trace->output("   - Skipping enrolments for Moodle course $courseid - enrolment method has been deactivated.");
+            return;
         }
 
-        $enrolments = $this->getTeacherEnrolments($course);
+        $enrolments = $this->getEnrolments($course);
 
-        var_dump($enrolments);
+        foreach ($enrolments as $enrolment) {
 
-
-        $enrolments = $this->getStudentEnrolments($course);
-
-        var_dump($enrolments);
-
-        return;
-
-        foreach ($enrolments as $enrolmentdata) {
-
-            // Create new user.
-            if (!$user = $DB->get_record('user', ['idnumber' => $enrolmentdata->personUid])) {
-
-                // Get student data.
-                $uid = $enrolmentdata->personUid;
-                echo "Getting student $uid";
-                $student = $this->getStudent($uid);
-
-
-
-                $user = new \stdClass();
-                foreach ($newuser as $key => $value) {
-                    $course->$key = $value;
-                }
-
-            // Create user.
+            // Get role.
+            if (property_exists($enrolment, 'functionKey')) {
+                $is_student = false;
+                $roleid = get_config('enrol_campusonline', 'role_' . $enrolment->functionKey);
             } else {
-
+                $is_student = true;
+                $roleid = get_config('enrol_campusonline', 'studentrole');
             }
 
-            if (!$course = $DB->get_record('course', ['idnumber' => $coursedata->uid])) {
+            // Skip if role should not be synced.
+            if (!$roleid || $roleid == 0) {
+                continue;
+            }
 
-                // Create new course.
-                $course = new \stdClass();
-                foreach ($newcourse as $key => $value) {
-                    $course->$key = $value;
-                }
+            // Create new user if needed.
+            $uid = $enrolment->personUid;
+            if (!$userid = $DB->get_field('user', 'id', ['idnumber' => $uid])) {
 
-                // Log course creation.
+                // Get person data.
+                $person = $this->getPerson($uid, $is_student);
+
+                // Create user.
+                $user = new \stdClass();
+                $user->username = strtolower($uid); // TODO: make configurable.
+                $user->password = $uid; // TODO: make configurable.
+                $user->idnumber = $uid;
+                $user->firstname = $person->givenName;
+                $user->lastname = $person->surname;
+                $user->email = "$uid@example.com"; // TODO: make configurable.
+                $user->auth = 'manual';  // TODO: make configurable?.
+                $user->mnethostid = $CFG->mnet_localhost_id; // Local host ID
+                $user->confirmed = 1; // Confirm the user
+
+                // Create user & log it.
                 $log = new \stdClass();
                 $log->timestamp = time();
-                $log->event = 'create_course';
-                if (create_course($course)) {
-                    $log->courseid = $course->id;
-                    $log->status = 0;
-                    $message = "Created course for CAMPUSonline UID $course->idnumber (Moodle course id $course->id).";
-                    $log->message = $message;
-                    $trace->output(" - $message");
-                } else {
+                $log->event = 'create_user';
+                $log->courseid = $courseid;
+                if (!$userid = user_create_user($user, false, false)) {
+                    $message = "Error creating Moodle user for CAMPUSonline user $uid.";
                     $log->status = 2;
-                    $log->message = 'error creating course';
-                }
-                $DB->insert_record('enrol_campusonline_logs', $log);
-
-            } else {
-
-                // Check if update is necessary.
-                $needsupdate = false;
-                foreach ($newcourse as $key => $value) {
-                    if ($course->$key != $value) {
-                        $trace->output($value);
-                        $trace->output($course->$key);
-                        $needsupdate = true;
-                        break;
-                    }
-                }
-
-                // Update.
-                if ($needsupdate) {
-
-                    // Skip.
-                    if (get_config('enrol_campusonline', 'updateexistingcourses') == 0) {
-                        $message = " - Skipped existing course with idnumber $course->idnumber (Moodle course id $course->id).";
-                        $trace->output($message);
-                        continue;
-                    }
-
-                    // Update course.
-                    foreach ($newcourse as $key => $value) {
-                        $course->$key = $value;
-                    }
-                    $DB->update_record('course', $course);
-
-                    // Log update.
-                    $log = new \stdClass();
-                    $log->timestamp = time();
-                    $log->event = 'update_course';
-                    $log->courseid = $course->id;
+                } else {
+                    $message = "Created Moodle user $userid for CAMPUSonline user $uid to enrol in Moodle course $course->id.";
                     $log->status = 0;
-                    $message = "Updated course with idnumber $course->idnumber (Moodle course id $course->id).";
-                    $trace->output(" - $message");
-                    $log->message = $message;
-                    $DB->insert_record('enrol_campusonline_logs', $log);
                 }
+                $trace->output("   - $message");
+                $log->message = $message;
+                $DB->insert_record('enrol_campusonline_logs', $log);
             }
 
-            echo $useridnumber;
+            // Create enrolment if needed.
+            if (!$DB->get_record('user_enrolments', ['enrolid' => $enrol->id, 'userid' => $userid])) {
 
+                // Create enrolment.
+                $enrolment = new \stdClass();
+                $enrolment->enrolid = $enrol->id;
+                $enrolment->userid = $userid;
+                $enrolment->timestart = time();
+                $enrolment->timeend = 0;
+                $enrolment->modifierid = 0;
+                $enrolment->timecreated = time();
+                $enrolment->timemodified = time();
+                $DB->insert_record('user_enrolments', $enrolment);
+
+                // Log enrolment creation.
+                $log = new \stdClass();
+                $log->timestamp = time();
+                $log->event = 'enrol_user';
+                $log->courseid = $courseid;
+                $log->status = 0;
+                $message = "Enrolled Moodle user $userid in Moodle course $courseid.";
+                $log->message = $message;
+                $trace->output("   - $message");
+                $DB->insert_record('enrol_campusonline_logs', $log);
+            }
+
+            // Add role.
+            $context = \context_course::instance($courseid);
+            if (!user_has_role_assignment($userid, $roleid, $context->id)) {
+                $success = role_assign($roleid, $userid, $context->id);
+                $message = "Assigned role $roleid to Moodle user $userid in Moodle course $courseid.";
+                $trace->output("   - $message");
+            }
+
+            // Remove roles.
+            $roles = get_user_roles($context, $userid);
+            foreach ($roles as $role) {
+                if ($role->roleid != $roleid) {
+                    $success = role_unassign($role->roleid, $userid, $context->id);
+                    $message = "Removed role $role->roleid from Moodle user $userid in Moodle course $courseid.";
+                    $trace->output("   - $message");
+                }
+            }
         }
     }
 

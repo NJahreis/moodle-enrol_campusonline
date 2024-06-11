@@ -96,6 +96,16 @@ if ($function == 'testconnection') {
     echo '<h3>' . get_string('coursecount', 'enrol_campusonline', count($courses)) . '</h3>';
     echo html_writer::table($table);
 
+// Preview course sync.
+} elseif ($function == 'showrawuserdata') {
+
+    $courses = $sync->getPersons();
+
+    echo '<h3>' . get_string('coursecount', 'enrol_campusonline', count($courses)) . '</h3>';
+    echo '<pre>';
+    print_r($courses);
+    echo '</pre>';
+
 // For development only. TODO: remove
 } elseif ($function == 'sync_courses') {
     $sync->syncCourses();
