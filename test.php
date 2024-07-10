@@ -41,13 +41,6 @@ $PAGE->set_url('/local/idpush/logs.php');
 $PAGE->set_title(get_string('pluginname', 'enrol_campusonline'));
 $PAGE->set_heading(get_string($function, 'enrol_campusonline'));
 
-// Begin output.
-echo $OUTPUT->header();
-
-echo '<a class="btn btn-secondary m-1"
-    href=' . new moodle_url('/admin/settings.php?section=enrolsettingscampusonline') . '>' .
-    get_string('backtosettings', 'enrol_campusonline') . '</a>';
-
 // Init sync.
 $sync = new sync;
 
@@ -63,37 +56,61 @@ if ($function == 'testconnection') {
             \core\output\notification::NOTIFY_ERROR);
     }
 
+    redirect(new moodle_url('/admin/settings.php', array('section' => 'enrolsettingscampusonline')));
+}
+
+// Begin output.
+echo $OUTPUT->header();
+
+$url = new moodle_url('/admin/settings.php?section=enrolsettingscampusonline');
+echo html_writer::link($url, get_string('backtosettings', 'enrol_campusonline'), array('class' => 'btn btn-secondary m-1'));
+
 // Preview course sync.
-} elseif ($function == 'showrawcoursedata') {
+if ($function == 'showrawcoursedata') {
 
-    $courses = $sync->getCourses();
-
-    echo '<h3>' . get_string('coursecount', 'enrol_campusonline', count($courses)) . '</h3>';
-    echo '<pre>';
-    print_r($courses);
-    echo '</pre>';
+    if ($courses = $sync->getCourses()) {
+        echo html_writer::tag('h3', get_string('coursecount', 'enrol_campusonline', count($courses)));
+        echo '<pre>';
+        print_r($courses);
+        echo '</pre>';
+    }
 
 // Show actual course data.
-} elseif ($function == 'previewcourses') {
+} elseif ($function == 'coursepreview') {
 
     $table = new html_table();
-    $table->head = ['idnumber', 'shortname', 'fullname', 'coursecategory'];
+    $table->head = ['idnumber', 'shortname', 'fullname'];
+    $table->head = array_merge($table->head, locallib::COURSE_FIELDS);
+    $customfields = locallib::getCourseCustomFields(null);
+    $table->head = array_merge($table->head, $customfields);
+    $table->head[] = 'coursecategory';
     $table->align = array('right', 'left', 'left');
 
     $data = array();
     $courses = $sync->getCourses();
-    foreach ($courses as $course) {
-        $coursedata['idnumber'] = $course->uid;
-        $coursedata['shortname'] = locallib::getCourseField('shortname', $course);
-        $coursedata['fullname'] = locallib::getCourseField('fullname', $course);
-        $categoryid = locallib::getCourseCategory($course);
-        $coursedata['coursecategory'] = $DB->get_field('course_categories', 'name', ['id' => $categoryid]);
-        $data[] = $coursedata;
+
+    foreach ($courses as $coursedata) {
+        $course = locallib::buildCourse($coursedata);
+        $customfields = locallib::getCourseCustomFields($coursedata);
+        $categoryid = locallib::getCourseCategory($coursedata);
+
+        // Add custom fields.
+        foreach ($customfields as $key => $value) {
+            $course['customfield_' . $key] = $value;
+        }
+
+        // Convert category id to linked name.
+        $categoryname = $DB->get_field('course_categories', 'name', ['id' => $categoryid]);
+        $url = new moodle_url('/course/index.php', array('id' => $categoryid));
+        $course['coursecategory'] = html_writer::link($url, $categoryname);
+
+        // Add to table.
+        $data[] = $course;
     }
 
     $table->data = $data;
 
-    echo '<h3>' . get_string('coursecount', 'enrol_campusonline', count($courses)) . '</h3>';
+    echo html_writer::tag('h3', get_string('coursecount', 'enrol_campusonline', count($courses)));
     echo html_writer::table($table);
 
 // Preview course sync.
@@ -101,7 +118,7 @@ if ($function == 'testconnection') {
 
     $courses = $sync->getPersons();
 
-    echo '<h3>' . get_string('coursecount', 'enrol_campusonline', count($courses)) . '</h3>';
+    echo html_writer::tag('h3', get_string('coursecount', 'enrol_campusonline', count($courses)));
     echo '<pre>';
     print_r($courses);
     echo '</pre>';
@@ -110,7 +127,6 @@ if ($function == 'testconnection') {
 } elseif ($function == 'sync_courses') {
     $sync->syncCourses();
 }
-
 
 echo $OUTPUT->footer();
 

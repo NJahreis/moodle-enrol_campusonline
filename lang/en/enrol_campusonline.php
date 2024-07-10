@@ -26,7 +26,8 @@
 // Basics.
 $string['pluginname'] = 'CAMPUSonline Enrollment';
 $string['privacy:metadata'] = 'The CAMPUSonline enrolment plugin does not store any personal data.';
-$string['task:sync'] = 'CAMPUSonline sync';
+$string['task:sync'] = 'CAMPUSonline sync for courses & enrolments';
+$string['task:usersync'] = 'CAMPUSonline sync for users';
 
 // Settings page.
 $string['connectionsettings'] = 'Connection settings';
@@ -37,24 +38,40 @@ $string['clientid_desc'] = 'Client ID to access CAMPUSonline';
 $string['clientsecret'] = 'Client secret';
 $string['clientsecret_desc'] = 'Secret key to access CAMPUSonline';
 
-$string['syncsettings'] = 'Sync settings';
+$string['enrolmentsyncsettings'] = 'Enrolment sync settings';
+$string['enrolmentsyncsettings_desc'] = 'The enrolment sync will create and update enrolments and the respective courses.';
+$string['configuretask'] = 'Configure scheduled sync task';
 $string['semester'] = 'Semester';
 $string['semester_desc'] = 'Semester to be synced.';
+$string['updateexistingcourses'] = 'Update existing courses';
+$string['updateexistingcourses_desc'] = 'Allows the enrolment sync task to change names or categories of existing Moodle courses if they change in CAMPUSonline.';
+$string['enrolsynccreateusers'] = 'Create users';
+$string['enrolsynccreateusers_desc'] = 'Allows the enrolment sync task will create users that do not exist or cannot be found in Moodle.';
+
+$string['coursecatsettings'] = 'Course category settings';
 $string['rootcoursecategory'] = 'Root course category';
 $string['rootcoursecategory_desc'] = 'Course category to sync courses into. If you select "TOP", then you will need to have rules to create subcategories, otherwise the sync will fail.';
-$string['updateexistingcourses'] = 'Update existing courses';
-$string['updateexistingcourses_desc'] = 'Will change names or categories of existing Moodle courses if they changes in CAMPUSonline.';
-$string['configuretask'] = 'Configure scheduled sync task';
-$string['activatecoursesync'] = 'Activate course sync';
-$string['activatecoursesync_desc'] = 'If enabled, new courses will be generated based on the CAMPUSonline data.';
+$string['subcategories'] = 'Subcategories';
+$string['subcategories_desc'] = 'Specify how to build the subcategory structure.
+    <li>Use tokens to build the category names, and backslashes to separate categories, eg: "{org:code}\{course:semesterKey}\{course:courseClassificationKey}"</li>
+    <li>Make sure that no subcategory name ends up being empty</li>
+    <li>Show raw data from CAMPUSonline to see available fields/tokens</li>';
+$string['createcoursecatetories'] = 'Create course categories';
+$string['createcoursecatetories_desc'] = 'Allows the enrolment sync task to create course categories if they do not exist.';
 
 $string['coursesyncsettings'] = 'Course field settings';
 $string['coursesyncsettings_desc'] = '
-<li>Moodle course <strong>idnumber</strong> will always be filled with the CAMPUSonline course <strong>uid</strong></li>
-<li>You can choose how to build your course <strong>fullname</strong> and <strong>shortname</strong> by combining text and tokens for CAMPUSonline fields, eg: "CAMPUSONLINE_COURSE_{title}</li>
-<li>Make sure the course shortnames are unique, or there will be errors creating courses!</li>';
+    <li>Moodle course <strong>idnumber</strong> will always be filled with the CAMPUSonline course <strong>uid</strong></li>
+    <li>Choose values for other course fields (including course custom fields) by combining text and <strong>tokens</strong> for CAMPUSonline fields, eg: "CAMPUSONLINE_COURSE_{title}</li>
+    <li>Show raw data from CAMPUSonline to see available fields/tokens</li>
+    <li>Make sure the course shortnames are unique, and fields are filled with valid values for their respective field types, or there will be errors creating courses!</li>';
 
-$string['enrolmentsyncsettings'] = 'Enrolment sync settings';
+
+
+$string['usersyncsettings'] = 'User sync settings';
+$string['usersynccreateusers'] = 'Allow user sync to create users';
+$string['usersynccreateusers_desc'] = 'When activated, the user sync task will create users that do not exist or cannot be found in Moodle';
+
 
 $string['rolemappings'] = 'Role mappings';
 $string['rolemappings_desc'] = 'Select Moodle roles to use for CAMPUSonline students and lectureship roles.';
@@ -72,6 +89,7 @@ $string['deletedcourse'] = 'deleted course (id: {$a})';
 
 $string['showrawcoursedata'] = 'Show raw data from CAMPUSonline';
 $string['previewcourses'] = 'Preview courses with these settings';
+$string['coursepreview'] = 'Courses preview';
 $string['coursecount'] = '{$a} courses found.';
 $string['testsettings'] = 'Test these settings';
 $string['testconnection'] = 'Test connection';
@@ -82,3 +100,4 @@ $string['success:connected'] = 'Successfully connected to CAMPUSonline endpoint.
 $string['error:cannotconnect'] = 'Cannot connect to CAMPUSonline endpoint. Error: {$a}';
 $string['error:endpointmissing'] = 'You have to provide a valid endpoint in settings.';
 $string['error:unknown'] = 'Unknown error.';
+$string['error:uidfieldnotfound'] = 'CAMPUSOnline user profile field not found - reinstall the plugin or re-create the field(s) manually.';

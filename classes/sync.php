@@ -118,6 +118,8 @@ class sync {
         // Analyze response.
         if (property_exists($result, 'items')) {
             $courses = $result->items;
+            $courses = $this->enrichCourses($courses);
+
         } else {
             $courses = array();
         }
@@ -185,14 +187,14 @@ class sync {
      * Gets data for a student from CAMPUSonline.
      *
      * @param string $uid
-     * @param bool $is_student
+     * @param bool $usertype 'student' or 'staff'
      *
      * @return array $studentdata
      */
-    public function getPerson($uid, $is_student) {
+    public function getPerson($uid, $usertype) {
 
         // Get person.
-        if ($is_student) {
+        if ($usertype == 'student') {
             $endpoint = "/co-sm-core/study/api/student-persons/$uid";
         } else {
             $endpoint = "/co-brm-core/org/api/employee-persons/$uid";
@@ -256,15 +258,17 @@ class sync {
         // Sync courses.
         foreach ($courses as $coursedata) {
 
-            $uid = $coursedata->uid;
+            $uid = $coursedata['course:uid'];
             $trace->output(" - Syncing CAMPUSonline course $uid");
 
             // Prepare new course data.
-            $newcourse = array();
-            $newcourse['idnumber'] = $uid;
-            $newcourse['shortname'] = locallib::getCourseField('shortname', $coursedata);
-            $newcourse['fullname'] = locallib::getCourseField('fullname', $coursedata);
-            $newcourse['category'] = locallib::getCourseCategory($coursedata);
+            $newcourse = locallib::buildCourse($coursedata);
+            $customfields = locallib::getCourseCustomFields($coursedata);
+
+            // Get category.
+            if (!$newcourse['category'] = locallib::getCourseCategory($coursedata, $trace)) {
+                continue;
+            }
 
             if (!$course = $DB->get_record('course', ['idnumber' => $uid])) {
 
@@ -279,9 +283,16 @@ class sync {
                 $log->timestamp = time();
                 $log->event = 'create_course';
                 if (create_course($course)) {
-                    $log->courseid = $course->id;
+
+                    $courseid = $course->id;
+
+                    // Add custom fields.
+                    locallib::setCourseCustomFields($courseid, $coursedata);
+
+                    // Log.
+                    $log->courseid = $courseid;
                     $log->status = 0;
-                    $message = "Created Moodle course $course->id for CAMPUSonline course $uid.";
+                    $message = "Created Moodle course $courseid for CAMPUSonline course $uid.";
                     $log->message = $message;
                     $trace->output(" - $message");
                 } else {
@@ -295,11 +306,17 @@ class sync {
 
             } else {
 
+                $courseid = $course->id;
+
                 // Check if update is necessary.
                 $needsupdate = false;
                 foreach ($newcourse as $key => $value) {
                     if ($course->$key != $value) {
-                        $trace->output($value);
+
+                        // Skip empty values.
+                        if (!$course->$key && !$value) {
+                            continue;
+                        }
                         $trace->output($course->$key);
                         $needsupdate = true;
                         break;
@@ -311,7 +328,7 @@ class sync {
 
                     // Skip.
                     if (get_config('enrol_campusonline', 'updateexistingcourses') == 0) {
-                        $message = " - Skipped existing Moodle course $course->id for CAMPUSonline course $uid.";
+                        $message = " - Skipped existing Moodle course $courseid for CAMPUSonline course $uid.";
                         $trace->output($message);
                         continue;
                     }
@@ -326,12 +343,24 @@ class sync {
                     $log = new \stdClass();
                     $log->timestamp = time();
                     $log->event = 'update_course';
-                    $log->courseid = $course->id;
+                    $log->courseid = $courseid;
                     $log->status = 0;
-                    $message = "Updated Moodle course $course->id with data from CAMPUSonline course $uid.";
+                    $message = "Updated Moodle course $courseid with data from CAMPUSonline course $uid.";
                     $trace->output(" - $message");
                     $log->message = $message;
                     $DB->insert_record('enrol_campusonline_logs', $log);
+                }
+
+                // Set course custom fields.
+                if (locallib::setCourseCustomFields($courseid, $coursedata)) {
+                    $log = new \stdClass();
+                    $log->timestamp = time();
+                    $log->event = 'update_course';
+                    $log->courseid = $courseid;
+                    $log->status = 0;
+                    $message = "Updated course custom fields in Moodle course $courseid with data from CAMPUSonline course $uid.";
+                    $trace->output(" - $message");
+                    $log->message = $message;
                 }
             }
 
@@ -366,10 +395,10 @@ class sync {
 
             // Get role.
             if (property_exists($enrolment, 'functionKey')) {
-                $is_student = false;
+                $usertype = 'staff';
                 $roleid = get_config('enrol_campusonline', 'role_' . $enrolment->functionKey);
             } else {
-                $is_student = true;
+                $usertype = 'student';
                 $roleid = get_config('enrol_campusonline', 'studentrole');
             }
 
@@ -378,18 +407,26 @@ class sync {
                 continue;
             }
 
-            // Create new user if needed.
+            // Get Moodle user.
             $uid = $enrolment->personUid;
-            if (!$userid = $DB->get_field('user', 'id', ['idnumber' => $uid])) {
+            $userid = locallib::getMoodleUserId($uid, $usertype);
 
-                // Get person data.
-                $person = $this->getPerson($uid, $is_student);
+            // Create new user if needed.
+            if (!$userid) {
 
-                // Create user.
+                if (get_config('enrol_campusonline', 'enrolsynccreateusers') == 0) {
+                    $trace->output(" - Skipping enrolment for CAMPUSonline user $uid - user does not exist in Moodle.");
+                    continue;
+                }
+
+                // Get person.
+                $person = $this->getPerson($uid, $usertype);
+
+                // Create user. TODO: move to own function.
                 $user = new \stdClass();
                 $user->username = strtolower($uid); // TODO: make configurable.
                 $user->password = $uid; // TODO: make configurable.
-                $user->idnumber = $uid;
+                $user->idnumber = $uid; // TODO: make configurable.
                 $user->firstname = $person->givenName;
                 $user->lastname = $person->surname;
                 $user->email = "$uid@example.com"; // TODO: make configurable.
@@ -403,6 +440,11 @@ class sync {
                 $log->event = 'create_user';
                 $log->courseid = $courseid;
                 if (!$userid = user_create_user($user, false, false)) {
+
+                    // Update user profile fields.
+
+
+
                     $message = "Error creating Moodle user for CAMPUSonline user $uid.";
                     $log->status = 2;
                 } else {
@@ -458,6 +500,48 @@ class sync {
                 }
             }
         }
+    }
+
+    /**
+     * Enriches courses with additional data from other endpoints.
+     *
+     * @param array $courses
+     *
+     * @return array $courses
+     */
+    private function enrichCourses($courses) {
+
+        $enriched_courses = array();
+
+        foreach ($courses as $course) {
+
+            $sanitized_course = array();
+            $course = (array)$course;
+
+            // Values from course endpoint.
+            foreach ($course as $key => $value) {
+                $value = locallib::normalizeValue($value);
+                $sanitized_course["course:$key"] = $value;
+            }
+
+            // Get values from org endpoint.
+            $org = $this->restCall('co-brm-core/org/api/organisations/' . $course['organisationUid']);
+            if (property_exists($org, 'items')) {
+                $org = reset($org->items);
+            }
+
+            // Attach values from org endpoint.
+            $org = (array)$org;
+
+            foreach ($org as $key => $value) {
+                $value = locallib::normalizeValue($value);
+                $sanitized_course["org:$key"] = $value;
+            }
+
+            $enriched_courses[] = $sanitized_course;
+        }
+
+        return $enriched_courses;
     }
 
     /**
