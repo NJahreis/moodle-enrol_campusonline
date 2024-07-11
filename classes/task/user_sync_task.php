@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Class sync_task
+ * Class user_sync_task
  *
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
@@ -30,13 +30,13 @@ defined('MOODLE_INTERNAL') || die;
 use enrol_campusonline\sync;
 use enrol_campusonline\locallib;
 
-class sync_task extends \core\task\scheduled_task {
+class user_sync_task extends \core\task\scheduled_task {
 
     /**
      * Task name.
      */
     public function get_name() {
-        return get_string('task:sync', 'enrol_campusonline');
+        return get_string('task:user_sync', 'enrol_campusonline');
     }
 
     /**
@@ -50,13 +50,14 @@ class sync_task extends \core\task\scheduled_task {
         raise_memory_limit(MEMORY_HUGE);
 
         // Initialize sync.
+        $sync = new sync;
         $trace = new \text_progress_trace();
-        $sync = new sync($trace);
 
         if ($sync->isConnected()) {
 
             // Sync courses and enrollments.
-            $sync->syncCourses();
+            $trace->output("not yet implemented");
+            // $sync->syncCourses($trace);
 
         } else {
 

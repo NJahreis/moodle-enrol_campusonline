@@ -29,14 +29,35 @@ defined('MOODLE_INTERNAL') || die;
 
 class locallib {
 
-    // Course fields available for mapping.
-    public const COURSE_FIELDS = ['summary',
-                                  'format',
-                                  'startdate',
-                                  'enddate',
-                                  'visible',
-                                  'lang',
+    // Course fields available for mapping and their default value.
+    public const COURSE_FIELDS = ['summary' => '',
+                                  'format' => 'topics',
+                                  'startdate' => '',
+                                  'enddate' => '',
+                                  'visible' => '1',
+                                  'lang' => '{course:mainLanguageOfInstruction}',
+                                  'groupmode' => '1',
+                                  'groupmodeforce' => '0',
     ];
+
+    // User fields available for identification.
+    public const USER_ID_FIELDS = ['id',
+                                   'username',
+                                   'idnumber',
+                                   'email',
+    ];
+
+    // User fields available for mapping and their default value.
+    public const USER_FIELDS = ['username' => 'co_{uid}',
+                                'idnumber' => '{uid}',
+                                'firstname' => '{givenName}',
+                                'lastname' => '{surname}',
+                                'email' => '{email}',
+                                'phone1' => '',
+                                'institution' => '',
+                                'department' => '',
+    ];
+
 
     /**
      * Add our enrolment method to a course.
@@ -78,16 +99,38 @@ class locallib {
      */
     public static function buildCourse($coursedata){
         $course = array();
+        $course['coursecategory'] = null;
         $course['idnumber'] = $coursedata['course:uid'];
-        $course['shortname'] = self::getCourseField('shortname', $coursedata);
-        $course['fullname'] = self::getCourseField('fullname', $coursedata);
+        $course['shortname'] = self::getFieldValue('shortname', $coursedata);
+        $course['fullname'] = self::getFieldValue('fullname', $coursedata);
 
         // Map additional fields.
-        foreach(self::COURSE_FIELDS as $field) {
-            $course[$field] = self::getCourseField($field, $coursedata);
+        foreach(self::COURSE_FIELDS as $field => $default) {
+            $course[$field] = self::getFieldValue($field, $coursedata);
         }
 
         return $course;
+    }
+
+    /**
+     * Builds a user from CAMPUSOnline data.
+     *
+     * @param object $userdata
+     *
+     * @return array $user
+     */
+    public static function buildUser($userdata){
+
+        $user = array();
+        $user['auth'] = self::getFieldValue('auth', $userdata, 'user');
+        $user['password'] = self::getFieldValue('password', $userdata, 'user');
+
+        // Map additional fields.
+        foreach(self::USER_FIELDS as $field => $default) {
+            $user[$field] = self::getFieldValue($field, $userdata, 'user');
+        }
+
+        return $user;
     }
 
     /**
@@ -102,87 +145,20 @@ class locallib {
     }
 
     /**
-     * Gets a category for a course.
-     *
-     * @param array $coursedata
-     * @param progress_trace $trace
-     *
-     * @return string $categoryid
-     */
-    public static function getCourseCategory($coursedata, $trace) {
-
-        global $DB;
-
-        $categoryid = get_config('enrol_campusonline', 'rootcoursecategory');
-        $subcategories = get_config('enrol_campusonline', 'subcategories');
-        $subcategories = explode('\\', $subcategories);
-
-        foreach ($subcategories as $name) {
-            foreach ($coursedata as $key => $value) {
-                if (is_string($value)) {
-                    $name = str_replace('{' . $key . '}', $value, $name);
-                }
-            }
-            $category = $DB->get_record('course_categories', ['name' => $name, 'parent' => $categoryid]);
-
-            if (!$category) {
-
-                $log = new \stdClass();
-                $log->timestamp = time();
-                $log->event = 'create_category';
-
-                if (get_config('enrol_campusonline', 'createcoursecatetories') == 0) {
-
-                    // Log error.
-                    $log->status = 2;
-                    $message = "Could not find Moodle course category $name and not allowed to create new categories. Create the category manually, or configure CAMPUSOnline to be able to create new categories.";
-                    $log->message = $message;
-                    $trace->output(" - $message");
-                    return false;
-
-                } else {
-
-                    // Log creation.
-                    $log = new \stdClass();
-                    $log->status = 0;
-                    $message = "Creating new Moodle course category $name.";
-                    $log->message = $message;
-                    $trace->output(" - $message");
-
-                    // Create new category.
-                    $categorydata = new \stdClass();
-                    $categorydata->name = $name;
-                    $categorydata->parent = $categoryid;
-                    $categorydata->description = 'Created by CAMPUSOnline';
-                    $category = \core_course_category::create($categorydata);
-                    $categoryid = $category->id;
-                }
-
-            } else {
-                $category = $DB->get_record('course_categories', ['name' => $name, 'parent' => $categoryid]);
-                $categoryid = $category->id;
-            }
-        }
-
-        // TODO: implement.
-        return $categoryid;
-    }
-
-    /**
-     * Gets a category for a course.
+     * Gets custom fields for courses.
      *
      * @param object $coursedata
      *
      * @return array $customfields
      */
-    public static function getCourseCustomFields($coursedata) {
-        $customfields = array();
+    public static function getCustomFields($coursedata) {
+
         $handler = \core_customfield\handler::get_handler('core_course', 'course');
         if ($custom_fields = $handler->get_fields()) {
             foreach ($custom_fields as $field) {
                 $name = $field->get('shortname');
                 if ($coursedata) {
-                    $customfields[$name] = self::getCourseField('customfield_' . $name, $coursedata);
+                    $customfields[$name] = self::getFieldValue('customfield_' . $name, $coursedata);
                 } else {
                     $customfields[$name] = $field->get('name');
                 }
@@ -192,58 +168,52 @@ class locallib {
     }
 
     /**
-     * Gets a value for a course field.
+     * Get user profile fields.
+     *
+     * @param object $coursedata
+     * @param string $type 'course' or 'user'
+     *
+     * @return array $customfields
+     */
+    public static function getCustomUserFields() {
+
+        global $DB;
+
+        $customfields = array();
+        $records = $DB->get_records('user_info_field');
+        foreach ($records as $record) {
+            if ($record->shortname == 'campusonline_student_uid' ||
+                $record->shortname == 'campusonline_employee_uid') {
+                continue;
+            }
+            $customfields[$record->shortname] = $record->name;
+        }
+        return $customfields;
+    }
+
+    /**
+     * Gets a value for a field in Moodle, replacing tokens in configured values.
      *
      * @param string $field
-     * @param array $coursedata
+     * @param array $data
+     * @param string $type 'course' or 'user'
      *
      * @return string $value
      */
-    public static function getCourseField($field, $coursedata) {
+    public static function getFieldValue($field, $data, $type = 'course') {
         global $DB;
 
-        $fieldvalue = get_config('enrol_campusonline', 'course_' . $field);
+        // Get configured value.
+        $fieldvalue = get_config('enrol_campusonline', $type . '_' . $field);
 
-        foreach ($coursedata as $key => $value) {
+        // Replace tokens.
+        foreach ($data as $key => $value) {
             if (is_string($value)) {
                 $fieldvalue = str_replace('{' . $key . '}', $value, $fieldvalue);
             }
         }
 
         return $fieldvalue;
-    }
-
-    /**
-     * Gets a the Moodle User ID of a CAMPUSOnline user via its uid or email.
-     *
-     * @param string $uid
-     * @param string $usertype 'student' or 'employee'
-     *
-     * @return int $userid
-     */
-    public static function getMoodleUserId($uid, $type) {
-
-        global $DB;
-
-        // Get field id of our user profile field.
-        $shortname = 'campusonline_' . $type . '_uid';
-        if (!$field = $DB->get_record('user_info_field', ['shortname' => $shortname])) {
-            throw new moodle_exception('error:uidfieldnotfound', 'enrol_campusonline', '', $shortname);
-        }
-
-        // Get user id via uid.
-        $sql = "SELECT * FROM {user_info_data} WHERE data = ?";
-        $params = array('data' => $uid);
-        $data = $DB->get_records_sql($sql, $params);
-        if ($data) {
-            return $data->userid;
-        }
-
-        // TODO: Get user id via email.
-
-
-        // TODO: Save uid in our custom user profile field.
-        return null;
     }
 
     /**
@@ -279,7 +249,7 @@ class locallib {
 
         $updated = false;
         $course = get_course($courseid);
-        $customfields = self::getCourseCustomFields($coursedata);
+        $customfields = self::getCustomFields($coursedata);
 
         // We update customfields directly via the DB,
         // because dealing with the customfield API is ridiculously complicated.
@@ -312,6 +282,32 @@ class locallib {
         }
 
         return $updated;
+    }
+
+    /**
+     * Writes a log entry.
+     *
+     * @param string $event
+     * @param string $message
+     * @param int $status
+     * @param string $courseid
+     *
+     */
+    public static function writeLog($event, $message, $status, $courseid = null) {
+
+        global $DB;
+
+        if ($status < get_config('enrol_campusonline', 'loglevel')) {
+            return;
+        }
+
+        $log = new \stdClass();
+        $log->timestamp = time();
+        $log->event = $event;
+        $log->message = $message;
+        $log->status = $status;
+        $log->courseid = $courseid;
+        $DB->insert_record('enrol_campusonline_logs', $log);
     }
 
     /**

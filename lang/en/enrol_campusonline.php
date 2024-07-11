@@ -26,11 +26,11 @@
 // Basics.
 $string['pluginname'] = 'CAMPUSonline Enrollment';
 $string['privacy:metadata'] = 'The CAMPUSonline enrolment plugin does not store any personal data.';
-$string['task:sync'] = 'CAMPUSonline sync for courses & enrolments';
-$string['task:usersync'] = 'CAMPUSonline sync for users';
+$string['task:sync'] = 'CAMPUSonline courses & enrolments sync';
+$string['task:user_sync'] = 'CAMPUSonline user sync';
 
 // Settings page.
-$string['connectionsettings'] = 'Connection settings';
+$string['connectionsettings'] = 'Connection';
 $string['endpoint'] = 'CAMPUSonline endpoint';
 $string['endpoint_desc'] = 'Address of the CAMPUSonline oauth2 endpoint';
 $string['clientid'] = 'Client ID';
@@ -38,17 +38,20 @@ $string['clientid_desc'] = 'Client ID to access CAMPUSonline';
 $string['clientsecret'] = 'Client secret';
 $string['clientsecret_desc'] = 'Secret key to access CAMPUSonline';
 
-$string['enrolmentsyncsettings'] = 'Enrolment sync settings';
-$string['enrolmentsyncsettings_desc'] = 'The enrolment sync will create and update enrolments and the respective courses.';
+$string['enrolmentsyncsettings'] = 'Course & enrolment sync';
+$string['enrolmentsyncsettings_desc'] = 'The sync task will create and update courses and their enrolments.';
 $string['configuretask'] = 'Configure scheduled sync task';
 $string['semester'] = 'Semester';
 $string['semester_desc'] = 'Semester to be synced.';
 $string['updateexistingcourses'] = 'Update existing courses';
 $string['updateexistingcourses_desc'] = 'Allows the enrolment sync task to change names or categories of existing Moodle courses if they change in CAMPUSonline.';
 $string['enrolsynccreateusers'] = 'Create users';
-$string['enrolsynccreateusers_desc'] = 'Allows the enrolment sync task will create users that do not exist or cannot be found in Moodle.';
+$string['enrolsynccreateusers_desc'] = 'Allows the enrolment sync task to create users that do not exist or cannot be found in Moodle.';
 
-$string['coursecatsettings'] = 'Course category settings';
+$string['showrawcoursedata'] = 'Show tokens and raw course data';
+$string['previewcourses'] = 'Preview courses with these settings';
+
+$string['coursecatsettings'] = 'Course category';
 $string['rootcoursecategory'] = 'Root course category';
 $string['rootcoursecategory_desc'] = 'Course category to sync courses into. If you select "TOP", then you will need to have rules to create subcategories, otherwise the sync will fail.';
 $string['subcategories'] = 'Subcategories';
@@ -59,19 +62,43 @@ $string['subcategories_desc'] = 'Specify how to build the subcategory structure.
 $string['createcoursecatetories'] = 'Create course categories';
 $string['createcoursecatetories_desc'] = 'Allows the enrolment sync task to create course categories if they do not exist.';
 
-$string['coursesyncsettings'] = 'Course field settings';
-$string['coursesyncsettings_desc'] = '
+$string['coursesyncsettings'] = 'Course values';
+$string['coursesyncsettings_desc'] = '<ul>
     <li>Moodle course <strong>idnumber</strong> will always be filled with the CAMPUSonline course <strong>uid</strong></li>
+    <li>Make sure the course shortnames are unique, and fields are filled with valid values for their respective field types, or there will be errors creating courses!</li>
     <li>Choose values for other course fields (including course custom fields) by combining text and <strong>tokens</strong> for CAMPUSonline fields, eg: "CAMPUSONLINE_COURSE_{title}</li>
-    <li>Show raw data from CAMPUSonline to see available fields/tokens</li>
-    <li>Make sure the course shortnames are unique, and fields are filled with valid values for their respective field types, or there will be errors creating courses!</li>';
+    <li>Show raw data from CAMPUSonline to see available fields/tokens</li></ul>';
 
+$string['groupsyncsettings'] = 'Group settings';
+$string['groupsyncsettings_desc'] = 'Not yet implemented';
 
+$string['useridsettings'] = 'User identification';
+$string['useridsettings_desc'] = '<ul>
+    <li>Moodle users will be identified by matching the CAMPUSOnline person UID to the user profile fields
+        <ul><li> <strong>campusonline_student_uid</strong> for students</li>
+        <li><strong>campusonline_employee_uid</strong> for employees</li></ul>
+    <li>Additionally, a secondary identification criteria can be configured for the user sync, to find users that already exist in Moodle without these identifiers</li>
+    <li><strong>When configuring a secondary identification criteria, be sure to use the same value in user sync & values for this field!</strong></li></ul>';
+$string['userclaims'] = 'Personal data to get from CAMPUSonline';
+$string['userclaims_desc'] = 'Specify which personal data to get from CAMPUSonline. Only claims configured here will be able to be assigned as tokens.';
+$string['usermoodlefield'] = 'Secondary identifier: field in Moodle';
+$string['usermoodlefield_desc'] = 'If a user is not found via its person UID, this field will be used to find the user in Moodle.';
+$string['usercovalue'] = 'Secondary identifier: value in CAMPUSonline';
+$string['usercovalue_desc'] = 'This CAMPUSonline value will be matched against the Moodle field specified above.';
 
-$string['usersyncsettings'] = 'User sync settings';
-$string['usersynccreateusers'] = 'Allow user sync to create users';
-$string['usersynccreateusers_desc'] = 'When activated, the user sync task will create users that do not exist or cannot be found in Moodle';
-
+$string['usersyncsettings'] = 'User sync & values';
+$string['usersyncsettings_desc'] = '<ul>
+    <li>This sync task is disabled by default</li>
+    <li>Make sure usernames are unique, and fields are filled with valid values for their respective field types, or there will be errors creating users!</li>
+    <li>Only enable this task if your user data is not already synced via other means (eg SSO systems)</li>
+    <li>Show raw data to see available fields/tokens</li></ul>';
+$string['showrawuserdata'] = 'Show tokens and raw user data';
+$string['previewusers'] = 'Preview users with these settings';
+$string['usersynccreateusers'] = 'Create & update users';
+$string['usersynccreateusers_desc'] = 'Allows the user sync task to update user data and create users that do not exist or cannot be found in Moodle.';
+$string['authmethod'] = 'Authentification method';
+$string['initialpassword'] = 'Initial password';
+$string['initialpassword_desc'] = 'Be sure to set an initial password that adheres to password complexity standards, or user creation will fail, even for users with authentification methods that will not even use the password!';
 
 $string['rolemappings'] = 'Role mappings';
 $string['rolemappings_desc'] = 'Select Moodle roles to use for CAMPUSonline students and lectureship roles.';
@@ -81,16 +108,25 @@ $string['studentrole'] = 'Students';
 $string['lectureshiproles'] = 'Select Moodle roles to use for CAMPUSonline lectureship roles.';
 
 $string['logsettings'] = 'Log settings';
+$string['loglevel'] = 'Log level';
+$string['allevents'] = 'All events';
+$string['warningsanderrors'] = 'Errors and warnings';
+$string['errorsonly'] = 'Errors only';
 $string['logduration'] = 'Keep logs for (days)';
 $string['viewlogs'] = 'View logs';
 $string['logs'] = 'Logs';
 $string['event'] = 'Event';
 $string['deletedcourse'] = 'deleted course (id: {$a})';
 
-$string['showrawcoursedata'] = 'Show raw data from CAMPUSonline';
-$string['previewcourses'] = 'Preview courses with these settings';
-$string['coursepreview'] = 'Courses preview';
-$string['coursecount'] = '{$a} courses found.';
+
+$string['coursepreview'] = 'Course sync preview';
+$string['coursecount'] = 'Raw data for {$a} courses:';
+$string['userpreview'] = 'User sync preview.';
+$string['usercount'] = 'Raw data for {$a} users:';
+$string['availabletokens'] = 'Available tokens';
+$string['availabletokens_disclaimer'] = 'Some of these might only be available for employees or students, but not for both.';
+$string['students'] = 'Students';
+$string['employees'] = 'Employees';
 $string['testsettings'] = 'Test these settings';
 $string['testconnection'] = 'Test connection';
 $string['backtosettings'] = 'Back to module settings';

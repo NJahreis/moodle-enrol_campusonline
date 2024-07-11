@@ -33,6 +33,7 @@ global $DB;
 
 // Get function.
 $function = required_param('function', PARAM_RAW);
+$limit = required_param('limit', PARAM_RAW);
 
 // Set page.
 $context = context_system::instance();
@@ -42,7 +43,7 @@ $PAGE->set_title(get_string('pluginname', 'enrol_campusonline'));
 $PAGE->set_heading(get_string($function, 'enrol_campusonline'));
 
 // Init sync.
-$sync = new sync;
+$sync = new sync(new \text_progress_trace());
 
 // Test connection.
 if ($function == 'testconnection') {
@@ -65,34 +66,51 @@ echo $OUTPUT->header();
 $url = new moodle_url('/admin/settings.php?section=enrolsettingscampusonline');
 echo html_writer::link($url, get_string('backtosettings', 'enrol_campusonline'), array('class' => 'btn btn-secondary m-1'));
 
-// Preview course sync.
+// Show raw course data.
 if ($function == 'showrawcoursedata') {
 
-    if ($courses = $sync->getCourses()) {
-        echo html_writer::tag('h3', get_string('coursecount', 'enrol_campusonline', count($courses)));
-        echo '<pre>';
-        print_r($courses);
-        echo '</pre>';
+    // Count and get tokens.
+    $courses = $sync->getCourses($limit);
+    $count = 0;
+    $tokens = array();
+    foreach ($courses as $course) {
+        foreach ($course as $key => $value) {
+            $tokens[$key] = $key;
+        }
     }
 
-// Show actual course data.
-} elseif ($function == 'coursepreview') {
+    // List tokens.
+    echo html_writer::tag('h3', get_string('availabletokens', 'enrol_campusonline'));
+    echo '<ul>';
+    foreach ($tokens as $token) {
+        echo '<li>{' . $token . '}</li>';
+    }
+    echo '</ul>';
 
+    // List raw course data.
+    echo html_writer::tag('h3', get_string('coursecount', 'enrol_campusonline', count($courses)));
+    echo '<pre>';
+    foreach ($courses as $course) {
+        var_dump((object) $course);
+    }
+    echo '</pre>';
+
+// Preview course sync.
+} elseif ($function == 'previewcourses') {
+
+    // Table header.
     $table = new html_table();
-    $table->head = ['idnumber', 'shortname', 'fullname'];
-    $table->head = array_merge($table->head, locallib::COURSE_FIELDS);
-    $customfields = locallib::getCourseCustomFields(null);
+    $table->head = ['coursecategory', 'idnumber', 'shortname', 'fullname'];
+    $table->head = array_merge($table->head, array_keys(locallib::COURSE_FIELDS));
+    $customfields = locallib::getCustomFields(null);
     $table->head = array_merge($table->head, $customfields);
-    $table->head[] = 'coursecategory';
-    $table->align = array('right', 'left', 'left');
 
+    // Table data.
     $data = array();
-    $courses = $sync->getCourses();
-
+    $courses = $sync->getCourses($limit);
     foreach ($courses as $coursedata) {
         $course = locallib::buildCourse($coursedata);
-        $customfields = locallib::getCourseCustomFields($coursedata);
-        $categoryid = locallib::getCourseCategory($coursedata);
+        $categoryid = $sync->getCourseCategory($coursedata);
 
         // Add custom fields.
         foreach ($customfields as $key => $value) {
@@ -113,19 +131,86 @@ if ($function == 'showrawcoursedata') {
     echo html_writer::tag('h3', get_string('coursecount', 'enrol_campusonline', count($courses)));
     echo html_writer::table($table);
 
-// Preview course sync.
+// Show raw user data.
 } elseif ($function == 'showrawuserdata') {
 
-    $courses = $sync->getPersons();
+    // Count and get tokens.
+    $persons = $sync->getPersons($limit);
+    $count = 0;
+    $tokens = array();
+    foreach ($persons as $personlist) {
+        $count += count($personlist);
+        foreach ($personlist as $person) {
+            $properties = get_object_vars($person);
+            foreach ($properties as $key => $value) {
+                $tokens[$key] = $key;
+            }
+            $persondata = $sync->getPersonData($person->uid);
+            $properties = get_object_vars($persondata);
+            foreach ($properties as $key => $value) {
+                $tokens[$key] = $key;
+                $person->$key = $value;
+            }
+        }
+    }
 
-    echo html_writer::tag('h3', get_string('coursecount', 'enrol_campusonline', count($courses)));
-    echo '<pre>';
-    print_r($courses);
-    echo '</pre>';
+    // List tokens.
+    echo html_writer::tag('h3', get_string('availabletokens', 'enrol_campusonline', $count));
+    echo get_string('availabletokens_disclaimer', 'enrol_campusonline');
+    echo '<ul>';
+    foreach ($tokens as $token) {
+        echo '<li>{' . $token . '}</li>';
+    }
+    echo '</ul>';
 
-// For development only. TODO: remove
-} elseif ($function == 'sync_courses') {
-    $sync->syncCourses();
+    // List raw user data.
+    echo html_writer::tag('h3', get_string('usercount', 'enrol_campusonline', $count));
+    foreach ($persons as $type => $personlist) {
+
+        echo html_writer::tag('h4', get_string($type, 'enrol_campusonline'));
+        echo '<pre>';
+        foreach ($personlist as $person) {
+            var_dump($person);
+        }
+        echo '</pre>';
+    }
+
+// Preview user sync.
+} elseif ($function == 'previewusers') {
+
+    // Table header.
+    $table = new html_table();
+    $table->head = ['auth', 'password'];
+    $table->head = array_merge($table->head, array_keys(locallib::USER_FIELDS));
+    $customfields = locallib::getCustomUserFields(null);
+    $table->head = array_merge($table->head, $customfields);
+
+    // Table data.
+    $data = array();
+    $persons = $sync->getPersons($limit);
+
+    foreach ($persons as $usertype => $personlist) {
+        foreach ($personlist as $person) {
+
+            // Get person data.
+            $persondata = $sync->getPersonData($person->uid);
+            $userdata = array_merge((array) $person, (array) $persondata);
+            $user = locallib::buildUser($userdata);
+
+            // Add custom fields.
+            foreach ($customfields as $key => $value) {
+                $user['user_profilefield_' . $key] = $value;
+            }
+
+            // Add to table.
+            $data[] = $user;
+        }
+    }
+
+    $table->data = $data;
+
+    echo html_writer::tag('h3', get_string('usercount', 'enrol_campusonline', $limit));
+    echo html_writer::table($table);
 }
 
 echo $OUTPUT->footer();

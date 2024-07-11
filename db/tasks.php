@@ -34,5 +34,15 @@ $tasks = array(
         'day'       => '*',
         'dayofweek' => '*',
         'month'     => '*'
+    ),
+    array(
+        'classname' => '\\enrol_campusonline\\task\\user_sync_task',
+        'blocking'  => 0,
+        'minute'    => '*',
+        'hour'      => '4',
+        'day'       => '*',
+        'dayofweek' => '*',
+        'month'     => '*',
+        'disabled'  => true,
     )
 );
