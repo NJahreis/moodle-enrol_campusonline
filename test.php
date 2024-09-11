@@ -38,7 +38,7 @@ $limit = required_param('limit', PARAM_RAW);
 // Set page.
 $context = context_system::instance();
 $PAGE->set_context($context);
-$PAGE->set_url('/local/idpush/logs.php');
+$PAGE->set_url('/enrol/campusonline/test.php');
 $PAGE->set_title(get_string('pluginname', 'enrol_campusonline'));
 $PAGE->set_heading(get_string($function, 'enrol_campusonline'));
 

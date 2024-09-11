@@ -36,6 +36,16 @@ $tasks = array(
         'month'     => '*'
     ),
     array(
+        'classname' => '\\enrol_campusonline\\task\\sync_delta_task',
+        'blocking'  => 0,
+        'minute'    => '*',
+        'hour'      => '*',
+        'day'       => '*',
+        'dayofweek' => '*',
+        'month'     => '*',
+        'disabled'  => true,
+    ),
+    array(
         'classname' => '\\enrol_campusonline\\task\\user_sync_task',
         'blocking'  => 0,
         'minute'    => '*',

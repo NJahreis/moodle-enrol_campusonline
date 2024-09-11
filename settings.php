@@ -76,7 +76,7 @@ if ($ADMIN->fulltree) {
         'enrol_campusonline/semester',
         get_string('semester', 'enrol_campusonline'),
         get_string('semester_desc', 'enrol_campusonline'),
-        '2022W',
+        '2024W, 2025S',
     ));
     // Update existing courses.
     $settings->add(new admin_setting_configcheckbox(

@@ -41,4 +41,11 @@ $capabilities = array(
             'editingteacher' => CAP_ALLOW,
         )
     ),
+    'enrol/campusonline:synccourse' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
+        )
+    ),
 );

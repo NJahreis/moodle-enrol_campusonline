@@ -175,7 +175,7 @@ class sync {
                 if (get_config('enrol_campusonline', 'createcoursecatetories') == 0) {
 
                     // Log error.
-                    $message = "Could not find Moodle course category $name and not allowed to create new categories. Create the category manually, or configure CAMPUSOnline to be able to create new categories.";
+                    $message = "ERROR: could not find Moodle course category $name and not allowed to create new categories. Create the category manually, or configure CAMPUSOnline to be able to create new categories.";
                     $this->trace->output(" - $message");
                     locallib::writeLog('create_category', $message, 2);
 
@@ -184,7 +184,7 @@ class sync {
                 } else {
 
                     // Log creation.
-                    $message = "Creating new Moodle course category $name.";
+                    $message = "SUCCESS: creating new Moodle course category $name.";
                     $this->trace->output(" - $message");
                     locallib::writeLog('create_category', $message, 0);
 
@@ -207,29 +207,57 @@ class sync {
     }
 
     /**
-     * Gets courses for preview.
+     * Gets courses for preview or sync.
+     *
+     * @param int $limit how many courses to get.
+     * @param string $courseid if provided, only fetches this one course.
+     * @return array
      */
-    public function getCourses($limit = null) {
+    public function getCourses($limit = null, $course_uids = null) {
 
-        // Get courses.
-        $endpoint = 'co-tm-core/course/api/courses';
-        $query = [
-            'semester_key' => get_config('enrol_campusonline', 'semester'),
-            'only_elearning_courses' => 'true',
-            'limit' => $limit,
-        ];
-        $result = $this->restCall($endpoint, $query);
+        $allcourses = array();
 
-        // Analyze response.
-        if (property_exists($result, 'items')) {
-            $courses = $result->items;
-            $courses = $this->enrichCourses($courses);
+        // Get semester(s).
+        $semesters = get_config('enrol_campusonline', 'semester');
+        $semesters = explode(',', $semesters);
 
-        } else {
-            $courses = array();
+        foreach ($semesters as $semester) {
+
+            $semester = trim($semester);
+
+            // Get courses.
+            $endpoint = 'co-tm-core/course/api/courses';
+            if ($course_uids) {
+                // Only request single course.
+                $query['course_uids'] = $course_uids;
+            } else {
+                // Request all courses for configured semester(s).
+                $query = [
+                    'semester_key' => $semester,
+                    'only_elearning_courses' => 'true',
+                    'limit' => $limit,
+                ];
+            }
+            $result = $this->restCall($endpoint, $query);
+
+            // Analyze response.
+            if (property_exists($result, 'items')) {
+                $courses = $result->items;
+                $courses = $this->enrichCourses($courses);
+
+            } else {
+                $courses = array();
+            }
+
+            $allcourses = array_merge($allcourses, $courses);
+
+            // Stop if we only want one course.
+            if ($course_uids) {
+                break;
+            }
         }
 
-        return $courses;
+        return $allcourses;
     }
 
     /**
@@ -336,7 +364,7 @@ class sync {
         // Log warning.
         $message = "WARNING could not find Moodle user for CAMPUSOnline $usertype $uid.";
         $this->trace->output("   - $message");
-        locallib::writeLog('get_user', $message, 2);
+        locallib::writeLog('get_user', $message, 1);
 
         return null;
     }
@@ -432,16 +460,22 @@ class sync {
     /**
      * Syncs courses.
      *
+     * @param string $courseid if provided, only syncs this one course.
      * @return void
      */
-    public function syncCourses() {
+    public function syncCourses($course_uids = null) {
 
         global $CFG, $DB;
 
         require_once("$CFG->dirroot/course/lib.php");
 
-        // Get courses.
-        $courses = $this->getCourses();
+        // Get course(s).
+        if ($course_uids) {
+            $courses = $this->getCourses(null, $course_uids);
+        } else {
+            $courses = $this->getCourses();
+        }
+
         $number = count($courses);
         $this->trace->output("Syncing $number courses ...");
 
@@ -477,7 +511,7 @@ class sync {
                     locallib::setCourseCustomFields($courseid, $coursedata);
 
                     // Log success.
-                    $message = "Created Moodle course $courseid for CAMPUSonline course $uid.";
+                    $message = "SUCCESS: created Moodle course $courseid for CAMPUSonline course $uid.";
                     $this->trace->output(" - $message");
                     locallib::writeLog('create_course', $message, 0, $courseid);
 
@@ -499,6 +533,12 @@ class sync {
                 // Check if update is necessary.
                 $needsupdate = false;
                 foreach ($newcourse as $key => $value) {
+
+                    // Skip category.
+                    if ($key == 'coursecategory') {
+                        continue;
+                    }
+
                     if ($course->$key != $value) {
 
                         // Skip empty values.
@@ -528,14 +568,14 @@ class sync {
                     $DB->update_record('course', $course);
 
                     // Log success.
-                    $message = "Updated Moodle course $courseid with data from CAMPUSonline course $uid.";
+                    $message = "SUCCESS: updated Moodle course $courseid with data from CAMPUSonline course $uid.";
                     $this->trace->output(" - $message");
                     locallib::writeLog('update_course', $message, 0, $courseid);
                 }
 
                 // Set course custom fields.
                 if (locallib::setCourseCustomFields($courseid, $coursedata)) {
-                    $message = "Updated course custom fields in Moodle course $courseid with data from CAMPUSonline course $uid.";
+                    $message = "SUCCESS: updated course custom fields in Moodle course $courseid with data from CAMPUSonline course $uid.";
                     $this->trace->output(" - $message");
                     locallib::writeLog('update_course', $message, 0, $courseid);
                 }
@@ -622,7 +662,7 @@ class sync {
                 $DB->insert_record('user_enrolments', $enrolment);
 
                 // Log success.
-                $message = "Enrolled Moodle user $userid in Moodle course $courseid.";
+                $message = "SUCCESS: Enrolled Moodle user $userid in Moodle course $courseid.";
                 $this->trace->output("   - $message");
                 locallib::writeLog('enrol_user', $message, 0, $courseid);
             }
@@ -683,7 +723,7 @@ class sync {
 
         // Create user.
         if ($userid = user_create_user($user)) {
-            $message = "Created Moodle user $userid for CAMPUSonline user $uid.";
+            $message = "SUCCESS: created Moodle user $userid for CAMPUSonline user $uid.";
             $status = 0;
 
         } else {
@@ -771,7 +811,7 @@ class sync {
 
         // Log UID update.
         $fieldname = 'campusonline_' . $usertype . '_uid';
-        $message = "Updated Moodle user $userid profile field $fieldname with CAMPUSonline uid $uid.";
+        $message = "SUCCESS: Updated Moodle user $userid profile field $fieldname with CAMPUSonline uid $uid.";
         $this->trace->output(" - $message");
         locallib::writeLog('update_user', $message, 0, $userid);
     }

@@ -62,7 +62,9 @@ class enrol_campusonline_plugin extends enrol_plugin {
     public function test_settings() {
         global $CFG, $OUTPUT;
 
-        $sync = new sync;
+        // Initialize sync.
+        $trace = new \text_progress_trace();
+        $sync = new sync($trace);
 
         if ($sync->isConnected()) {
             echo '<div class="alert alert-success">';
@@ -73,4 +75,40 @@ class enrol_campusonline_plugin extends enrol_plugin {
             echo get_string('error:cannotconnect', 'enrol_campusonline', $error);
         }
     }
+
+    /**
+     * Adds a button to sync a single course with CAMPUSonline data.
+     *
+     * @param course_enrolment_manager $manager
+     * @return enrol_user_button|false
+     */
+    public function get_manual_enrol_button(course_enrolment_manager $manager) {
+
+        $instance = null;
+        $instances = [];
+        foreach ($manager->get_enrolment_instances() as $tempinstance) {
+            if ($tempinstance->enrol == 'campusonline') {
+                if ($instance === null) {
+                    $instance = $tempinstance;
+                }
+                $instances[] = ['id' => $tempinstance->id, 'name' => $this->get_instance_name($tempinstance)];
+            }
+        }
+        if (empty($instance)) {
+            return false;
+        }
+
+        $context = context_course::instance($instance->courseid);
+        if (has_capability('enrol/campusonline:synccourse', $context)) {
+            $synclink = new moodle_url(
+                '/enrol/campusonline/sync_course.php',
+                ['courseid' => $instance->courseid]
+            );
+            $button = new enrol_user_button($synclink, get_string('syncthiscourse', 'enrol_campusonline'), 'get');
+            return $button;
+        } else {
+            return false;
+        }
+    }
+
 }

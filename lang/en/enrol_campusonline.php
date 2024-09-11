@@ -24,9 +24,10 @@
 
 
 // Basics.
-$string['pluginname'] = 'CAMPUSonline Enrollment';
+$string['pluginname'] = 'CAMPUSonline enrolment';
 $string['privacy:metadata'] = 'The CAMPUSonline enrolment plugin does not store any personal data.';
-$string['task:sync'] = 'CAMPUSonline courses & enrolments sync';
+$string['task:sync'] = 'CAMPUSonline courses & enrolments FULL sync';
+$string['task:sync_delta'] = 'CAMPUSonline courses & enrolments MODIFICATION sync';
 $string['task:user_sync'] = 'CAMPUSonline user sync';
 
 // Settings page.
@@ -39,10 +40,19 @@ $string['clientsecret'] = 'Client secret';
 $string['clientsecret_desc'] = 'Secret key to access CAMPUSonline';
 
 $string['enrolmentsyncsettings'] = 'Course & enrolment sync';
-$string['enrolmentsyncsettings_desc'] = 'The sync task will create and update courses and their enrolments.';
+$string['enrolmentsyncsettings_desc'] = '<ul>
+    <li>These sync tasks create and update <strong>courses</strong> and their <strong>enrolments</strong></li>
+    <li>There are two sync tasks: one for <strong>full</strong> sync, and one for <strong>modifications</strong> only</li>
+    <li>It is recommended to run the full sync task during the night, as it can take quite a long time</li>
+    <li>The modifications sync task can be scheduled to run more often, or run manually if needed. By default, it is not scheduled.</li>
+    <li>When scheduling the modification task, make sure to configure the <strong>timeframe</strong> to fetch modifications in line with the schedule for the modification sync task</li>
+    <li>Please be aware that modifications in the CAMPUSonline data will be deleted after <strong>7 days</strong></li>
+    <li>In addition, you can sync a single course, using the "Sync course with CAMPUSonline" button on the course participants page (only available for courses created via CAMPUSonline, and requires the permission enrol/campusonline:synccourse</li></ul>';
 $string['configuretask'] = 'Configure scheduled sync task';
+$string['configuretask_full'] = 'Configure scheduled sync task for FULL sync';
+$string['configuretask_delta'] = 'Configure scheduled sync task for MODIFICATIONS sync';
 $string['semester'] = 'Semester';
-$string['semester_desc'] = 'Semester to be synced.';
+$string['semester_desc'] = 'Semester(s) to be synced. For multiple semesters, separate them with a comma.';
 $string['updateexistingcourses'] = 'Update existing courses';
 $string['updateexistingcourses_desc'] = 'Allows the enrolment sync task to change names or categories of existing Moodle courses if they change in CAMPUSonline.';
 $string['enrolsynccreateusers'] = 'Create users';
@@ -65,10 +75,10 @@ $string['createcoursecatetories_desc'] = 'Allows the enrolment sync task to crea
 $string['coursesyncsettings'] = 'Course values';
 $string['coursesyncsettings_desc'] = '<ul>
     <li>Moodle course <strong>idnumber</strong> will always be filled with the CAMPUSonline course <strong>uid</strong></li>
-    <li>Make sure the course shortnames are unique, and fields are filled with valid values for their respective field types, or there will be errors creating courses!</li>
+    <li>These values are required, otherwise course creation will fail: course_fullname, course_shortname, course_format</li>
+    <li>Make sure the course <strong>shortnames</strong> are unique, and fields are filled with valid values for their respective field types, or there will be errors creating courses!</li>
     <li>Choose values for other course fields (including course custom fields) by combining text and <strong>tokens</strong> for CAMPUSonline fields, eg: "CAMPUSONLINE_COURSE_{title}</li>
     <li>Show raw data from CAMPUSonline to see available fields/tokens</li></ul>';
-
 $string['groupsyncsettings'] = 'Group settings';
 $string['groupsyncsettings_desc'] = 'Not yet implemented';
 
@@ -90,6 +100,7 @@ $string['usersyncsettings'] = 'User sync & values';
 $string['usersyncsettings_desc'] = '<ul>
     <li>This sync task is disabled by default</li>
     <li>Make sure usernames are unique, and fields are filled with valid values for their respective field types, or there will be errors creating users!</li>
+    <li>These values are required, otherwise course creation will fail: user_auth, user_password, user_username, user_email</li>
     <li>Only enable this task if your user data is not already synced via other means (eg SSO systems)</li>
     <li>Show raw data to see available fields/tokens</li></ul>';
 $string['showrawuserdata'] = 'Show tokens and raw user data';
@@ -130,6 +141,10 @@ $string['employees'] = 'Employees';
 $string['testsettings'] = 'Test these settings';
 $string['testconnection'] = 'Test connection';
 $string['backtosettings'] = 'Back to module settings';
+
+$string['syncthiscourse'] = 'Sync course with CAMPUSonline';
+$string['syncingcourse'] = 'Syncing Moodle course with CAMPUSonline...';
+$string['connectionerror'] = 'Could not connect to CAMPUSOnline. Check your connection settings. Please contact your administrator.';
 
 // Alerts.
 $string['success:connected'] = 'Successfully connected to CAMPUSonline endpoint.';
