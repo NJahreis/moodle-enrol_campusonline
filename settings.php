@@ -107,10 +107,10 @@ if ($ADMIN->fulltree) {
     ));
 
     // ----- Course category settings -----
-    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawcoursedata', 'limit' => 50));
+    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawcoursedata', 'limit' => 10));
     $buttons = html_writer::link($url, get_string('showrawcoursedata', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
-    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewcourses', 'limit' => 50));
+    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewcourses', 'limit' => 10));
     $buttons .= html_writer::link($url, get_string('previewcourses', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
     $settings->add(new admin_setting_heading(
@@ -310,10 +310,10 @@ if ($ADMIN->fulltree) {
         array('action' => 'edit', 'task' => 'enrol_campusonline\task\user_sync_task'));
     $buttons = html_writer::link($url, get_string('configuretask', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
-    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawuserdata', 'limit' => 50));
+    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawuserdata', 'limit' => 10));
     $buttons .= html_writer::link($url, get_string('showrawuserdata', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
-    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewusers', 'limit' => 50));
+    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewusers', 'limit' => 10));
     $buttons .= html_writer::link($url, get_string('previewusers', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
     $buttons .= '<br>';

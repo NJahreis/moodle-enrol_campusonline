@@ -121,10 +121,12 @@ class sync {
      * @param string $endpoint
      * @param array $query
      * @param string $method
+     * @param string $cursor
+     * @param array $items
      *
      * @return object
      */
-    private function restCall($endpoint, $query = null, $method = 'GET') {
+    private function restCall($endpoint, $query = null, $method = 'GET', $items = null) {
 
         // Set params.
         $url = $this->config->endpoint . '/' . $endpoint;
@@ -148,6 +150,19 @@ class sync {
         // Analyze response.
         $response_body = $response->getBody()->getContents();
         $response_object = json_decode($response_body, false);
+
+        // Attach previous items.
+        if ($items) {
+            $response_object->items = array_merge($items, $response_object->items);
+        }
+
+        // Check if there are more results to fetch.
+        if (!array_key_exists('limit', $_GET) && property_exists($response_object, 'nextCursor')) {
+            $items = $response_object->items;
+            $query['cursor'] = $response_object->nextCursor;
+            $response_object = $this->restCall($endpoint, $query, $method, $items);
+        }
+
         return $response_object;
     }
 
