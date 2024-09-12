@@ -40,6 +40,8 @@ class sync {
     private $trace;
     private $employee_uid_fieldid;
     private $student_uid_fieldid;
+    private $orgdata;
+    private $semesterdata;
 
     /**
      * Constructor.
@@ -126,7 +128,7 @@ class sync {
      *
      * @return object
      */
-    private function restCall($endpoint, $query = null, $method = 'GET', $items = null) {
+    private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage = false, $items = null) {
 
         // Set params.
         $url = $this->config->endpoint . '/' . $endpoint;
@@ -156,11 +158,18 @@ class sync {
             $response_object->items = array_merge($items, $response_object->items);
         }
 
+        // Set paging.
+        if (!array_key_exists('limit', $_GET)) {
+            $page = true;
+        } else {
+            $page = $alwayspage;
+        }
+
         // Check if there are more results to fetch.
-        if (!array_key_exists('limit', $_GET) && property_exists($response_object, 'nextCursor')) {
+        if ($page && property_exists($response_object, 'nextCursor')) {
             $items = $response_object->items;
             $query['cursor'] = $response_object->nextCursor;
-            $response_object = $this->restCall($endpoint, $query, $method, $items);
+            $response_object = $this->restCall($endpoint, $query, $method, true, $items);
         }
 
         return $response_object;
@@ -782,6 +791,9 @@ class sync {
      */
     private function enrichCourses($courses) {
 
+        $this->getOrgData();
+        $this->getSemesterData();
+
         $enriched_courses = array();
         foreach ($courses as $course) {
 
@@ -794,13 +806,8 @@ class sync {
                 $sanitized_course["course:$key"] = $value;
             }
 
-            // Get values from org endpoint. TODO: einmal abholen.
-            $org = $this->restCall('co-brm-core/org/api/organisations/' . $course['organisationUid']);
-            if (property_exists($org, 'items')) {
-                $org = reset($org->items);
-            }
-
             // Attach values from org endpoint.
+            $org = $this->orgdata[$course['organisationUid']];
             $org = (array)$org;
 
             foreach ($org as $key => $value) {
@@ -812,6 +819,44 @@ class sync {
         }
 
         return $enriched_courses;
+    }
+
+    /**
+     * Gets org data from CAMPUSonline.
+     */
+    private function getOrgData() {
+
+        $endpoint = 'co-brm-core/org/api/organisations';
+        $result = $this->restCall($endpoint, null, 'GET', true);
+
+        // Add to class property.
+        $this->orgdata = array();
+        if (property_exists($result, 'items')) {
+            foreach ($result->items as $item) {
+                $this->orgdata[$item->uid] = $item;
+            }
+        }
+    }
+
+    /**
+     * Gets semester data from CAMPUSonline.
+     */
+    private function getSemesterData() {
+
+        $endpoint = 'co-sm-core/semester/api/semesters';
+        $result = $this->restCall($endpoint, null, 'GET', true);
+
+        echo "<pre>";
+        var_dump($result);
+        die();
+
+        // Add to class property.
+        $this->semesterdata = array();
+        if (property_exists($result, 'items')) {
+            foreach ($result->items as $item) {
+                $this->orgdata[$item->uid] = $item;
+            }
+        }
     }
 
     /**
