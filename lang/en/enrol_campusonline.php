@@ -48,9 +48,12 @@ $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>When scheduling the modification task, make sure to configure the <strong>timeframe</strong> to fetch modifications in line with the schedule for the modification sync task</li>
     <li>Please be aware that modifications in the CAMPUSonline data will be deleted after <strong>7 days</strong></li>
     <li>In addition, you can sync a single course, using the "Sync course with CAMPUSonline" button on the course participants page (only available for courses created via CAMPUSonline, and requires the permission enrol/campusonline:synccourse</li></ul>';
-$string['configuretask'] = 'Configure scheduled sync task';
-$string['configuretask_full'] = 'Configure scheduled sync task for FULL sync';
-$string['configuretask_delta'] = 'Configure scheduled sync task for MODIFICATIONS sync';
+$string['configuretask'] = 'Configure scheduled task';
+$string['configuretask_full'] = 'Configure scheduled task for FULL sync';
+$string['configuretask_delta'] = 'Configure scheduled task for MODIFICATIONS sync';
+$string['runtask'] = 'Run scheduled task';
+$string['runtask_full'] = 'Run scheduled task for FULL sync';
+$string['runtask_delta'] = 'Run scheduled task for MODIFICATIONS sync';
 $string['semester'] = 'Semester';
 $string['semester_desc'] = 'Semester(s) to be synced. For multiple semesters, separate them with a comma.';
 $string['updateexistingcourses'] = 'Update existing courses';
@@ -62,6 +65,10 @@ $string['showrawcoursedata'] = 'Show tokens and raw course data';
 $string['previewcourses'] = 'Preview courses with these settings';
 
 $string['coursecatsettings'] = 'Course category';
+$string['coursecatsettings_desc'] = '<ul>
+    <li>The course category tree can be built using values from CAMPUSonline as tokens</li>
+    <li>If the resulting course category changes for a course that is actively synced, the course will be moved</li></ul>';
+
 $string['rootcoursecategory'] = 'Root course category';
 $string['rootcoursecategory_desc'] = 'Course category to sync courses into. If you select "TOP", then you will need to have rules to create subcategories, otherwise the sync will fail.';
 $string['subcategories'] = 'Subcategories';
@@ -75,8 +82,8 @@ $string['createcoursecatetories_desc'] = 'Allows the enrolment sync task to crea
 $string['coursesyncsettings'] = 'Course values';
 $string['coursesyncsettings_desc'] = '<ul>
     <li>Moodle course <strong>idnumber</strong> will always be filled with the CAMPUSonline course <strong>uid</strong></li>
-    <li>These values are required, otherwise course creation will fail: course_fullname, course_shortname, course_format</li>
     <li>Make sure the course <strong>shortnames</strong> are unique, and fields are filled with valid values for their respective field types, or there will be errors creating courses!</li>
+    <li>These values are <strong>required</strong>, otherwise course creation will fail: course_fullname, course_shortname, course_format</li>
     <li>Choose values for other course fields (including course custom fields) by combining text and <strong>tokens</strong> for CAMPUSonline fields, eg: "CAMPUSONLINE_COURSE_{title}</li>
     <li>Show raw data from CAMPUSonline to see available fields/tokens</li></ul>';
 $string['groupsyncsettings'] = 'Group settings';
@@ -101,13 +108,11 @@ $string['usersyncsettings'] = 'User sync & values';
 $string['usersyncsettings_desc'] = '<ul>
     <li>This sync task is disabled by default</li>
     <li>Make sure usernames are unique, and fields are filled with valid values for their respective field types, or there will be errors creating users!</li>
-    <li>These values are required, otherwise course creation will fail: user_auth, user_password, user_username, user_email</li>
+    <li>These values are <strong>required</strong>, otherwise course creation will fail: user_auth, user_password, user_username, user_email</li>
     <li>Only enable this task if your user data is not already synced via other means (eg SSO systems)</li>
     <li>Show raw data to see available fields/tokens</li></ul>';
 $string['showrawuserdata'] = 'Show tokens and raw user data';
 $string['previewusers'] = 'Preview users with these settings';
-$string['usersynccreateusers'] = 'Create & update users';
-$string['usersynccreateusers_desc'] = 'Allows the user sync task to update user data and create users that do not exist or cannot be found in Moodle.';
 $string['authmethod'] = 'Authentification method';
 $string['initialpassword'] = 'Initial password';
 $string['initialpassword_desc'] = 'Be sure to set an initial password that adheres to password complexity standards, or user creation will fail, even for users with authentification methods that will not even use the password!';

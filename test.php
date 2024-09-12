@@ -33,7 +33,7 @@ global $DB;
 
 // Get function.
 $function = required_param('function', PARAM_RAW);
-$limit = required_param('limit', PARAM_RAW);
+$limit = optional_param('limit', 0, PARAM_RAW);
 
 // Set page.
 $context = context_system::instance();
@@ -117,9 +117,16 @@ if ($function == 'showrawcoursedata') {
             $course['customfield_' . $key] = $value;
         }
 
-        // Convert category id to linked name.
-        $categoryname = $DB->get_field('course_categories', 'name', ['id' => $categoryid]);
-        $url = new moodle_url('/course/index.php', array('id' => $categoryid));
+        // Convert category id to linked name of full category tree.
+        $categoryname = '';
+        $categoryidforlink = $categoryid;
+        while ($categoryid > 0) {
+            $category = $DB->get_record('course_categories', ['id' => $categoryid]);
+            $categoryname = $category->name . ' / ' . $categoryname;
+            $categoryid = $category->parent;
+        }
+        $categoryname = trim($categoryname, ' / ');
+        $url = new moodle_url('/course/index.php', array('categoryid' => $categoryidforlink));
         $course['coursecategory'] = html_writer::link($url, $categoryname);
 
         // Add to table.

@@ -42,7 +42,7 @@ if ($ADMIN->fulltree) {
         get_string('endpoint', 'enrol_campusonline'),
         get_string('endpoint_desc', 'enrol_campusonline'),
         '',
-        PARAM_RAW,
+        PARAM_TEXT,
         50
     ));
     // Client ID.
@@ -51,7 +51,7 @@ if ($ADMIN->fulltree) {
         get_string('clientid', 'enrol_campusonline'),
         get_string('clientid_desc', 'enrol_campusonline'),
         '',
-        PARAM_RAW,
+        PARAM_TEXT,
         50
     ));
     // Client secret.
@@ -65,12 +65,25 @@ if ($ADMIN->fulltree) {
     // ----- Enrolment sync settings -----
     $url = new moodle_url('/admin/tool/task/scheduledtasks.php',
         array('action' => 'edit', 'task' => 'enrol_campusonline\task\sync_task'));
-    $button = html_writer::link($url, get_string('configuretask', 'enrol_campusonline'),
+    $buttons = html_writer::link($url, get_string('configuretask_full', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
+    $url = new moodle_url('/admin/tool/task/scheduledtasks.php',
+        array('action' => 'edit', 'task' => 'enrol_campusonline\task\sync_delta_task'));
+    $buttons .= html_writer::link($url, get_string('configuretask_delta', 'enrol_campusonline'),
+        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
+    $buttons .= '<br>';
+    $url = new moodle_url('/admin/tool/task/schedule_task.php',
+        array('action' => 'edit', 'task' => 'enrol_campusonline\task\sync_task'));
+    $buttons .= html_writer::link($url, get_string('runtask_full', 'enrol_campusonline'),
+        array('target' => '_blank', 'class' => 'btn btn-primary m-1'));
+    $url = new moodle_url('/admin/tool/task/schedule_task.php',
+        array('action' => 'edit', 'task' => 'enrol_campusonline\task\sync_delta_task'));
+    $buttons .= html_writer::link($url, get_string('runtask_delta', 'enrol_campusonline'),
+        array('target' => '_blank', 'class' => 'btn btn-primary m-1'));
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/enrolmentsyncsettings',
         get_string('enrolmentsyncsettings', 'enrol_campusonline'),
-        $button  . '<br>' . get_string('enrolmentsyncsettings_desc', 'enrol_campusonline'),));
+        $buttons  . '<br>' . get_string('enrolmentsyncsettings_desc', 'enrol_campusonline'),));
     // Semester.
     $settings->add(new admin_setting_configtext(
         'enrol_campusonline/semester',
@@ -96,14 +109,14 @@ if ($ADMIN->fulltree) {
     // ----- Course category settings -----
     $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawcoursedata', 'limit' => 50));
     $buttons = html_writer::link($url, get_string('showrawcoursedata', 'enrol_campusonline'),
-        array('class' => 'btn btn-secondary m-1'));
+        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
     $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewcourses', 'limit' => 50));
     $buttons .= html_writer::link($url, get_string('previewcourses', 'enrol_campusonline'),
-        array('class' => 'btn btn-secondary m-1'));
+        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/coursecatsettings',
         get_string('coursecatsettings', 'enrol_campusonline'),
-        $buttons,
+        get_string('coursecatsettings_desc', 'enrol_campusonline') . $buttons,
     ));
     // Root course category.
     $options = core_course_category::make_categories_list();
@@ -121,7 +134,7 @@ if ($ADMIN->fulltree) {
         get_string('subcategories', 'enrol_campusonline'),
         get_string('subcategories_desc', 'enrol_campusonline'),
         '{org:code}\{course:semesterKey}\{course:courseClassificationKey}',
-        PARAM_RAW,
+        PARAM_TEXT,
         100
     ));
     // Create course categories.
@@ -144,7 +157,7 @@ if ($ADMIN->fulltree) {
         get_string('fullname'),
         '',
         '{title}',
-        PARAM_RAW,
+        PARAM_TEXT,
         50
     ));
     // Course shortname.
@@ -153,8 +166,23 @@ if ($ADMIN->fulltree) {
         get_string('shortname'),
         '',
         '{semesterKey} - {courseCode}',
-        PARAM_RAW,
+        PARAM_TEXT,
         50
+    ));
+    // Course format.
+    // Get available course_format plugins.
+    $courseformats = core_plugin_manager::instance()->get_plugins_of_type('format');
+    $courseformats = array_keys($courseformats);
+    $courseformat_options = array();
+    foreach ($courseformats as $courseformat) {
+        $courseformat_options[$courseformat] = get_string('pluginname', 'format_' . $courseformat);
+    }
+    $settings->add(new admin_setting_configselect(
+        'enrol_campusonline/course_format',
+        get_string('format'),
+        '',
+        'topics',
+        $courseformat_options,
     ));
     // Other configurable fields.
     foreach (locallib::COURSE_FIELDS as $field => $default) {
@@ -163,12 +191,17 @@ if ($ADMIN->fulltree) {
         } else {
             $string = get_string($field);
         }
+        if (in_array($field, locallib::BOOL_FIELDS)) {
+            $type = PARAM_BOOL;
+        } else {
+            $type = PARAM_TEXT;
+        }
         $settings->add(new admin_setting_configtext(
             'enrol_campusonline/course_' . $field,
             $string,
             '',
             $default,
-            PARAM_RAW,
+            $type,
             50
         ));
     }
@@ -180,7 +213,7 @@ if ($ADMIN->fulltree) {
             $fullname,
             '',
             '',
-            PARAM_RAW,
+            PARAM_TEXT,
             50
         ));
     }
@@ -279,21 +312,19 @@ if ($ADMIN->fulltree) {
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
     $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawuserdata', 'limit' => 50));
     $buttons .= html_writer::link($url, get_string('showrawuserdata', 'enrol_campusonline'),
-        array('class' => 'btn btn-secondary m-1'));
+        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
     $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewusers', 'limit' => 50));
     $buttons .= html_writer::link($url, get_string('previewusers', 'enrol_campusonline'),
-        array('class' => 'btn btn-secondary m-1'));
+        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
+    $buttons .= '<br>';
+    $url = new moodle_url('/admin/tool/task/schedule_task.php',
+        array('action' => 'edit', 'task' => 'enrol_campusonline\task\user_sync_task'));
+    $buttons .= html_writer::link($url, get_string('runtask', 'enrol_campusonline'),
+        array('target' => '_blank', 'class' => 'btn btn-primary m-1'));
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/usersyncsettings',
         get_string('usersyncsettings', 'enrol_campusonline'),
         get_string('usersyncsettings_desc', 'enrol_campusonline') . $buttons,
-    ));
-    // Create users.
-    $settings->add(new admin_setting_configcheckbox(
-        'enrol_campusonline/usersynccreateusers',
-        get_string('usersynccreateusers', 'enrol_campusonline'),
-        get_string('usersynccreateusers_desc', 'enrol_campusonline'),
-        0,
     ));
     // User auth.
     $authplugins = core_component::get_plugin_list('auth');
@@ -314,18 +345,23 @@ if ($ADMIN->fulltree) {
         get_string('initialpassword', 'enrol_campusonline'),
         get_string('initialpassword_desc', 'enrol_campusonline'),
         'Password123!',
-        PARAM_RAW,
+        PARAM_TEXT,
         50
     ));
     // Other configurable fields.
     foreach (locallib::USER_FIELDS as $field => $default) {
         $string = get_string($field);
+        if (in_array($field, locallib::BOOL_FIELDS)) {
+            $type = PARAM_BOOL;
+        } else {
+            $type = PARAM_TEXT;
+        }
         $settings->add(new admin_setting_configtext(
             'enrol_campusonline/user_' . $field,
             $string,
             '',
             $default,
-            PARAM_RAW,
+            $type,
             50
         ));
     }
@@ -337,7 +373,7 @@ if ($ADMIN->fulltree) {
             $fullname,
             '',
             '',
-            PARAM_RAW,
+            PARAM_TEXT,
             50
         ));
     }
@@ -345,7 +381,7 @@ if ($ADMIN->fulltree) {
     // ----- Log settings -----
     $url = new moodle_url('/enrol/campusonline/logs.php');
     $button = html_writer::link($url, get_string('viewlogs', 'enrol_campusonline'),
-        array('class' => 'btn btn-secondary m-1'));
+        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/logsettings',
         get_string('logsettings', 'enrol_campusonline'),

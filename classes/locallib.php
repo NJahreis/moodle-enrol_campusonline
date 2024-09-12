@@ -31,7 +31,6 @@ class locallib {
 
     // Course fields available for mapping and their default value.
     public const COURSE_FIELDS = ['summary' => '',
-                                  'format' => 'topics',
                                   'startdate' => '',
                                   'enddate' => '',
                                   'visible' => '1',
@@ -55,6 +54,12 @@ class locallib {
                                 'phone1' => '',
                                 'institution' => '',
                                 'department' => '',
+    ];
+
+    // Fields that use PARAM_BOOL instead of PARAM_TEXT.
+    public const BOOL_FIELDS = ['visible',
+                                'groupmode',
+                                'groupmodeforce',
     ];
 
 
