@@ -336,10 +336,22 @@ class sync {
         // Get user id via uid in our user profile fields..
         $sql = "SELECT * FROM {user_info_data} WHERE fieldid = ? AND data = ?";
         $params = array('fieldid' => $fieldid, 'data' => $uid);
-        $records = $DB->get_records_sql($sql, $params);
-        if ($records) {
+        if ($records = $DB->get_records_sql($sql, $params)) {
             $record = reset($records);
             return $record->userid;
+        }
+
+        // Get full person data from CAMPUSOnline.
+        $person = $this->getPerson($uid, $usertype);
+        $persondata = $this->getPersonData($person->uid);
+        $userdata = array_merge((array) $person, (array) $persondata);
+
+        // Try to find user via username.
+        $value = locallib::getFieldValue('username', $userdata, 'user');
+        if ($record = $DB->get_record('user', ['username' => $value])) {
+            $userid = $record->id;
+            $this->updateMoodleUserUids($userid, $uid, $usertype);
+            return $userid;
         }
 
         // Try to find user via secondary identifier.
@@ -348,10 +360,6 @@ class sync {
 
         if ($field && $valueconfig) {
 
-            // Get full person data from CAMPUSOnline.
-            $person = $this->getPerson($uid, $usertype);
-            $persondata = $this->getPersonData($person->uid);
-            $userdata = array_merge((array) $person, (array) $persondata);
             $value = locallib::getFieldValue($field, $userdata, 'user');
 
             // Try to find user using secondary identifier.
@@ -608,7 +616,14 @@ class sync {
             return;
         }
 
-        // Get enrolments.
+        // Sum up existing enrolments in Moodle course, to save on DB queries.
+        $existing_enrolments_userids = array();
+        $existing_enrolments = $DB->get_records('user_enrolments', ['enrolid' => $enrol->id]);
+        foreach ($existing_enrolments as $existing_enrolment) {
+            $existing_enrolments_userids[] = $existing_enrolment->userid;
+        }
+
+        // Get enrolments from CAMPUSonline.
         $enrolments = $this->getEnrolments($course);
         foreach ($enrolments as $enrolment) {
 
@@ -649,9 +664,9 @@ class sync {
             }
 
             // Create enrolment if needed.
-            if (!$DB->get_record('user_enrolments', ['enrolid' => $enrol->id, 'userid' => $userid])) {
+            if (!in_array($userid, $existing_enrolments_userids)) {
 
-                // Create enrolment. TODO: move to own function.
+                // Create enrolment.
                 $enrolment = new \stdClass();
                 $enrolment->enrolid = $enrol->id;
                 $enrolment->userid = $userid;

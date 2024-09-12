@@ -87,12 +87,13 @@ $string['useridsettings_desc'] = '<ul>
     <li>Moodle users will be identified by matching the CAMPUSOnline person UID to the user profile fields
         <ul><li> <strong>campusonline_student_uid</strong> for students</li>
         <li><strong>campusonline_employee_uid</strong> for employees</li></ul>
-    <li>Additionally, a secondary identification criteria can be configured for the user sync, to find users that already exist in Moodle without these identifiers</li>
+    <li>If a user is not found via its person UID, the username will be used as a fallback, as configured in the user sync values below</li>
+    <li>Additionally, a secondary fallback identification criteria can be configured for the user sync, to find users that already exist in Moodle without these identifiers</li>
     <li><strong>When configuring a secondary identification criteria, be sure to use the same value in user sync & values for this field!</strong></li></ul>';
 $string['userclaims'] = 'Personal data to get from CAMPUSonline';
 $string['userclaims_desc'] = 'Specify which personal data to get from CAMPUSonline. Only claims configured here will be able to be assigned as tokens.';
 $string['usermoodlefield'] = 'Secondary identifier: field in Moodle';
-$string['usermoodlefield_desc'] = 'If a user is not found via its person UID, this field will be used to find the user in Moodle.';
+$string['usermoodlefield_desc'] = 'If a user is not found via its person UID or username, this field will be used to find the user in Moodle.';
 $string['usercovalue'] = 'Secondary identifier: value in CAMPUSonline';
 $string['usercovalue_desc'] = 'This CAMPUSonline value will be matched against the Moodle field specified above.';
 

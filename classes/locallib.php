@@ -42,7 +42,6 @@ class locallib {
 
     // User fields available for identification.
     public const USER_ID_FIELDS = ['id',
-                                   'username',
                                    'idnumber',
                                    'email',
     ];
