@@ -25,6 +25,7 @@
 
 namespace enrol_campusonline;
 
+use moodle_url;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ConnectException;
@@ -137,9 +138,11 @@ class sync {
         $response = $client->request($method, $url, [
             'headers' => [
                 'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $this->token
             ],
-            'query' => $query
+            'query' => $query,
+            'json' => $query
         ]);
 
         // Analyze response.
@@ -519,6 +522,9 @@ class sync {
                     // Add custom fields.
                     locallib::setCourseCustomFields($courseid, $coursedata);
 
+                    // Write back URL to CAMPUSonline.
+                    $this->setMoodleCourseUrl($course);
+
                     // Log success.
                     $message = "SUCCESS: created Moodle course $courseid for CAMPUSonline course $uid.";
                     $this->trace->output(" - $message");
@@ -773,7 +779,7 @@ class sync {
                 $sanitized_course["course:$key"] = $value;
             }
 
-            // Get values from org endpoint.
+            // Get values from org endpoint. TODO: einmal abholen.
             $org = $this->restCall('co-brm-core/org/api/organisations/' . $course['organisationUid']);
             if (property_exists($org, 'items')) {
                 $org = reset($org->items);
@@ -791,6 +797,22 @@ class sync {
         }
 
         return $enriched_courses;
+    }
+
+    /**
+     * Sets the moodle course URL in CAMPUSonline.
+     */
+    private function setMoodleCourseUrl($course) {
+
+        $endpoint = 'co-tm-core/course/api/e-learning-infos';
+        $moodle_url = new moodle_url('/course/view.php', array('id' => $course->id));
+        $url = $moodle_url->__toString();
+        $query = [
+            'courseUid' => $course->idnumber,
+            'externalUrl' => $url,
+        ];
+
+        return $this->restCall($endpoint, $query, 'POST');
     }
 
     /**

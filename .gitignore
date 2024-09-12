@@ -125,3 +125,6 @@ debug_*
 
 .idea/
 *.iml
+
+# File for local testing
+testlocal.php
