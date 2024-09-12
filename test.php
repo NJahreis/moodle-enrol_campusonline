@@ -113,6 +113,7 @@ if ($function == 'showrawcoursedata') {
         $categoryid = $sync->getCourseCategory($coursedata);
 
         // Add custom fields.
+        $customfields = locallib::getCustomFields($coursedata);
         foreach ($customfields as $key => $value) {
             $course['customfield_' . $key] = $value;
         }

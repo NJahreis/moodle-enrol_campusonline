@@ -25,14 +25,16 @@
 
 namespace enrol_campusonline;
 
+use DateTime;
+
 defined('MOODLE_INTERNAL') || die;
 
 class locallib {
 
     // Course fields available for mapping and their default value.
     public const COURSE_FIELDS = ['summary' => '',
-                                  'startdate' => '',
-                                  'enddate' => '',
+                                  'startdate' => '{semester:validFrom}',
+                                  'enddate' => '{semester:validUntil}',
                                   'visible' => '1',
                                   'lang' => '{course:mainLanguageOfInstruction}',
                                   'groupmode' => '1',
@@ -236,7 +238,17 @@ class locallib {
             $value = (string) $value;
         }
 
-        return $value;
+        // Convert dates into timestamps.
+        // Create a new DateTime object from the date string.
+        $date = DateTime::createFromFormat('Y-m-d\TH:i:sP', $value);
+
+        // Check if the DateTime object was created successfully.
+        if ($date !== false && $date->getLastErrors()['warning_count'] == 0 && $date->getLastErrors()['error_count'] == 0) {
+            return (string)$date->getTimestamp();
+
+        } else {
+            return $value;
+        }
     }
 
     /**

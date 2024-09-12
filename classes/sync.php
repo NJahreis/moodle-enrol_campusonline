@@ -419,7 +419,7 @@ class sync {
         if ($usertype == 'student') {
             $endpoint = "/co-sm-core/study/api/student-persons/$uid";
         } else {
-            $endpoint = "/co-brm-core/org/api/employee-persons/$uid";
+            $endpoint = "/co-brm-core/org/api/employee-persons/$uid"; // TODO: replace with claims.
         }
         $person = $this->restCall($endpoint);
         $person->__type = $usertype;
@@ -584,7 +584,6 @@ class sync {
                         if (!$course->$key && !$value) {
                             continue;
                         }
-                        $this->trace->output($course->$key);
                         $needsupdate = true;
                         break;
                     }
@@ -815,6 +814,15 @@ class sync {
                 $sanitized_course["org:$key"] = $value;
             }
 
+            // Attach values from semester endpoint.
+            $semester = $this->semesterdata[$course['semesterKey']];
+            $semester = (array)$semester;
+
+            foreach ($semester as $key => $value) {
+                $value = locallib::normalizeValue($value);
+                $sanitized_course["semester:$key"] = $value;
+            }
+
             $enriched_courses[] = $sanitized_course;
         }
 
@@ -846,15 +854,11 @@ class sync {
         $endpoint = 'co-sm-core/semester/api/semesters';
         $result = $this->restCall($endpoint, null, 'GET', true);
 
-        echo "<pre>";
-        var_dump($result);
-        die();
-
         // Add to class property.
         $this->semesterdata = array();
         if (property_exists($result, 'items')) {
             foreach ($result->items as $item) {
-                $this->orgdata[$item->uid] = $item;
+                $this->semesterdata[$item->key] = $item;
             }
         }
     }
