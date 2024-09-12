@@ -119,10 +119,11 @@ class sync {
      *
      * @param string $endpoint
      * @param array $query
+     * @param string $method
      *
      * @return object
      */
-    private function restCall($endpoint, $query = null) {
+    private function restCall($endpoint, $query = null, $method = 'GET') {
 
         // Set params.
         $url = $this->config->endpoint . '/' . $endpoint;
@@ -133,7 +134,7 @@ class sync {
         ]);
 
         // Make request.
-        $response = $client->request('GET', $url, [
+        $response = $client->request($method, $url, [
             'headers' => [
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . $this->token
