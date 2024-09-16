@@ -41,10 +41,11 @@ class locallib {
                                   'groupmodeforce' => '0',
     ];
 
-    // User fields available for identification.
-    public const USER_ID_FIELDS = ['id',
-                                   'idnumber',
-                                   'email',
+    // User fields not available for identification.
+    public const USER_ID_FIELDS_IGNORE = ['id',
+                                          'username',
+                                          'idnumber',
+                                          'email',
     ];
 
     // User fields available for mapping and their default value.
@@ -56,6 +57,12 @@ class locallib {
                                 'phone1' => '',
                                 'institution' => '',
                                 'department' => '',
+    ];
+
+    // CAMPUSonline internal custom user fields.
+    public const CO_USER_FIELDS = ['user_profilefield_campusonline_person_uid' => '{uid}',
+                                   'user_profilefield_campusonline_student_uid' => '{studentInternalId}',
+                                   'user_profilefield_campusonline_employee_uid' => '{employeeInternalId}'
     ];
 
     // Fields that use PARAM_BOOL instead of PARAM_TEXT.
@@ -107,12 +114,12 @@ class locallib {
         $course = array();
         $course['coursecategory'] = null;
         $course['idnumber'] = $coursedata['course:uid'];
-        $course['shortname'] = self::getFieldValue('shortname', $coursedata);
-        $course['fullname'] = self::getFieldValue('fullname', $coursedata);
+        $course['shortname'] = self::getFieldValue('course_shortname', $coursedata);
+        $course['fullname'] = self::getFieldValue('course_fullname', $coursedata);
 
         // Map additional fields.
         foreach(self::COURSE_FIELDS as $field => $default) {
-            $course[$field] = self::getFieldValue($field, $coursedata);
+            $course[$field] = self::getFieldValue('course_' . $field, $coursedata);
         }
 
         return $course;
@@ -128,12 +135,12 @@ class locallib {
     public static function buildUser($userdata){
 
         $user = array();
-        $user['auth'] = self::getFieldValue('auth', $userdata, 'user');
-        $user['password'] = self::getFieldValue('password', $userdata, 'user');
+        $user['auth'] = self::getFieldValue('user_auth', $userdata);
+        $user['password'] = self::getFieldValue('user_password', $userdata);
 
         // Map additional fields.
         foreach(self::USER_FIELDS as $field => $default) {
-            $user[$field] = self::getFieldValue($field, $userdata, 'user');
+            $user[$field] = self::getFieldValue('user_' . $field, $userdata);
         }
 
         return $user;
@@ -151,23 +158,25 @@ class locallib {
     }
 
     /**
-     * Gets custom fields for courses.
+     * Gets custom fields.
      *
      * @param object $coursedata
      *
      * @return array $customfields
      */
-    public static function getCustomFields($coursedata) {
+    public static function getCustomCourseFieldData($coursedata) {
 
         $handler = \core_customfield\handler::get_handler('core_course', 'course');
         if ($custom_fields = $handler->get_fields()) {
             foreach ($custom_fields as $field) {
                 $name = $field->get('shortname');
                 if ($coursedata) {
-                    $customfields[$name] = self::getFieldValue('customfield_' . $name, $coursedata);
+                    $customfields[$name] = self::getFieldValue('course_customfield_' . $name, $coursedata);
                 } else {
+                    // For settings.php
                     $customfields[$name] = $field->get('name');
                 }
+
             }
         }
         return $customfields;
@@ -177,22 +186,24 @@ class locallib {
      * Get user profile fields.
      *
      * @param object $coursedata
-     * @param string $type 'course' or 'user'
      *
      * @return array $customfields
      */
-    public static function getCustomUserFields() {
+    public static function getCustomUserFieldData($userdata) {
 
         global $DB;
 
         $customfields = array();
         $records = $DB->get_records('user_info_field');
         foreach ($records as $record) {
-            if ($record->shortname == 'campusonline_student_uid' ||
-                $record->shortname == 'campusonline_employee_uid') {
-                continue;
+            $name = $record->shortname;
+            if ($userdata) {
+                $customfields[$record->id] = self::getFieldValue('user_profilefield_' . $name, $userdata);
+            } else {
+                // For settings.php
+                $customfields[$record->shortname] = $record->name;
             }
-            $customfields[$record->shortname] = $record->name;
+
         }
         return $customfields;
     }
@@ -202,25 +213,39 @@ class locallib {
      *
      * @param string $field
      * @param array $data
-     * @param string $type 'course' or 'user'
      *
      * @return string $value
      */
-    public static function getFieldValue($field, $data, $type = 'course') {
+    public static function getFieldValue($field, $data) {
         global $DB;
 
-        // Get configured value.
-        $fieldvalue = get_config('enrol_campusonline', $type . '_' . $field);
+        // Get hardcoded defaults.
+        if (array_key_exists($field, self::CO_USER_FIELDS)) {
+            $fieldvalue = self::CO_USER_FIELDS[$field];
+
+        } else {
+            // Get configured value.
+            $fieldvalue = get_config('enrol_campusonline', $field);
+        }
 
         // Replace tokens.
         foreach ($data as $key => $value) {
+
+            // Convert integers into string values.
+            if (is_int($value)) {
+                $value = (string)$value;
+            }
+
             if (is_string($value)) {
                 $fieldvalue = str_replace('{' . $key . '}', $value, $fieldvalue);
             }
         }
 
-        // Lang field.
-        if ($field == 'lang') {
+        // Remove leftover empty tokens.
+        $fieldvalue = preg_replace('/\{[^}]*\}/', '', $fieldvalue);
+
+        // Special case: lang field.
+        if ($field == 'course_lang') {
             $fieldvalue = strtolower(substr($fieldvalue, 0, 2));
             $langs = array_keys(get_string_manager()->get_list_of_translations());
             if (!in_array($fieldvalue, $langs)) {
@@ -261,20 +286,20 @@ class locallib {
     }
 
     /**
-     * Sets course custom fields course.
+     * Sets custom fields for course.
      *
      * @param string $courseid
      * @param array $coursedata
      *
      * @return boolean $updated
      */
-    public static function setCourseCustomFields($courseid, $coursedata) {
+    public static function setCustomCourseFields($courseid, $coursedata) {
 
         global $DB;
 
         $updated = false;
         $course = get_course($courseid);
-        $customfields = self::getCustomFields($coursedata);
+        $customfields = self::getCustomCourseFieldData($coursedata);
 
         // We update customfields directly via the DB,
         // because dealing with the customfield API is ridiculously complicated.
@@ -302,6 +327,46 @@ class locallib {
                 $data->timecreated = time();
                 $data->timemodified = time();
                 $DB->insert_record('customfield_data', $data);
+                $updated = true;
+            }
+        }
+
+        return $updated;
+    }
+
+    /**
+     * Sets user custom fields.
+     *
+     * @param string $userid
+     * @param array $userdata
+     *
+     * @return boolean $updated
+     */
+    public static function setCustomUserFields($userid, $userdata) {
+
+        global $DB;
+
+        $updated = false;
+        $user = \core_user::get_user($userid);
+        $customfields = self::getCustomUserFieldData($userdata);
+
+        // We update customfields directly via the DB,
+        // because dealing with the customfield API is ridiculously complicated.
+        foreach ($customfields as $fieldid => $value) {
+            if ($data = $DB->get_record('user_info_data', ['fieldid' => $fieldid, 'userid' => $userid])) {
+                $oldvalue = $data->data;
+                if ($oldvalue != $value) {
+                    $data->data = $value;
+                    $DB->update_record('user_info_data', $data);
+                    $updated = true;
+                }
+            } else {
+                $data = new \stdClass();
+                $data->fieldid = $fieldid;
+                $data->userid = $userid;
+                $data->data = $value;
+                $data->dataformat = 0;
+                $DB->insert_record('user_info_data', $data);
                 $updated = true;
             }
         }

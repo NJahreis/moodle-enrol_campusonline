@@ -36,15 +36,18 @@ function xmldb_enrol_campusonline_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
-    // Example of creating a custom user profile field upon installation or update.
-    if ($oldversion < 2024070906) {
+    // Create new personUID custom user profile field.
+    if ($oldversion < 2024091604) {
+        $categoryid = create_custom_profile_field_category('enrol_campusonline', 'CAMPUSOnline');
+        create_custom_profile_field('campusonline_person_uid', 'Person UID', 'text', $categoryid);
+        upgrade_plugin_savepoint(true, 2024091604, 'enrol', 'campusonline');
+    }
 
-        // Create custom user profile fields.
+    // Create custom user profile fields.
+    if ($oldversion < 2024070906) {
         $categoryid = create_custom_profile_field_category('enrol_campusonline', 'CAMPUSOnline');
         create_custom_profile_field('campusonline_student_uid', 'Student UID', 'text', $categoryid);
         create_custom_profile_field('campusonline_employee_uid', 'Employee UID', 'text', $categoryid);
-
-        // Set the new version to indicate that the upgrade step has been completed.
         upgrade_plugin_savepoint(true, 2024070906, 'enrol', 'campusonline');
     }
 

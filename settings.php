@@ -91,19 +91,19 @@ if ($ADMIN->fulltree) {
         get_string('semester_desc', 'enrol_campusonline'),
         '2024W, 2025S',
     ));
-    // Update existing courses.
-    $settings->add(new admin_setting_configcheckbox(
-        'enrol_campusonline/updateexistingcourses',
-        get_string('updateexistingcourses', 'enrol_campusonline'),
-        get_string('updateexistingcourses_desc', 'enrol_campusonline'),
-        1,
-    ));
     // Create users.
     $settings->add(new admin_setting_configcheckbox(
         'enrol_campusonline/enrolsynccreateusers',
         get_string('enrolsynccreateusers', 'enrol_campusonline'),
         get_string('enrolsynccreateusers_desc', 'enrol_campusonline'),
         0,
+    ));
+    // Update existing courses.
+    $settings->add(new admin_setting_configcheckbox(
+        'enrol_campusonline/updateexistingcourses',
+        get_string('updateexistingcourses', 'enrol_campusonline'),
+        get_string('updateexistingcourses_desc', 'enrol_campusonline'),
+        1,
     ));
     // Update Course URLs.
     $settings->add(new admin_setting_configcheckbox(
@@ -117,7 +117,7 @@ if ($ADMIN->fulltree) {
         'enrol_campusonline/modificationtimeframe',
         get_string('modificationtimeframe', 'enrol_campusonline'),
         get_string('modificationtimeframe_desc', 'enrol_campusonline'),
-        1,
+        0,
         PARAM_INT,
     ));
 
@@ -221,7 +221,7 @@ if ($ADMIN->fulltree) {
         ));
     }
     // Custom fields.
-    $customfields = locallib::getCustomFields(null);
+    $customfields = locallib::getCustomCourseFieldData(null);
     foreach ($customfields as $shortname => $fullname) {
         $settings->add(new admin_setting_configtext(
             'enrol_campusonline/course_customfield_' . $shortname,
@@ -288,22 +288,11 @@ if ($ADMIN->fulltree) {
         get_string('useridsettings', 'enrol_campusonline'),
         get_string('useridsettings_desc', 'enrol_campusonline'),
     ));
-    // User claims.
-    $settings->add(new admin_setting_configtext(
-        'enrol_campusonline/userclaims',
-        get_string('userclaims', 'enrol_campusonline'),
-        get_string('userclaims_desc', 'enrol_campusonline'),
-        'co-claim-name,co-claim-title,co-claim-date-of-birth,co-claim-email',
-    ));
     // User identification - Moodle field.
     $options = [0 => get_string('none')];
-    foreach (locallib::USER_ID_FIELDS as $field) {
-        if ($field == 'id') {
-            $name = 'id';
-        } else {
-            $name = get_string($field);
-        }
-        $options[$field] = $name;
+    $customfields = locallib::getCustomUserFieldData(null);
+    foreach ($customfields as $shortname => $fullname) {
+        $options[$shortname] = $fullname;
     }
     $settings->add(new admin_setting_configselect(
         'enrol_campusonline/usermoodlefield',
@@ -312,12 +301,23 @@ if ($ADMIN->fulltree) {
         'email',
         $options,
     ));
-    // User identification - CO value.
+    // External key.
     $settings->add(new admin_setting_configtext(
-        'enrol_campusonline/usercovalue',
-        get_string('usercovalue', 'enrol_campusonline'),
-        get_string('usercovalue_desc', 'enrol_campusonline'),
-        '{email}',
+        'enrol_campusonline/user_externalkey',
+        get_string('externalkey', 'enrol_campusonline'),
+        get_string('externalkey_desc', 'enrol_campusonline'),
+        '',
+        PARAM_TEXT,
+        50
+    ));
+    // External system key.
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/user_externalsystemkey',
+        get_string('externalsystemkey', 'enrol_campusonline'),
+        get_string('externalsystemkey_desc', 'enrol_campusonline'),
+        '',
+        PARAM_TEXT,
+        50
     ));
 
     // ----- User sync settings -----
@@ -379,9 +379,18 @@ if ($ADMIN->fulltree) {
             $type,
             50
         ));
+
+        // Allow email update.
+        if ($field == 'email') {
+            $settings->add(new admin_setting_configcheckbox(
+                'enrol_campusonline/user_allowemailupdate',
+                get_string('allowemailupdate', 'enrol_campusonline'),
+                get_string('allowemailupdate_desc', 'enrol_campusonline'),
+                1,
+            ));
+        }
     }
     // Custom fields.
-    $customfields = locallib::getCustomUserFields();
     foreach ($customfields as $shortname => $fullname) {
         $settings->add(new admin_setting_configtext(
             'enrol_campusonline/user_profilefield_' . $shortname,

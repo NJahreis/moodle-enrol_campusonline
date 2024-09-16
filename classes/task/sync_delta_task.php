@@ -55,8 +55,8 @@ class sync_delta_task extends \core\task\scheduled_task {
 
         if ($sync->isConnected()) {
 
-            // Sync courses and enrollments.
-            $sync->syncCourses();
+            // Sync courses and enrollments delta.
+            $sync->syncCourseDelta();
 
         } else {
 

@@ -58,12 +58,13 @@ $string['semester_desc'] = 'Semester(s) to be synced. For multiple semesters, se
 $string['updateexistingcourses'] = 'Update existing courses';
 $string['updateexistingcourses_desc'] = 'Allows the enrolment sync task to change names or categories of existing Moodle courses if they change in CAMPUSonline.';
 $string['enrolsynccreateusers'] = 'Create users';
-$string['enrolsynccreateusers_desc'] = 'Allows the enrolment sync task to create users that do not exist or cannot be found in Moodle.';
-$string['updatecourseurls'] = 'Update course URLs for existing courses';
+$string['enrolsynccreateusers_desc'] = 'Allows the enrolment sync task to create users that do not exist or cannot be found in Moodle. <strong>Only activate this after making sure that user identification works correctly</strong>, otherwise you might end up with a lot of duplicate users in Moodle!';
+$string['updatecourseurls'] = 'Update course URLs';
 $string['updatecourseurls_desc'] = 'Writes back the Moodle course URL to CAMPUSonline each time a course is synced. Normally this is only done upon course creation. If something went wrong, you can activate this, but it should be left unchecked in the long term for performance reasons.';
 $string['modificationtimeframe'] = 'Days to include in modification sync';
 $string['modificationtimeframe_desc'] = '<ul>
     <li>How many days back modifications should be fetched from CAMPUSonline for the <strong>modification sync</strong></li>
+    <li>0 = only get today\'s modifications</li>
     <li>At the moment, CAMPUSonline provides a maximum of <strong>7 days</strong> worth of modifications</li>
     <li>When running the modification sync task in longer intervals, modifications will get lost, so make sure to <strong>configure the task schedule accordingly</strong></li></ul>';
 $string['showrawcoursedata'] = 'Show tokens and raw course data';
@@ -94,33 +95,33 @@ $string['coursesyncsettings_desc'] = '<ul>
 $string['groupsyncsettings'] = 'Group settings';
 $string['groupsyncsettings_desc'] = 'Not yet implemented';
 
-$string['useridsettings'] = 'User identification';
+$string['useridsettings'] = 'Identification of existing users';
 $string['useridsettings_desc'] = '<ul>
-    <li>Moodle users will be identified by matching the CAMPUSOnline person UID to the user profile fields
-        <ul><li> <strong>campusonline_student_uid</strong> for students</li>
-        <li><strong>campusonline_employee_uid</strong> for employees</li></ul>
-    <li>If a user is not found via its person UID, the username will be used as a fallback, as configured in the user sync values below</li>
-    <li>Additionally, a secondary fallback identification criteria can be configured for the user sync, to find users that already exist in Moodle without these identifiers</li>
-    <li><strong>When configuring a secondary identification criteria, be sure to use the same value in user sync & values for this field!</strong></li></ul>';
-$string['userclaims'] = 'Personal data to get from CAMPUSonline';
-$string['userclaims_desc'] = 'Specify which personal data to get from CAMPUSonline. Only claims configured here will be able to be assigned as tokens.';
-$string['usermoodlefield'] = 'Secondary identifier: field in Moodle';
-$string['usermoodlefield_desc'] = 'If a user is not found via its person UID or username, this field will be used to find the user in Moodle.';
-$string['usercovalue'] = 'Secondary identifier: value in CAMPUSonline';
-$string['usercovalue_desc'] = 'This CAMPUSonline value will be matched against the Moodle field specified above.';
+    <li>Moodle users will be identified by matching the CAMPUSOnline person UID to the user profile field <strong>campusonline_person_uid</strong> (created upon plugin installation)</li>
+    <li>In case your Moodle users were <strong>not created via CAMPUSoline sync</strong>, they need to be identified via other methods</li>
+    <li>If a user is not found via its person UID, the configured user sync values will be used to find the user in Moodle in this order: <strong>username</strong>, <strong>idnumber</strong>, <strong>email</strong></li>
+    <li>If you want to use another user field as <strong>fallback</strong>, it can be configured below</li>
+    <li>The values configured in <strong>user sync & values</strong> for this field will be used as matching criteria</li></ul>';
+$string['usermoodlefield'] = 'Custom field as callback for user identification';
+$string['usermoodlefield_desc'] = 'If a user is not found via any other means (see above), this field will be used to find the user in Moodle.';
 
 $string['usersyncsettings'] = 'User sync & values';
 $string['usersyncsettings_desc'] = '<ul>
-    <li>This sync task is completely optional, and should be left disabled if not explicitly needed</li>
-    <li>Make sure usernames are unique, and fields are filled with valid values for their respective field types, or there will be errors creating users!</li>
-    <li>These values are <strong>required</strong>, otherwise course creation will fail: user_auth, user_password, user_username, user_email</li>
-    <li>Only enable this task if your user data is not already synced via other means (eg SSO systems)</li>
-    <li>Show raw data to see available fields/tokens</li></ul>';
+    <li>This sync task is completely <strong>optional</strong>, and should be left disabled if not explicitly needed</li>
+    <li>Only enable this task if your user data is <strong>not already synced via other means</strong> (eg SSO systems)</li>
+    <li>Regardless whether the sync task is active, you should still set the field values, since they are also used for <strong>user identification</strong> and <strong>user creation</strong> (if configured)</li>
+    <li><strong>usernames need to be unique</strong>, and fields are filled with valid values for their respective field types, or there will be errors creating users!</li>
+    <li>These values are <strong>required</strong>, otherwise user creation will fail: user_auth, user_password, user_username, user_email</li>
+    <li>CAMPUSonline <strong>person UID</strong>, <strong>student UID</strong> and <strong>employee UID</strong> will be automatically synced in the respective user profile fields</li>
+    <li>Click on <strong>Show tokens and raw data</strong> to see available fields/tokens</li></ul>';
 $string['showrawuserdata'] = 'Show tokens and raw user data';
 $string['previewusers'] = 'Preview users with these settings';
 $string['authmethod'] = 'Authentification method';
 $string['initialpassword'] = 'Initial password';
 $string['initialpassword_desc'] = 'Be sure to set an initial password that adheres to password complexity standards, or user creation will fail, even for users with authentification methods that will not even use the password!';
+
+$string['allowemailupdate'] = 'Allow user sync to update email address';
+$string['allowemailupdate_desc'] = 'Allows the user sync to change existing user\'s email adresses. Be aware, that this might lead to problems, since on some Moodle sites users might use their email to login.';
 
 $string['rolemappings'] = 'Role mappings';
 $string['rolemappings_desc'] = 'Select Moodle roles to use for CAMPUSonline students and lectureship roles.';
@@ -140,7 +141,6 @@ $string['logs'] = 'Logs';
 $string['event'] = 'Event';
 $string['deletedcourse'] = 'deleted course (id: {$a})';
 
-
 $string['coursepreview'] = 'Course sync preview';
 $string['coursecount'] = 'Raw data for {$a} courses:';
 $string['userpreview'] = 'User sync preview.';
@@ -152,6 +152,11 @@ $string['employees'] = 'Employees';
 $string['testsettings'] = 'Test these settings';
 $string['testconnection'] = 'Test connection';
 $string['backtosettings'] = 'Back to module settings';
+
+$string['externalkey'] = 'External key';
+$string['externalkey_desc'] = 'If necessary for user identification, you can fetch the external system UID from CAMPUSonline.  An external system UID consists of the key of the external system (external_system_key) and the unique ID in the external system (external_key).';
+$string['externalsystemkey'] = 'External system key';
+$string['externalsystemkey_desc'] = 'See above - if both of these values are set, external system UID will be added to available tokens for users, and can be used for identification.';
 
 $string['syncthiscourse'] = 'Sync course with CAMPUSonline';
 $string['syncingcourse'] = 'Syncing Moodle course with CAMPUSonline...';

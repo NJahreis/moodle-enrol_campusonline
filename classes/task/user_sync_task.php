@@ -56,8 +56,7 @@ class user_sync_task extends \core\task\scheduled_task {
         if ($sync->isConnected()) {
 
             // Sync users.
-            $trace->output("not yet implemented");
-            // $sync->syncCourses($trace);
+            $sync->syncUsers($trace);
 
         } else {
 
