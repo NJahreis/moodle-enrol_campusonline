@@ -1,8 +1,11 @@
-# CAMPUSonline Moodle Plugin
+# CAMPUSonline enrolment sync
 
-tba
+## Installation
 
+## Configurations
 
-- https://moodle.campusonline.community/local/campusonline_extension/
+## Enrolment sync
 
+- CAMPUSonline enrolment sync will only remove roles and suspend enrolments of its own type.
+- If users are added to the course manually (or with any other enrolment method), CAMPUSonline sync will not touch those role assignments or enrolments.
 

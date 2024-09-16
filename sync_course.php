@@ -23,9 +23,6 @@
 
 require_once('../../config.php');
 
-require_login();
-
-
 use enrol_campusonline\sync;
 use enrol_campusonline\locallib;
 
@@ -35,12 +32,13 @@ global $DB;
 $courseid = required_param('courseid', PARAM_RAW);
 $course = get_course($courseid);
 $context = context_course::instance($courseid);
+require_login($course);
 require_capability('enrol/campusonline:synccourse', $context);
-
 
 // Set page.
 $PAGE->set_context($context);
-$PAGE->set_url('/enrol/campusonline/sync_course.php');
+$PAGE->set_pagelayout('incourse');
+$PAGE->set_url('/enrol/campusonline/sync_course.php', array('courseid' => $courseid));
 $PAGE->set_title(get_string('syncthiscourse', 'enrol_campusonline'));
 $PAGE->set_heading(get_string('syncthiscourse', 'enrol_campusonline'));
 

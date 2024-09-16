@@ -219,6 +219,15 @@ class locallib {
             }
         }
 
+        // Lang field.
+        if ($field == 'lang') {
+            $fieldvalue = strtolower(substr($fieldvalue, 0, 2));
+            $langs = array_keys(get_string_manager()->get_list_of_translations());
+            if (!in_array($fieldvalue, $langs)) {
+                $fieldvalue = '';
+            }
+        }
+
         return $fieldvalue;
     }
 

@@ -636,6 +636,7 @@ class sync {
         global $CFG, $DB;
         require_once("$CFG->dirroot/user/lib.php");
         $courseid = $course->id;
+        $context = \context_course::instance($courseid);
 
         // Check if enrolment method is active.
         if (!$enrol = $DB->get_record('enrol', ['courseid' => $courseid, 'enrol' => 'campusonline', 'status' => 0])) {
@@ -653,6 +654,7 @@ class sync {
         }
 
         // Get enrolments from CAMPUSonline.
+        $assigned_roles = array();
         $enrolments = $this->getEnrolments($course);
         foreach ($enrolments as $enrolment) {
 
@@ -713,21 +715,47 @@ class sync {
             }
 
             // Add role.
-            $context = \context_course::instance($courseid);
             if (!user_has_role_assignment($userid, $roleid, $context->id)) {
                 $success = role_assign($roleid, $userid, $context->id);
                 $message = "Assigned role $roleid to Moodle user $userid in Moodle course $courseid.";
                 $this->trace->output("   - $message");
             }
 
+            // Add to assigned roles for later cleanup.
+            $assigned_roles[$userid][] = $roleid;
+        }
+
+        // Cleanup - remove roles and suspend empty enrolments.
+        $enrolid = $DB->get_record('enrol', ['courseid' => $courseid, 'enrol' => 'campusonline'])->id;
+        $moodle_co_enrolments = $DB->get_records('user_enrolments', ['enrolid' => $enrolid, 'status' => 0]);
+
+        foreach ($moodle_co_enrolments as $moodle_co_enrolment) {
+
+            $userid = $moodle_co_enrolment->userid;
+
+            // Check if user is enrolled via our own enrolment method.
+            if (!$DB->get_record('user_enrolments', ['enrolid' => $enrolid, 'userid' => $userid, 'status' => 0])) {
+                continue;
+            }
+
             // Remove roles.
             $roles = get_user_roles($context, $userid);
             foreach ($roles as $role) {
-                if ($role->roleid != $roleid) {
+                if (!array_key_exists($userid, $assigned_roles) || !in_array($role->roleid, $assigned_roles[$userid])) {
                     $success = role_unassign($role->roleid, $userid, $context->id);
                     $message = "Removed role $role->roleid from Moodle user $userid in Moodle course $courseid.";
                     $this->trace->output("   - $message");
                 }
+            }
+
+            // Suspend enrolments with no roles are left.
+            $roles = get_user_roles($context, $userid);
+            if (empty($roles)) {
+                $enrolment = $DB->get_record('user_enrolments', ['enrolid' => $enrolid, 'userid' => $userid]);
+                $enrolment->status = 1;
+                $DB->update_record('user_enrolments', $enrolment);
+                $message = "Suspended enrolment for Moodle user $userid in Moodle course $courseid.";
+                $this->trace->output("   - $message");
             }
         }
     }
