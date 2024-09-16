@@ -419,7 +419,7 @@ class sync {
         if ($usertype == 'student') {
             $endpoint = "/co-sm-core/study/api/student-persons/$uid";
         } else {
-            $endpoint = "/co-brm-core/org/api/employee-persons/$uid"; // TODO: replace with claims.
+            $endpoint = "/co-brm-core/org/api/employee-persons/$uid";
         }
         $person = $this->restCall($endpoint);
         $person->__type = $usertype;
@@ -432,16 +432,28 @@ class sync {
      *
      * @param string $uid
      *
-     * @return object $persondata
+     * @return array $persondata
      */
     public function getPersonData($uid) {
 
-        $endpoint = "/co-brm-core/org/api/personal-claims/$uid";
+        $endpoint = "/co-brm-core/pers/api/personal-claims";
         $query = [
-            'claims' => get_config('enrol_campusonline', 'userclaims'),
+            'claim' => 'CO_CLAIM_ALL',
+            'person_uid' => $uid,
         ];
 
-        return $this->restCall($endpoint, $query);
+        $result = $this->restCall($endpoint, $query);
+
+        // Log error.
+        if (!property_exists($result, 'items') || empty($result->items)) {
+            $message = "WARNING: could not get full person data for CAMPUSonline user $uid.";
+            $this->trace->output("   - $message");
+            locallib::writeLog('create_user', $message, 2);
+            return array();
+        }
+
+        // Return persondata.
+        return $result->items[0];
     }
 
     /**

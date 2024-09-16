@@ -42,6 +42,7 @@ $string['clientsecret_desc'] = 'Secret key to access CAMPUSonline';
 $string['enrolmentsyncsettings'] = 'Course & enrolment sync';
 $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>These sync tasks create and update <strong>courses</strong> and their <strong>enrolments</strong></li>
+    <li>It is recommended to run a <strong>full sync</strong> manually or weekly, and schedule only the <strong>modification sync</strong> task, to improve performance.
     <li>There are two sync tasks: one for <strong>full</strong> sync, and one for <strong>modifications</strong> only</li>
     <li>It is recommended to run the full sync task during the night, as it can take quite a long time</li>
     <li>The modifications sync task can be scheduled to run more often, or run manually if needed. By default, it is not scheduled.</li>
@@ -110,7 +111,7 @@ $string['usercovalue_desc'] = 'This CAMPUSonline value will be matched against t
 
 $string['usersyncsettings'] = 'User sync & values';
 $string['usersyncsettings_desc'] = '<ul>
-    <li>This sync task is disabled by default</li>
+    <li>This sync task is completely optional, and should be left disabled if not explicitly needed</li>
     <li>Make sure usernames are unique, and fields are filled with valid values for their respective field types, or there will be errors creating users!</li>
     <li>These values are <strong>required</strong>, otherwise course creation will fail: user_auth, user_password, user_username, user_email</li>
     <li>Only enable this task if your user data is not already synced via other means (eg SSO systems)</li>

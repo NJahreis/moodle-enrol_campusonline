@@ -33,7 +33,8 @@ $tasks = array(
         'hour'      => '1',
         'day'       => '*',
         'dayofweek' => '*',
-        'month'     => '*'
+        'month'     => '*',
+        'disabled'  => true,
     ),
     array(
         'classname' => '\\enrol_campusonline\\task\\sync_delta_task',
