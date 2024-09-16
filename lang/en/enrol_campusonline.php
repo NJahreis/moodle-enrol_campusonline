@@ -93,8 +93,14 @@ $string['coursesyncsettings_desc'] = '<ul>
     <li>Choose values for other course fields (including course custom fields) by combining text and <strong>tokens</strong> for CAMPUSonline fields, eg: "CAMPUSONLINE_COURSE_{title}</li>
     <li>Show raw data from CAMPUSonline to see available fields/tokens</li></ul>';
 $string['groupsyncsettings'] = 'Group settings';
-$string['groupsyncsettings_desc'] = 'Not yet implemented';
-
+$string['groupsyncsettings_desc'] = '<ul>
+    <li>CAMPUSonline <strong>groups</strong> can either be synced into Moodle course groups, or separate courses can be created for each group</li>
+    <li>If for some reason you do no not want to sync groups at all for some elearning types, you can configure group to group only for specific event types</li>
+    </ul>';
+$string['grouptocourse'] = 'Group to course';
+$string['grouptocourse_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, separate Moodle courses will be created for each of the groups.';
+$string['grouptogroup'] = 'Group to group';
+$string['grouptogroup_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, CAMPUSonline groups will be synced into Moodle groups. When empty, will be applied to all types not configured to create separate courses for groups.';
 $string['useridsettings'] = 'Identification of existing users';
 $string['useridsettings_desc'] = '<ul>
     <li>Moodle users will be identified by matching the CAMPUSOnline person UID to the user profile field <strong>campusonline_person_uid</strong> (created upon plugin installation)</li>

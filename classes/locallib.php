@@ -26,6 +26,7 @@
 namespace enrol_campusonline;
 
 use DateTime;
+use context_course;
 
 defined('MOODLE_INTERNAL') || die;
 
@@ -107,14 +108,21 @@ class locallib {
      * Builds a course from CAMPUSOnline data.
      *
      * @param object $coursedata
+     * @param string $group uid
      *
      * @return array $course
      */
-    public static function buildCourse($coursedata){
+    public static function buildCourse($coursedata, $group = null){
         $course = array();
         $course['coursecategory'] = null;
         $course['idnumber'] = $coursedata['course:uid'];
         $course['shortname'] = self::getFieldValue('course_shortname', $coursedata);
+
+        if ($group && $group !== 'none') {
+            $course['idnumber'] .= ":$group";
+            $course['shortname'] .= ":$group";
+        }
+
         $course['fullname'] = self::getFieldValue('course_fullname', $coursedata);
 
         // Map additional fields.
@@ -291,7 +299,7 @@ class locallib {
      * @param string $courseid
      * @param array $coursedata
      *
-     * @return boolean $updated
+     * @return void
      */
     public static function setCustomCourseFields($courseid, $coursedata) {
 
@@ -299,6 +307,7 @@ class locallib {
 
         $updated = false;
         $course = get_course($courseid);
+        $context = context_course::instance($courseid);
         $customfields = self::getCustomCourseFieldData($coursedata);
 
         // We update customfields directly via the DB,
@@ -307,31 +316,27 @@ class locallib {
             if (!$field = $DB->get_record('customfield_field', ['shortname' => $shortname])) {
                 continue;
             }
-            if ($data = $DB->get_record('customfield_data', ['fieldid' => $field->id, 'instanceid' => $course->id])) {
-                $oldvalue = $data->value;
-                if ($oldvalue != $value) {
-                    $data->intvalue = (int)$value;
-                    $data->value = $value;
-                    $data->charvalue = $value;
-                    $DB->update_record('customfield_data', $data);
-                    $updated = true;
-                }
-            } else {
+            if (!$data = $DB->get_record('customfield_data', ['fieldid' => $field->id, 'instanceid' => $course->id])) {
                 $data = new \stdClass();
-                $data->fieldid = $field->id;
-                $data->instanceid = $course->id;
-                $data->value = $value;
-                $data->intvalue = (int)$value;
-                $data->charvalue = $value;
-                $data->valueformat = 0;
-                $data->timecreated = time();
-                $data->timemodified = time();
+                $create = true;
+            } else {
+                $create = false;
+            }
+            $data->fieldid = $field->id;
+            $data->instanceid = $course->id;
+            $data->value = $value;
+            $data->intvalue = (int)$value;
+            $data->charvalue = $value;
+            $data->valueformat = 0;
+            $data->timecreated = time();
+            $data->timemodified = time();
+            $data->contextid = $context->id;
+            if ($create) {
                 $DB->insert_record('customfield_data', $data);
-                $updated = true;
+            } else {
+                $DB->update_record('customfield_data', $data);
             }
         }
-
-        return $updated;
     }
 
     /**

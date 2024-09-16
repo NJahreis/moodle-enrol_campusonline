@@ -281,6 +281,23 @@ if ($ADMIN->fulltree) {
         get_string('groupsyncsettings', 'enrol_campusonline'),
         get_string('groupsyncsettings_desc', 'enrol_campusonline')
     ));
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/grouptocourse',
+        get_string('grouptocourse', 'enrol_campusonline'),
+        get_string('grouptocourse_desc', 'enrol_campusonline'),
+        'GROUP_TO_COURSE',
+        PARAM_TEXT,
+        50
+    ));
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/grouptogroup',
+        get_string('grouptogroup', 'enrol_campusonline'),
+        get_string('grouptogroup_desc', 'enrol_campusonline'),
+        '',
+        PARAM_TEXT,
+        50
+    ));
+
 
     // ----- User id settings -----
     $settings->add(new admin_setting_heading(

@@ -206,7 +206,7 @@ class sync {
 
                     // Log error.
                     $message = "ERROR: could not find Moodle course category $name and not allowed to create new categories. Create the category manually, or configure CAMPUSOnline to be able to create new categories.";
-                    $this->trace->output(" - $message");
+                    $this->trace->output("   - $message");
                     locallib::writeLog('create_category', $message, 2);
 
                     return false;
@@ -215,7 +215,7 @@ class sync {
 
                     // Log creation.
                     $message = "SUCCESS: creating new Moodle course category $name.";
-                    $this->trace->output(" - $message");
+                    $this->trace->output("   - $message");
                     locallib::writeLog('create_category', $message, 0);
 
                     // Create new category.
@@ -259,7 +259,7 @@ class sync {
             $endpoint = 'co-tm-core/course/api/courses';
             if ($course_uids) {
                 // Only request specific courses.
-                $query['course_uids'] = $course_uids;
+                $query['course_uids'] = implode(', ', $course_uids);
             } else {
                 // Request all courses for configured semester(s).
                 $query = [
@@ -300,10 +300,16 @@ class sync {
      */
     public function getEnrolments($course) {
 
+        $uids = explode(':', $course->idnumber);
+        $course_uid = $uids[0];
+        if (count($uids) > 1) {
+            $group_uid = $uids[1];
+        }
+
         // Get student enrolments.
         $endpoint = 'co-tm-core/course/api/registrations';
         $query = [
-            'course_uid' => $course->idnumber,
+            'course_uid' => $course_uid,
         ];
         $result = $this->restCall($endpoint, $query);
 
@@ -579,6 +585,7 @@ class sync {
         // Get config.
         $updatecourseurls = get_config('enrol_campusonline', 'updatecourseurls');
         $updatecourses = get_config('enrol_campusonline', 'updateexistingcourses');
+        $grouptocourse = get_config('enrol_campusonline', 'grouptocourse');
 
         // Start output.
         $number = count($courses);
@@ -587,83 +594,115 @@ class sync {
         // Sync courses.
         foreach ($courses as $coursedata) {
 
-            $uid = $coursedata['course:uid'];
-            $this->trace->output(" - Syncing CAMPUSonline course $uid");
+            $course_uid = $coursedata['course:uid'];
+            $this->trace->output(" - Syncing CAMPUSonline course $course_uid");
 
-            // Prepare new course data.
-            $newcourse = locallib::buildCourse($coursedata);
-
-            // Get category.
-            if (!$newcourse['category'] = $this->getCourseCategory($coursedata)) {
-                continue;
+            // Check if we need to make separate courses for each group.
+            $elearning_type = $coursedata['course:elearningEventTypeKey'];
+            if (str_contains($grouptocourse, $elearning_type)) {
+                $groups = $this->getCourseGroups($coursedata['course:uid']);
+            } else {
+                $groups = ['none'];
             }
 
-            if (!$course = $DB->get_record('course', ['idnumber' => $uid])) {
+            foreach ($groups as $group) {
 
-                // Create new course.
-                $course = new \stdClass();
-                foreach ($newcourse as $key => $value) {
-                    $course->$key = $value;
-                }
-
-                // Create course and log course creation.
-                if (create_course($course)) {
-
-                    $courseid = $course->id;
-
-                    // Add custom fields.
-                    locallib::setCustomCourseFields($courseid, $coursedata);
-
-                    // Write back URL to CAMPUSonline.
-                    $this->setMoodleCourseUrl($course);
-
-                    // Log success.
-                    $message = "SUCCESS: created Moodle course $courseid for CAMPUSonline course $uid.";
-                    $this->trace->output(" - $message");
-                    locallib::writeLog('create_course', $message, 0, $courseid);
-
+                // Single course or separate courses for each group.
+                if ($group == 'none') {
+                    $idnumber = $course_uid;
                 } else {
-
-                    // Log error.
-                    $message = "ERROR: could not reate Moodle course for CAMPUSonline course $uid.";
-                    $this->trace->output(" - $message");
-                    locallib::writeLog('create_course', $message, 2);
+                    $idnumber = "$course_uid:$group";
                 }
 
-                // Add our enrolment method.
-                locallib::addEnrolmentMethod($course);
+                // Prepare new course data.
+                $newcourse = locallib::buildCourse($coursedata, $group);
 
-            } else {
-
-                $courseid = $course->id;
-
-                // Update course URL in CAMPUSonline.
-                if ($updatecourseurls == 1) {
-                    $this->setMoodleCourseUrl($course);
-                }
-
-                // Skip.
-                if (!$course_uids && $updatecourses == 0) {
+                // Get category.
+                if (!$newcourse['category'] = $this->getCourseCategory($coursedata)) {
                     continue;
                 }
 
-                // Update course.
-                foreach ($newcourse as $key => $value) {
-                    $course->$key = $value;
+                if (!$course = $DB->get_record('course', ['idnumber' => $idnumber])) {
+
+                    // Create new course.
+                    $course = new \stdClass();
+                    foreach ($newcourse as $key => $value) {
+                        $course->$key = $value;
+                    }
+
+                    // Create course and log course creation.
+                    if (create_course($course)) {
+
+                        $courseid = $course->id;
+
+                        // Add custom fields.
+                        locallib::setCustomCourseFields($courseid, $coursedata);
+
+                        // Write back URL to CAMPUSonline.
+                        $this->setMoodleCourseUrl($course);
+
+                        // Log success.
+                        if ($group == 'none') {
+                            $message = "SUCCESS: created Moodle course $courseid for CAMPUSonline course $course_uid.";
+                        } else {
+                            $message = "SUCCESS: created Moodle course $courseid for CAMPUSonline course $course_uid group $group.";
+                        }
+
+                        $this->trace->output("   - $message");
+                        locallib::writeLog('create_course', $message, 0, $courseid);
+
+                    } else {
+
+                        // Log error.
+                        if ($group == 'none') {
+                            $message = "ERROR: could not create Moodle course for CAMPUSonline course $course_uid.";
+                        } else {
+                            $message = "ERROR: could not create Moodle course for CAMPUSonline course $course_uid group $group.";
+                        }
+                        $this->trace->output("   - $message");
+                        locallib::writeLog('create_course', $message, 2);
+                    }
+
+                    // Add our enrolment method.
+                    locallib::addEnrolmentMethod($course);
+
+                } else {
+
+                    $courseid = $course->id;
+
+                    // Update course URL in CAMPUSonline.
+                    if ($updatecourseurls == 1) {
+                        $this->setMoodleCourseUrl($course);
+                    }
+
+                    // Skip.
+                    if (!$course_uids && $updatecourses == 0) {
+                        continue;
+                    }
+
+                    // Update course.
+                    foreach ($newcourse as $key => $value) {
+                        $course->$key = $value;
+                    }
+                    $DB->update_record('course', $course);
+
+                    // Update course custom fields.
+                    locallib::setCustomCourseFields($courseid, $coursedata);
+
+                    // Log success.
+                    if ($group == 'none') {
+                        $message = "SUCCESS: updated Moodle course $courseid with data from CAMPUSonline course $course_uid.";
+                    } else {
+                        $message = "SUCCESS: updated Moodle course $courseid with data from CAMPUSonline course $course_uid group $group.";
+                    }
+                    $this->trace->output("   - $message");
+                    locallib::writeLog('update_course', $message, 0, $courseid);
                 }
-                $DB->update_record('course', $course);
 
-                // Update course custom fields.
-                locallib::setCustomCourseFields($courseid, $coursedata);
+                // Sync enrolments.
+                $this->syncEnrolments($course);
 
-                // Log success.
-                $message = "SUCCESS: updated Moodle course $courseid with data from CAMPUSonline course $uid.";
-                $this->trace->output(" - $message");
-                locallib::writeLog('update_course', $message, 0, $courseid);
             }
-
-            // Sync enrolments.
-            $this->syncEnrolments($course);
         }
     }
 
@@ -700,6 +739,19 @@ class sync {
         $assigned_roles = array();
         $enrolments = $this->getEnrolments($course);
         foreach ($enrolments as $enrolment) {
+
+            // Check if this is a course for a single groups.
+            $uids = explode(':', $course->idnumber);
+            $course_uid = $uids[0];
+            $group_uid = null;
+            if (count($uids) > 1) {
+                $group_uid = $uids[1];
+
+                // Skip if enrolment is not for this group.
+                if (property_exists($enrolment, 'courseGroupUid') && $enrolment->courseGroupUid != $group_uid) {
+                    continue;
+                }
+            }
 
             // Get role.
             if (property_exists($enrolment, 'functionKey')) {
@@ -767,6 +819,11 @@ class sync {
 
             // Add to assigned roles for later cleanup.
             $assigned_roles[$userid][] = $roleid;
+
+            // Collect group memberships.
+            if ($group_uid) {
+                $assigned_groups[$userid][] = $group_uid;
+            }
         }
 
         // Cleanup - remove roles and suspend empty enrolments.
@@ -802,6 +859,8 @@ class sync {
                 $this->trace->output("   - $message");
             }
         }
+
+        // TODO: create/update groups.
     }
 
     /**
@@ -863,14 +922,14 @@ class sync {
 
                     // Log success.
                     $message = "SUCCESS: created Moodle course $courseid for CAMPUSonline course $uid.";
-                    $this->trace->output(" - $message");
+                    $this->trace->output("   - $message");
                     locallib::writeLog('create_course', $message, 0, $courseid);
 
                 } else {
 
                     // Log error.
                     $message = "ERROR: could not reate Moodle course for CAMPUSonline course $uid.";
-                    $this->trace->output(" - $message");
+                    $this->trace->output("   - $message");
                     locallib::writeLog('create_course', $message, 2);
                 }
 
@@ -902,7 +961,7 @@ class sync {
 
                 // Log success.
                 $message = "SUCCESS: updated Moodle course $courseid with data from CAMPUSonline course $uid.";
-                $this->trace->output(" - $message");
+                $this->trace->output("   - $message");
                 locallib::writeLog('update_course', $message, 0, $courseid);
             }
 
@@ -1012,6 +1071,28 @@ class sync {
     }
 
     /**
+     * Gets group for a course.
+     *
+     * @param string $course_uid
+     * @return array groups
+     */
+    private function getCourseGroups($course_uid) {
+
+        $endpoint = "/co-tm-core/course/api/courses/$course_uid/groups";
+        $result = $this->restCall($endpoint, null);
+
+        // Analyze response.
+        $groups = array();
+        if (property_exists($result, 'items')) {
+            foreach ($result->items as $item) {
+                $groups[] = $item->uid;
+            }
+        }
+
+        return $groups;
+    }
+
+    /**
      * Gets org data from CAMPUSonline.
      */
     private function getOrgData() {
@@ -1053,11 +1134,12 @@ class sync {
      */
     private function setMoodleCourseUrl($course) {
 
+        $course_uid = explode(':', $course->idnumber)[0];
         $endpoint = 'co-tm-core/course/api/e-learning-infos';
         $moodle_url = new moodle_url('/course/view.php', array('id' => $course->id));
         $url = $moodle_url->__toString();
         $query = [
-            'courseUid' => $course->idnumber,
+            'courseUid' => $course_uid,
             'externalUrl' => $url,
         ];
 
@@ -1066,7 +1148,7 @@ class sync {
             if (property_exists($result, 'externalUrl')) {
                 $url = $result->externalUrl;
                 $message = "SUCCESS: updated CAMPUSonline course $course->idnumber with Moodle course URL $url.";
-                $this->trace->output(" - $message");
+                $this->trace->output("   - $message");
                 locallib::writeLog('update_course', $message, 0, $course->id);
                 return;
             }
@@ -1074,7 +1156,7 @@ class sync {
 
         // Error.
         $message = "ERROR: could not update CAMPUSonline course $course->idnumber with Moodle course URL.";
-        $this->trace->output(" - $message");
+        $this->trace->output("   - $message");
         locallib::writeLog('update_course', $message, 2, $course->id);
     }
 
@@ -1118,7 +1200,7 @@ class sync {
         // Log UID update.
         $fieldname = 'campusonline_' . $usertype . '_uid';
         $message = "SUCCESS: updated Moodle user $userid profile fields CAMPUSonline uids for person $uid.";
-        $this->trace->output(" - $message");
+        $this->trace->output("   - $message");
         locallib::writeLog('update_user', $message, 0, $userid);
     }
 

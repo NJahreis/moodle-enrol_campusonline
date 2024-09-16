@@ -54,7 +54,7 @@ echo "<pre>";
 if ($sync->isConnected()) {
 
     // Sync course.
-    $course_uid = $course->idnumber;
+    $course_uid = explode(':', $course->idnumber)[0];
     $sync->syncCourses([$course_uid]);
 
 } else {
