@@ -27,6 +27,6 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->version = 2024091606;
 $plugin->requires = 2023100902;
 $plugin->component = 'enrol_campusonline';
-$plugin->release = '1.0';
+$plugin->release = '0.95';
 $plugin->maturity = MATURITY_BETA;
 $plugin->dependencies = [];
