@@ -45,8 +45,6 @@ $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>There are two sync tasks: one for <strong>full</strong> sync, and one for <strong>modifications</strong> only</li>
     <li>It is recommended to run the full sync task during the night, as it can take quite a long time</li>
     <li>The modifications sync task can be scheduled to run more often, or run manually if needed. By default, it is not scheduled.</li>
-    <li>When scheduling the modification task, make sure to configure the <strong>timeframe</strong> to fetch modifications in line with the schedule for the modification sync task</li>
-    <li>Please be aware that modifications in the CAMPUSonline data will be deleted after <strong>7 days</strong></li>
     <li>In addition, you can sync a single course, using the "Sync course with CAMPUSonline" button on the course participants page (only available for courses created via CAMPUSonline, and requires the permission enrol/campusonline:synccourse</li></ul>';
 $string['configuretask'] = 'Configure scheduled task';
 $string['configuretask_full'] = 'Configure scheduled task for FULL sync';
@@ -60,7 +58,13 @@ $string['updateexistingcourses'] = 'Update existing courses';
 $string['updateexistingcourses_desc'] = 'Allows the enrolment sync task to change names or categories of existing Moodle courses if they change in CAMPUSonline.';
 $string['enrolsynccreateusers'] = 'Create users';
 $string['enrolsynccreateusers_desc'] = 'Allows the enrolment sync task to create users that do not exist or cannot be found in Moodle.';
-
+$string['updatecourseurls'] = 'Update course URLs for existing courses';
+$string['updatecourseurls_desc'] = 'Writes back the Moodle course URL to CAMPUSonline each time a course is synced. Normally this is only done upon course creation. If something went wrong, you can activate this, but it should be left unchecked in the long term for performance reasons.';
+$string['modificationtimeframe'] = 'Days to include in modification sync';
+$string['modificationtimeframe_desc'] = '<ul>
+    <li>How many days back modifications should be fetched from CAMPUSonline for the <strong>modification sync</strong></li>
+    <li>At the moment, CAMPUSonline provides a maximum of <strong>7 days</strong> worth of modifications</li>
+    <li>When running the modification sync task in longer intervals, modifications will get lost, so make sure to <strong>configure the task schedule accordingly</strong></li></ul>';
 $string['showrawcoursedata'] = 'Show tokens and raw course data';
 $string['previewcourses'] = 'Preview courses with these settings';
 

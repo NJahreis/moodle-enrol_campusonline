@@ -569,6 +569,11 @@ class sync {
 
                 $courseid = $course->id;
 
+                // Update course URL in CAMPUSonline.
+                if (get_config('enrol_campusonline', 'updatecourseurls') == 1) {
+                    $this->setMoodleCourseUrl($course);
+                }
+
                 // Check if update is necessary.
                 $needsupdate = false;
                 foreach ($newcourse as $key => $value) {
@@ -893,6 +898,9 @@ class sync {
 
     /**
      * Sets the moodle course URL in CAMPUSonline.
+     *
+     * @param object $course
+     * @return void
      */
     private function setMoodleCourseUrl($course) {
 
@@ -904,7 +912,21 @@ class sync {
             'externalUrl' => $url,
         ];
 
-        return $this->restCall($endpoint, $query, 'POST');
+        // Log success.
+        if ($result = $this->restCall($endpoint, $query, 'POST')) {
+            if (property_exists($result, 'externalUrl')) {
+                $url = $result->externalUrl;
+                $message = "SUCCESS: updated CAMPUSonline course $course->idnumber with Moodle course URL $url.";
+                $this->trace->output(" - $message");
+                locallib::writeLog('update_course', $message, 0, $course->id);
+                return;
+            }
+        }
+
+        // Error.
+        $message = "ERROR: could not update CAMPUSonline course $course->idnumber with Moodle course URL.";
+        $this->trace->output(" - $message");
+        locallib::writeLog('update_course', $message, 2, $course->id);
     }
 
     /**

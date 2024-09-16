@@ -105,6 +105,21 @@ if ($ADMIN->fulltree) {
         get_string('enrolsynccreateusers_desc', 'enrol_campusonline'),
         0,
     ));
+    // Update Course URLs.
+    $settings->add(new admin_setting_configcheckbox(
+        'enrol_campusonline/updatecourseurls',
+        get_string('updatecourseurls', 'enrol_campusonline'),
+        get_string('updatecourseurls_desc', 'enrol_campusonline'),
+        0,
+    ));
+    // Timeframe for modification sync.
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/modificationtimeframe',
+        get_string('modificationtimeframe', 'enrol_campusonline'),
+        get_string('modificationtimeframe_desc', 'enrol_campusonline'),
+        1,
+        PARAM_INT,
+    ));
 
     // ----- Course category settings -----
     $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawcoursedata', 'limit' => 10));
