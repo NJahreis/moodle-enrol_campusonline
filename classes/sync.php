@@ -558,7 +558,7 @@ class sync {
         // Sync modified courses.
         $course_uids = array_keys($course_uids);
         foreach ($course_uids as $course_uid) {
-            $this->syncCourses($course_uid);
+            $this->syncCourses([$course_uid]);
         }
 
     }
@@ -598,11 +598,12 @@ class sync {
             $this->trace->output(" - Syncing CAMPUSonline course $course_uid");
 
             // Check if we need to make separate courses for each group.
-            $elearning_type = $coursedata['course:elearningEventTypeKey'];
-            if (str_contains($grouptocourse, $elearning_type)) {
-                $groups = $this->getCourseGroups($coursedata['course:uid']);
-            } else {
-                $groups = ['none'];
+            $groups = ['none'];
+            if (array_key_exists('course:elearningEventTypeKey', $coursedata)) {
+                $elearning_type = $coursedata['course:elearningEventTypeKey'];
+                if (str_contains($grouptocourse, $elearning_type)) {
+                    $groups = $this->getCourseGroups($coursedata['course:uid']);
+                }
             }
 
             foreach ($groups as $group) {

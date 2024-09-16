@@ -30,15 +30,41 @@ $string['task:sync'] = 'CAMPUSonline courses & enrolments FULL sync';
 $string['task:sync_delta'] = 'CAMPUSonline courses & enrolments MODIFICATION sync';
 $string['task:user_sync'] = 'CAMPUSonline user sync';
 
-// Settings page.
-$string['connectionsettings'] = 'Connection';
-$string['endpoint'] = 'CAMPUSonline endpoint';
-$string['endpoint_desc'] = 'Address of the CAMPUSonline oauth2 endpoint';
+$string['allevents'] = 'All events';
+$string['allowemailupdate'] = 'Allow user sync to update email address';
+$string['allowemailupdate_desc'] = 'Allows the user sync to change existing user\'s email addresses. Be aware, that this might lead to problems, since on some Moodle sites users might use their email to login.';
+$string['authmethod'] = 'Authentification method';
+$string['availabletokens'] = 'Available tokens';
+$string['availabletokens_disclaimer'] = 'Some of these might only be available for employees or students, but not for both.';
+$string['backtosettings'] = 'Back to module settings';
 $string['clientid'] = 'Client ID';
 $string['clientid_desc'] = 'Client ID to access CAMPUSonline';
 $string['clientsecret'] = 'Client secret';
 $string['clientsecret_desc'] = 'Secret key to access CAMPUSonline';
-
+$string['configuretask'] = 'Configure scheduled task';
+$string['configuretask_delta'] = 'Configure scheduled task for MODIFICATIONS sync';
+$string['configuretask_full'] = 'Configure scheduled task for FULL sync';
+$string['connectionerror'] = 'Could not connect to CAMPUSOnline. Check your connection settings. Please contact your administrator.';
+$string['connectionsettings'] = 'Connection';
+$string['coursecatsettings'] = 'Course category';
+$string['coursecatsettings_desc'] = '<ul>
+    <li>The course category tree can be built using values from CAMPUSonline as tokens</li>
+    <li>If the resulting course category changes for a course that is actively synced, the course will be moved</li></ul>';
+$string['coursecount'] = 'Raw data for {$a} courses:';
+$string['coursepreview'] = 'Course sync preview';
+$string['coursesyncsettings'] = 'Course values';
+$string['coursesyncsettings_desc'] = '<ul>
+    <li>Moodle course <strong>idnumber</strong> will always be filled with the CAMPUSonline course <strong>uid</strong></li>
+    <li>Make sure the course <strong>shortnames</strong> are unique, and fields are filled with valid values for their respective field types, or there will be errors creating courses!</li>
+    <li>These values are <strong>required</strong>, otherwise course creation will fail: course_fullname, course_shortname, course_format</li>
+    <li>Choose values for other course fields (including course custom fields) by combining text and <strong>tokens</strong> for CAMPUSonline fields, eg: "CAMPUSONLINE_COURSE_{title}</li>
+    <li>Show raw data from CAMPUSonline to see available fields/tokens</li></ul>';
+$string['createcoursecatetories'] = 'Create course categories';
+$string['createcoursecatetories_desc'] = 'Allows the enrolment sync task to create course categories if they do not exist.';
+$string['deletedcourse'] = 'deleted course (id: {$a})';
+$string['donotsyncrole'] = '- do not sync this role -';
+$string['endpoint'] = 'CAMPUSonline endpoint';
+$string['endpoint_desc'] = 'Address of the CAMPUSonline oauth2 endpoint';
 $string['enrolmentsyncsettings'] = 'Course & enrolment sync';
 $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>These sync tasks create and update <strong>courses</strong> and their <strong>enrolments</strong></li>
@@ -47,60 +73,71 @@ $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>It is recommended to run the full sync task during the night, as it can take quite a long time</li>
     <li>The modifications sync task can be scheduled to run more often, or run manually if needed. By default, it is not scheduled.</li>
     <li>In addition, you can sync a single course, using the "Sync course with CAMPUSonline" button on the course participants page (only available for courses created via CAMPUSonline, and requires the permission enrol/campusonline:synccourse</li></ul>';
-$string['configuretask'] = 'Configure scheduled task';
-$string['configuretask_full'] = 'Configure scheduled task for FULL sync';
-$string['configuretask_delta'] = 'Configure scheduled task for MODIFICATIONS sync';
-$string['runtask'] = 'Run scheduled task';
-$string['runtask_full'] = 'Run scheduled task for FULL sync';
-$string['runtask_delta'] = 'Run scheduled task for MODIFICATIONS sync';
-$string['semester'] = 'Semester';
-$string['semester_desc'] = 'Semester(s) to be synced. For multiple semesters, separate them with a comma.';
-$string['updateexistingcourses'] = 'Update existing courses';
-$string['updateexistingcourses_desc'] = 'Allows the enrolment sync task to change names or categories of existing Moodle courses if they change in CAMPUSonline.';
 $string['enrolsynccreateusers'] = 'Create users';
 $string['enrolsynccreateusers_desc'] = 'Allows the enrolment sync task to create users that do not exist or cannot be found in Moodle. <strong>Only activate this after making sure that user identification works correctly</strong>, otherwise you might end up with a lot of duplicate users in Moodle!';
-$string['updatecourseurls'] = 'Update course URLs';
-$string['updatecourseurls_desc'] = 'Writes back the Moodle course URL to CAMPUSonline each time a course is synced. Normally this is only done upon course creation. If something went wrong, you can activate this, but it should be left unchecked in the long term for performance reasons.';
+$string['error:cannotconnect'] = 'Cannot connect to CAMPUSonline endpoint. Error: {$a}';
+$string['error:endpointmissing'] = 'You have to provide a valid endpoint in settings.';
+$string['error:uidfieldnotfound'] = 'CAMPUSOnline user profile field not found - reinstall the plugin or re-create the field(s) manually.';
+$string['error:unknown'] = 'Unknown error.';
+$string['event'] = 'Event';
+$string['errorsonly'] = 'Errors only';
+$string['externalkey'] = 'External key';
+$string['externalkey_desc'] = 'If necessary for user identification, you can fetch the external system UID from CAMPUSonline.  An external system UID consists of the key of the external system (external_system_key) and the unique ID in the external system (external_key).';
+$string['externalsystemkey'] = 'External system key';
+$string['externalsystemkey_desc'] = 'See above - if both of these values are set, external system UID will be added to available tokens for users, and can be used for identification.';
+$string['grouptocourse'] = 'Group to course';
+$string['grouptocourse_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, separate Moodle courses will be created for each of the groups.';
+$string['grouptogroup'] = 'Group to group';
+$string['grouptogroup_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, CAMPUSonline groups will be synced into Moodle groups. When empty, will be applied to all types not configured to create separate courses for groups.';
+$string['groupsyncsettings'] = 'Group settings';
+$string['groupsyncsettings_desc'] = '<ul>
+    <li>CAMPUSonline <strong>groups</strong> can either be synced into Moodle course groups, or separate courses can be created for each group</li>
+    <li>If for some reason you do no not want to sync groups at all for some elearning types, you can configure group to group only for specific event types</li>
+    </ul>';
+$string['initialpassword'] = 'Initial password';
+$string['initialpassword_desc'] = 'Be sure to set an initial password that adheres to password complexity standards, or user creation will fail, even for users with authentification methods that will not even use the password!';
+$string['lectureshiproles'] = 'Select Moodle roles to use for CAMPUSonline lectureship roles.';
+$string['logduration'] = 'Keep logs for (days)';
+$string['loglevel'] = 'Log level';
+$string['logsettings'] = 'Log settings';
+$string['logs'] = 'Logs';
 $string['modificationtimeframe'] = 'Days to include in modification sync';
 $string['modificationtimeframe_desc'] = '<ul>
     <li>How many days back modifications should be fetched from CAMPUSonline for the <strong>modification sync</strong></li>
     <li>0 = only get today\'s modifications</li>
     <li>At the moment, CAMPUSonline provides a maximum of <strong>7 days</strong> worth of modifications</li>
     <li>When running the modification sync task in longer intervals, modifications will get lost, so make sure to <strong>configure the task schedule accordingly</strong></li></ul>';
-$string['showrawcoursedata'] = 'Show tokens and raw course data';
 $string['previewcourses'] = 'Preview courses with these settings';
-
-$string['coursecatsettings'] = 'Course category';
-$string['coursecatsettings_desc'] = '<ul>
-    <li>The course category tree can be built using values from CAMPUSonline as tokens</li>
-    <li>If the resulting course category changes for a course that is actively synced, the course will be moved</li></ul>';
-
+$string['previewusers'] = 'Preview users with these settings';
+$string['rolemappings'] = 'Role mappings';
+$string['rolemappings_desc'] = 'Select Moodle roles to use for CAMPUSonline students and lectureship roles.';
+$string['rolemappings_notconnected'] = 'Could not connect to CAMPUSOnline. Check your connection settings and reload this page, to add mappings for CAMPUSonline roles.';
 $string['rootcoursecategory'] = 'Root course category';
 $string['rootcoursecategory_desc'] = 'Course category to sync courses into. If you select "TOP", then you will need to have rules to create subcategories, otherwise the sync will fail.';
+$string['runtask'] = 'Run scheduled task';
+$string['runtask_delta'] = 'Run scheduled task for MODIFICATIONS sync';
+$string['runtask_full'] = 'Run scheduled task for FULL sync';
+$string['semester'] = 'Semester';
+$string['semester_desc'] = 'Semester(s) to be synced. For multiple semesters, separate them with a comma.';
+$string['showrawcoursedata'] = 'Show tokens and raw course data';
+$string['showrawuserdata'] = 'Show tokens and raw user data';
+$string['studentrole'] = 'Students';
+$string['students'] = 'Students';
 $string['subcategories'] = 'Subcategories';
 $string['subcategories_desc'] = 'Specify how to build the subcategory structure.
     <li>Use tokens to build the category names, and backslashes to separate categories, eg: "{org:code}\{course:semesterKey}\{course:courseClassificationKey}"</li>
     <li>Make sure that no subcategory name ends up being empty</li>
     <li>Show raw data from CAMPUSonline to see available fields/tokens</li>';
-$string['createcoursecatetories'] = 'Create course categories';
-$string['createcoursecatetories_desc'] = 'Allows the enrolment sync task to create course categories if they do not exist.';
-
-$string['coursesyncsettings'] = 'Course values';
-$string['coursesyncsettings_desc'] = '<ul>
-    <li>Moodle course <strong>idnumber</strong> will always be filled with the CAMPUSonline course <strong>uid</strong></li>
-    <li>Make sure the course <strong>shortnames</strong> are unique, and fields are filled with valid values for their respective field types, or there will be errors creating courses!</li>
-    <li>These values are <strong>required</strong>, otherwise course creation will fail: course_fullname, course_shortname, course_format</li>
-    <li>Choose values for other course fields (including course custom fields) by combining text and <strong>tokens</strong> for CAMPUSonline fields, eg: "CAMPUSONLINE_COURSE_{title}</li>
-    <li>Show raw data from CAMPUSonline to see available fields/tokens</li></ul>';
-$string['groupsyncsettings'] = 'Group settings';
-$string['groupsyncsettings_desc'] = '<ul>
-    <li>CAMPUSonline <strong>groups</strong> can either be synced into Moodle course groups, or separate courses can be created for each group</li>
-    <li>If for some reason you do no not want to sync groups at all for some elearning types, you can configure group to group only for specific event types</li>
-    </ul>';
-$string['grouptocourse'] = 'Group to course';
-$string['grouptocourse_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, separate Moodle courses will be created for each of the groups.';
-$string['grouptogroup'] = 'Group to group';
-$string['grouptogroup_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, CAMPUSonline groups will be synced into Moodle groups. When empty, will be applied to all types not configured to create separate courses for groups.';
+$string['success:connected'] = 'Successfully connected to CAMPUSonline endpoint.';
+$string['syncthiscourse'] = 'Sync course with CAMPUSonline';
+$string['syncingcourse'] = 'Syncing Moodle course with CAMPUSonline...';
+$string['testconnection'] = 'Test connection';
+$string['testsettings'] = 'Test these settings';
+$string['updatecourseurls'] = 'Update course URLs';
+$string['updatecourseurls_desc'] = 'Writes back the Moodle course URL to CAMPUSonline each time a course is synced. Normally this is only done upon course creation. If something went wrong, you can activate this, but it should be left unchecked in the long term for performance reasons.';
+$string['updateexistingcourses'] = 'Update existing courses';
+$string['updateexistingcourses_desc'] = 'Allows the enrolment sync task to change names or categories of existing Moodle courses if they change in CAMPUSonline.';
+$string['usercount'] = 'Raw data for {$a} users:';
 $string['useridsettings'] = 'Identification of existing users';
 $string['useridsettings_desc'] = '<ul>
     <li>Moodle users will be identified by matching the CAMPUSOnline person UID to the user profile field <strong>campusonline_person_uid</strong> (created upon plugin installation)</li>
@@ -110,7 +147,6 @@ $string['useridsettings_desc'] = '<ul>
     <li>The values configured in <strong>user sync & values</strong> for this field will be used as matching criteria</li></ul>';
 $string['usermoodlefield'] = 'Custom field as callback for user identification';
 $string['usermoodlefield_desc'] = 'If a user is not found via any other means (see above), this field will be used to find the user in Moodle.';
-
 $string['usersyncsettings'] = 'User sync & values';
 $string['usersyncsettings_desc'] = '<ul>
     <li>This sync task is completely <strong>optional</strong>, and should be left disabled if not explicitly needed</li>
@@ -120,57 +156,4 @@ $string['usersyncsettings_desc'] = '<ul>
     <li>These values are <strong>required</strong>, otherwise user creation will fail: user_auth, user_password, user_username, user_email</li>
     <li>CAMPUSonline <strong>person UID</strong>, <strong>student UID</strong> and <strong>employee UID</strong> will be automatically synced in the respective user profile fields</li>
     <li>Click on <strong>Show tokens and raw data</strong> to see available fields/tokens</li></ul>';
-$string['showrawuserdata'] = 'Show tokens and raw user data';
-$string['previewusers'] = 'Preview users with these settings';
-$string['authmethod'] = 'Authentification method';
-$string['initialpassword'] = 'Initial password';
-$string['initialpassword_desc'] = 'Be sure to set an initial password that adheres to password complexity standards, or user creation will fail, even for users with authentification methods that will not even use the password!';
-
-$string['allowemailupdate'] = 'Allow user sync to update email address';
-$string['allowemailupdate_desc'] = 'Allows the user sync to change existing user\'s email adresses. Be aware, that this might lead to problems, since on some Moodle sites users might use their email to login.';
-
-$string['rolemappings'] = 'Role mappings';
-$string['rolemappings_desc'] = 'Select Moodle roles to use for CAMPUSonline students and lectureship roles.';
-$string['rolemappings_notconnected'] = 'Could not connect to CAMPUSOnline. Check your connection settings and reload this page, to add mappings for CAMPUSonline roles.';
-$string['donotsyncrole'] = '- do not sync this role -';
-$string['studentrole'] = 'Students';
-$string['lectureshiproles'] = 'Select Moodle roles to use for CAMPUSonline lectureship roles.';
-
-$string['logsettings'] = 'Log settings';
-$string['loglevel'] = 'Log level';
-$string['allevents'] = 'All events';
-$string['warningsanderrors'] = 'Errors and warnings';
-$string['errorsonly'] = 'Errors only';
-$string['logduration'] = 'Keep logs for (days)';
 $string['viewlogs'] = 'View logs';
-$string['logs'] = 'Logs';
-$string['event'] = 'Event';
-$string['deletedcourse'] = 'deleted course (id: {$a})';
-
-$string['coursepreview'] = 'Course sync preview';
-$string['coursecount'] = 'Raw data for {$a} courses:';
-$string['userpreview'] = 'User sync preview.';
-$string['usercount'] = 'Raw data for {$a} users:';
-$string['availabletokens'] = 'Available tokens';
-$string['availabletokens_disclaimer'] = 'Some of these might only be available for employees or students, but not for both.';
-$string['students'] = 'Students';
-$string['employees'] = 'Employees';
-$string['testsettings'] = 'Test these settings';
-$string['testconnection'] = 'Test connection';
-$string['backtosettings'] = 'Back to module settings';
-
-$string['externalkey'] = 'External key';
-$string['externalkey_desc'] = 'If necessary for user identification, you can fetch the external system UID from CAMPUSonline.  An external system UID consists of the key of the external system (external_system_key) and the unique ID in the external system (external_key).';
-$string['externalsystemkey'] = 'External system key';
-$string['externalsystemkey_desc'] = 'See above - if both of these values are set, external system UID will be added to available tokens for users, and can be used for identification.';
-
-$string['syncthiscourse'] = 'Sync course with CAMPUSonline';
-$string['syncingcourse'] = 'Syncing Moodle course with CAMPUSonline...';
-$string['connectionerror'] = 'Could not connect to CAMPUSOnline. Check your connection settings. Please contact your administrator.';
-
-// Alerts.
-$string['success:connected'] = 'Successfully connected to CAMPUSonline endpoint.';
-$string['error:cannotconnect'] = 'Cannot connect to CAMPUSonline endpoint. Error: {$a}';
-$string['error:endpointmissing'] = 'You have to provide a valid endpoint in settings.';
-$string['error:unknown'] = 'Unknown error.';
-$string['error:uidfieldnotfound'] = 'CAMPUSOnline user profile field not found - reinstall the plugin or re-create the field(s) manually.';
