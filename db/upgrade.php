@@ -37,10 +37,10 @@ function xmldb_enrol_campusonline_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     // Create new personUID custom user profile field.
-    if ($oldversion < 2024091604) {
+    if ($oldversion < 2024091701) {
         $categoryid = create_custom_profile_field_category('enrol_campusonline', 'CAMPUSOnline');
         create_custom_profile_field('campusonline_person_uid', 'Person UID', 'text', $categoryid);
-        upgrade_plugin_savepoint(true, 2024091604, 'enrol', 'campusonline');
+        upgrade_plugin_savepoint(true, 2024091701, 'enrol', 'campusonline');
     }
 
     // Create custom user profile fields.

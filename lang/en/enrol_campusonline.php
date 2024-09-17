@@ -157,3 +157,4 @@ $string['usersyncsettings_desc'] = '<ul>
     <li>CAMPUSonline <strong>person UID</strong>, <strong>student UID</strong> and <strong>employee UID</strong> will be automatically synced in the respective user profile fields</li>
     <li>Click on <strong>Show tokens and raw data</strong> to see available fields/tokens</li></ul>';
 $string['viewlogs'] = 'View logs';
+$string['warningsanderrors'] = 'warnings and errors';
