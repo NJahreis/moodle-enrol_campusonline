@@ -88,7 +88,8 @@ $string['externalsystemkey_desc'] = 'Siehe oben - wenn beide Werte gesetzt sind,
 $string['grouptocourse'] = 'Gruppe zu Kurs';
 $string['grouptocourse_desc'] = 'Komma-separierte Liste von elearningEventTypeKeys. Für diese E-Learning-Ereignistypen werden separate Moodle-Kurse für jede der Gruppen erstellt.';
 $string['grouptogroup'] = 'Gruppe zu Gruppe';
-$string['grouptogroup_desc'] = 'Komma-separierte Liste von elearningEventTypeKeys. Für diese E-Learning-Ereignistypen werden CAMPUSonline-Gruppen in Moodle-Gruppen synchronisiert. Wenn leer, wird dies auf alle Typen angewendet, für die keine separaten Kurse für Gruppen erstellt werden.';
+$string['grouptogroup_desc'] = 'Komma-separierte Liste von elearningEventTypeKeys. Für diese E-Learning-Ereignistypen werden CAMPUSonline-Gruppen in Moodle-Gruppen synchronisiert.
+<p>Wenn leer werden Moodle-Gruppen für <strong>ALLE</strong> Typen erstellt, die nicht für separate Kurse konfiguriert sind!</p>.';
 $string['groupsyncsettings'] = 'Gruppeneinstellungen';
 $string['groupsyncsettings_desc'] = '<ul>
     <li>CAMPUSonline-<strong>Gruppen</strong> können entweder in Moodle-Kursgruppen synchronisiert oder es können separate Kurse für jede Gruppe erstellt werden</li>

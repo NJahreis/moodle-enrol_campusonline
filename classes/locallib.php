@@ -60,6 +60,11 @@ class locallib {
                                 'department' => '',
     ];
 
+    // User fields that cannot be empty
+    public const USER_FIELDS_NOEMPTY = ['username',
+                                        'email'
+    ];
+
     // CAMPUSonline internal custom user fields.
     public const CO_USER_FIELDS = ['user_profilefield_campusonline_person_uid' => '{uid}',
                                    'user_profilefield_campusonline_student_uid' => '{studentInternalId}',
@@ -108,22 +113,24 @@ class locallib {
      * Builds a course from CAMPUSOnline data.
      *
      * @param object $coursedata
-     * @param string $group uid
+     * @param string $group_name
+     * @param string $group_uid
      *
      * @return array $course
      */
-    public static function buildCourse($coursedata, $group = null){
+    public static function buildCourse($coursedata, $group_name = null, $group_uid = null){
         $course = array();
         $course['coursecategory'] = null;
         $course['idnumber'] = $coursedata['course:uid'];
         $course['shortname'] = self::getFieldValue('course_shortname', $coursedata);
-
-        if ($group && $group !== 'none') {
-            $course['idnumber'] .= ":$group";
-            $course['shortname'] .= ":$group";
-        }
-
         $course['fullname'] = self::getFieldValue('course_fullname', $coursedata);
+
+        // Include group information.
+        if ($group_name && $group_uid) {
+            $course['idnumber'] .= ":$group_uid";
+            $course['shortname'] .= ":$group_uid";
+            $course['fullname'] .= ":$group_name";
+        }
 
         // Map additional fields.
         foreach(self::COURSE_FIELDS as $field => $default) {
