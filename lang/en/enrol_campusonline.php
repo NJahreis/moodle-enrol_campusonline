@@ -48,8 +48,8 @@ $string['connectionerror'] = 'Could not connect to CAMPUSOnline. Check your conn
 $string['connectionsettings'] = 'Connection';
 $string['coursecatsettings'] = 'Course category';
 $string['coursecatsettings_desc'] = '<ul>
-    <li>The course category tree can be built using values from CAMPUSonline as tokens</li>
-    <li>If the resulting course category changes for a course that is actively synced, the course will be moved</li></ul>';
+    <li>The course category tree can be built using values from CAMPUSonline as <strong>tokens</strong></li>
+    <li>If the resulting course category changes for a course that is actively synced, the course will be <strong>moved</strong></li></ul>';
 $string['coursecount'] = 'Raw data for {$a} courses:';
 $string['coursepreview'] = 'Course sync preview';
 $string['coursesyncsettings'] = 'Course values';
@@ -68,11 +68,10 @@ $string['endpoint_desc'] = 'Address of the CAMPUSonline oauth2 endpoint';
 $string['enrolmentsyncsettings'] = 'Course & enrolment sync';
 $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>These sync tasks create and update <strong>courses</strong> and their <strong>enrolments</strong></li>
-    <li>It is recommended to run a <strong>full sync</strong> manually or weekly, and schedule only the <strong>modification sync</strong> task, to improve performance.
     <li>There are two sync tasks: one for <strong>full</strong> sync, and one for <strong>modifications</strong> only</li>
-    <li>It is recommended to run the full sync task during the night, as it can take quite a long time</li>
-    <li>The modifications sync task can be scheduled to run more often, or run manually if needed. By default, it is not scheduled.</li>
-    <li>In addition, you can sync a single course, using the "Sync course with CAMPUSonline" button on the course participants page (only available for courses created via CAMPUSonline, and requires the permission enrol/campusonline:synccourse</li></ul>';
+    <li>To improve performance, it is recommended to run a <strong>full sync</strong> manually or weekly, and schedule only the <strong>modification sync</strong> task.
+    <li>It is recommended to schedul the full sync task during the night, as it can take quite a long time</li>
+    <li>In addition, you can <strong>sync a single course</strong>, using the "Sync course with CAMPUSonline" button on the course participants page (only available for courses created via CAMPUSonline, and requires the permission enrol/campusonline:synccourse</li></ul>';
 $string['enrolsynccreateusers'] = 'Create users';
 $string['enrolsynccreateusers_desc'] = 'Allows the enrolment sync task to create users that do not exist or cannot be found in Moodle. <strong>Only activate this after making sure that user identification works correctly</strong>, otherwise you might end up with a lot of duplicate users in Moodle!';
 $string['error:cannotconnect'] = 'Cannot connect to CAMPUSonline endpoint. Error: {$a}';
@@ -82,20 +81,20 @@ $string['error:unknown'] = 'Unknown error.';
 $string['event'] = 'Event';
 $string['errorsonly'] = 'Errors only';
 $string['externalkey'] = 'External key';
-$string['externalkey_desc'] = 'If necessary for user identification, you can fetch the external system UID from CAMPUSonline.  An external system UID consists of the key of the external system (external_system_key) and the unique ID in the external system (external_key).';
+$string['externalkey_desc'] = 'If necessary for user identification, you can fetch an <strong>external system UID</strong> from CAMPUSonline.  An external system UID consists of the key of the external system (external_system_key) and the unique ID in the external system (external_key).';
 $string['externalsystemkey'] = 'External system key';
 $string['externalsystemkey_desc'] = 'See above - if both of these values are set, external system UID will be added to available tokens for users, and can be used for identification.';
 $string['grouptocourse'] = 'Group to course';
 $string['grouptocourse_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, separate Moodle courses will be created for each of the groups.';
 $string['grouptogroup'] = 'Group to group';
-$string['grouptogroup_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, CAMPUSonline groups will be synced into Moodle groups. <p>Leave this empty to sync groups into Moodle groups for <strong>all</strong> types except the ones configured for separate courses.</p>';
+$string['grouptogroup_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, CAMPUSonline groups will be synced into Moodle groups. <p>Leave this empty to sync groups into Moodle groups for <strong>all</strong> types except the ones configured for separate courses (recommended).</p>';
 $string['groupsyncsettings'] = 'Group settings';
 $string['groupsyncsettings_desc'] = '<ul>
-    <li>CAMPUSonline <strong>groups</strong> can either be synced into Moodle course groups, or separate courses can be created for each group</li>
-    <li>If for some reason you do no not want to sync groups at all for some elearning types, you can configure group to group only for specific event types</li>
+    <li>CAMPUSonline <strong>groups</strong> can either be synced into Moodle course groups, or <strong>separate courses</strong> can be created for each group</li>
+    <li>If you do no not want to sync groups at all for some elearning types, you can configure group to group only for specific event types</li>
     </ul>';
-$string['initialpassword'] = 'Initial password';
-$string['initialpassword_desc'] = 'Be sure to set an initial password that adheres to password complexity standards, or user creation will fail, even for users with authentification methods that will not even use the password!';
+$string['initialpassword'] = 'Password';
+$string['initialpassword_desc'] = 'Be sure to set an password that adheres to password complexity standards, or user creation will fail, <strong>even for users with authentification methods that will not even use the password!</strong>';
 $string['lectureshiproles'] = 'Select Moodle roles to use for CAMPUSonline lectureship roles.';
 $string['logduration'] = 'Keep logs for (days)';
 $string['loglevel'] = 'Log level';
@@ -142,15 +141,14 @@ $string['useridsettings'] = 'Identification of existing users';
 $string['useridsettings_desc'] = '<ul>
     <li>Moodle users will be identified by matching the CAMPUSOnline person UID to the user profile field <strong>campusonline_person_uid</strong> (created upon plugin installation)</li>
     <li>In case your Moodle users were <strong>not created via CAMPUSoline sync</strong>, they need to be identified via other methods</li>
-    <li>If a user is not found via its person UID, the configured user sync values will be used to find the user in Moodle in this order: <strong>username</strong>, <strong>idnumber</strong>, <strong>email</strong></li>
+    <li>If a user is not found via its person UID, these criteria will be used in this order to identicate the user: <strong>username</strong>, <strong>idnumber</strong>, <strong>email</strong></li>
     <li>If you want to use another user field as <strong>fallback</strong>, it can be configured below</li>
     <li>The values configured in <strong>user sync & values</strong> for this field will be used as matching criteria</li></ul>';
 $string['usermoodlefield'] = 'Custom field as callback for user identification';
 $string['usermoodlefield_desc'] = 'If a user is not found via any other means (see above), this field will be used to find the user in Moodle.';
 $string['usersyncsettings'] = 'User sync & values';
 $string['usersyncsettings_desc'] = '<ul>
-    <li>This sync task is completely <strong>optional</strong>, and should be left disabled if not explicitly needed</li>
-    <li>Only enable this task if your user data is <strong>not already synced via other means</strong> (eg SSO systems)</li>
+    <li>This sync task is completely <strong>optional</strong>, and should only be enabled if userdata is <strong>not already synced via other means</strong> (eg SSO systems)</li>
     <li>Regardless whether the sync task is active, you should still set the field values, since they are also used for <strong>user identification</strong> and <strong>user creation</strong> (if configured)</li>
     <li><strong>usernames need to be unique</strong>, and fields are filled with valid values for their respective field types, or there will be errors creating users!</li>
     <li>These values are <strong>required</strong>, otherwise user creation will fail: user_auth, user_password, user_username, user_email</li>
