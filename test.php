@@ -75,7 +75,9 @@ if ($function == 'showrawcoursedata') {
     $tokens = array();
     foreach ($courses as $course) {
         foreach ($course as $key => $value) {
-            $tokens[$key] = $key;
+            if (is_scalar($value)) {
+                $tokens[$key] = $key;
+            }
         }
     }
 
@@ -89,9 +91,14 @@ if ($function == 'showrawcoursedata') {
 
     // List raw course data.
     echo html_writer::tag('h3', get_string('coursecount', 'enrol_campusonline', count($courses)));
-    echo '<pre>';
     foreach ($courses as $course) {
-        var_dump((object) $course);
+        echo html_writer::tag('h4', $course['course:title']);
+        foreach ($course as $key => $value) {
+            if (is_scalar($value)) {
+                echo '<strong>{' . $key . '}</strong>: ' . $value . '<br>';
+            }
+        }
+        echo '<br>';
     }
     echo '</pre>';
 
@@ -102,7 +109,7 @@ if ($function == 'showrawcoursedata') {
     $table = new html_table();
     $table->head = ['coursecategory', 'idnumber', 'shortname', 'fullname'];
     $table->head = array_merge($table->head, array_keys(locallib::COURSE_FIELDS));
-    $customfields = locallib::getCustomFields(null);
+    $customfields = locallib::getCustomCourseFieldData(null);
     $table->head = array_merge($table->head, $customfields);
 
     // Table data.
@@ -113,7 +120,7 @@ if ($function == 'showrawcoursedata') {
         $categoryid = $sync->getCourseCategory($coursedata);
 
         // Add custom fields.
-        $customfields = locallib::getCustomFields($coursedata);
+        $customfields = locallib::getCustomCourseFieldData($coursedata);
         foreach ($customfields as $key => $value) {
             $course['customfield_' . $key] = $value;
         }
@@ -144,26 +151,18 @@ if ($function == 'showrawcoursedata') {
 
     // Count and get tokens.
     $persons = $sync->getPersons($limit);
-    $count = 0;
     $tokens = array();
-    foreach ($persons as $personlist) {
-        $count += count($personlist);
-        foreach ($personlist as $person) {
-            $properties = get_object_vars($person);
-            foreach ($properties as $key => $value) {
+    foreach ($persons as $person) {
+        $person = (array) $person;
+        foreach ($person as $key => $value) {
+            if (is_scalar($value)) {
                 $tokens[$key] = $key;
-            }
-            $persondata = $sync->getPersonData($person->uid);
-            $properties = get_object_vars($persondata);
-            foreach ($properties as $key => $value) {
-                $tokens[$key] = $key;
-                $person->$key = $value;
             }
         }
     }
 
     // List tokens.
-    echo html_writer::tag('h3', get_string('availabletokens', 'enrol_campusonline', $count));
+    echo html_writer::tag('h3', get_string('availabletokens', 'enrol_campusonline', count($persons)));
     echo get_string('availabletokens_disclaimer', 'enrol_campusonline');
     echo '<ul>';
     foreach ($tokens as $token) {
@@ -172,15 +171,15 @@ if ($function == 'showrawcoursedata') {
     echo '</ul>';
 
     // List raw user data.
-    echo html_writer::tag('h3', get_string('usercount', 'enrol_campusonline', $count));
-    foreach ($persons as $type => $personlist) {
-
-        echo html_writer::tag('h4', get_string($type, 'enrol_campusonline'));
-        echo '<pre>';
-        foreach ($personlist as $person) {
-            var_dump($person);
+    echo html_writer::tag('h3', get_string('usercount', 'enrol_campusonline', count($persons)));
+    foreach ($persons as $person) {
+        echo html_writer::tag('h4', $person['givenName'] . ' ' . $person['surname']);
+        foreach ($person as $key => $value) {
+            if (is_scalar($value)) {
+                echo '<strong>{' . $key . '}</strong>: ' . $value . '<br>';
+            }
         }
-        echo '</pre>';
+        echo '<br>';
     }
 
 // Preview user sync.
@@ -190,29 +189,26 @@ if ($function == 'showrawcoursedata') {
     $table = new html_table();
     $table->head = ['auth', 'password'];
     $table->head = array_merge($table->head, array_keys(locallib::USER_FIELDS));
-    $customfields = locallib::getCustomUserFields(null);
+    $customfields = locallib::getCustomUserFieldData(null);
     $table->head = array_merge($table->head, $customfields);
 
     // Table data.
     $data = array();
     $persons = $sync->getPersons($limit);
 
-    foreach ($persons as $usertype => $personlist) {
-        foreach ($personlist as $person) {
+    foreach ($persons as $persondata) {
 
-            // Get person data.
-            $persondata = $sync->getPersonData($person->uid);
-            $userdata = array_merge((array) $person, (array) $persondata);
-            $user = locallib::buildUser($userdata);
+        // Get person data.
+        $user = locallib::buildUser($persondata);
 
-            // Add custom fields.
-            foreach ($customfields as $key => $value) {
-                $user['user_profilefield_' . $key] = $value;
-            }
-
-            // Add to table.
-            $data[] = $user;
+        // Add custom fields.
+        foreach ($customfields as $key => $value) {
+            $user['user_profilefield_' . $key] = $value;
         }
+
+        // Add to table.
+        $data[] = $user;
+
     }
 
     $table->data = $data;

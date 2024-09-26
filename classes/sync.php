@@ -39,7 +39,8 @@ class sync {
     private $token;
     private $trace;
     private $employee_uid_fieldid;
-    private $student_uid_fieldid;
+    private $externalkey;
+    private $externalsystemkey;
     private $person_uid_fieldid;
     private $orgdata;
     private $semesterdata;
@@ -59,52 +60,17 @@ class sync {
         // Get settings.
         $this->config = get_config('enrol_campusonline');
         $this->trace = $trace;
-        $path = $this->config->endpoint;
-        $clientid = $this->config->clientid;
-        $secret = $this->config->clientsecret;
+        $this->externalkey = $this->config->user_externalkey;
+        $this->externalsystemkey = $this->config->user_externalsystemkey;
 
         try {
             $this->person_uid_fieldid = $DB->get_record('user_info_field', ['shortname' => 'campusonline_person_uid'])->id;
-            $this->student_uid_fieldid = $DB->get_record('user_info_field', ['shortname' => 'campusonline_student_uid'])->id;
-            $this->employee_uid_fieldid = $DB->get_record('user_info_field', ['shortname' => 'campusonline_employee_uid'])->id;
         } catch (Exception $e) {
             throw new moodle_exception('error:uidfieldnotfound', 'enrol_campusonline', '', $shortname);
         }
 
-        // Make request.
-        if ($path && $clientid && $secret) {
-            $path = rtrim($path, '/');
-            $url = $path . '/public/sec/auth/realms/CAMPUSonline_SP/protocol/openid-connect/token';
-            $client = new Client([
-                'base_uri' => $url,
-                'timeout' => 10.0,
-                'connect_timeout' => 2.0,
-            ]);
-            $response = $client->request('POST', $url, [
-                'headers' => [
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ],
-                'form_params' => [
-                    'grant_type' => 'client_credentials',
-                    'client_id' => $clientid,
-                    'client_secret' => $secret
-                ]
-            ]);
-
-            // Analyze response.
-            $response_body = $response->getBody()->getContents();
-            $response_object = json_decode($response_body, false);
-            $response_array = (array)$response_object;
-
-            // Analyze response.
-            if (array_key_exists('error', $response_array)) {
-                $this->error = $response_array['error'] . ': ' . $response_array['error_description'];
-            } elseif (array_key_exists('access_token', $response_array)) {
-                $this->token = $response_array['access_token'];
-            } else {
-                $this->error = $response_array['error'] . ': ' . get_string('error:unknown', 'enrol_campusonline');
-            }
-        }
+        // Get token.
+        $this->updateToken();
     }
 
     /**
@@ -121,63 +87,82 @@ class sync {
         return $this->error;
     }
 
-    /**
-     * Calls REST API.
-     *
-     * @param string $endpoint
-     * @param array $query
-     * @param string $method
-     * @param string $cursor
-     * @param array $items
-     *
-     * @return object
-     */
-    private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage = false, $items = null) {
+/**
+ * Calls REST API with pagination.
+ *
+ * @param string $endpoint The API endpoint to call.
+ * @param array $query Query parameters to pass to the API.
+ * @param string $method HTTP method (GET by default).
+ * @param string $alwayspage Whether to always page through the API.
+ *
+ * @return object All collected items from paginated API responses.
+ */
+private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage = false) {
 
-        // Set params.
-        $url = $this->config->endpoint . '/' . $endpoint;
-        $client = new Client([
-            'base_uri' => $url,
-            'timeout' => 10.0,
-            'connect_timeout' => 2.0,
-        ]);
+    // Set base URL and initialize the HTTP client.
+    $url = $this->config->endpoint . '/' . $endpoint;
+    $client = new Client([
+        'base_uri' => $url,
+        'timeout' => 10.0,
+        'connect_timeout' => 2.0,
+    ]);
 
-        // Make request.
+    $all_items = [];
+    $cursor = null;
+    if ($this->config->restcalls) {
+        $this->trace->output("        debug: fetching data from CAMPUSonline endpoint $endpoint");
+    }
+
+    do {
+
+        // Update the query with the cursor, if available.
+        if ($cursor !== null) {
+            $query['cursor'] = $cursor;
+            $this->updateToken();
+
+            if ($this->config->restcalls) {
+                $count = count($all_items);
+                $this->trace->output("        debug: paging to cursor $cursor, collected $count items so far");
+            }
+        }
+
+        // Make the API request.
         $response = $client->request($method, $url, [
             'headers' => [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $this->token
             ],
-            'query' => $query,
-            'json' => $query
+            'query' => $query
         ]);
 
-        // Analyze response.
+        // Decode the response.
         $response_body = $response->getBody()->getContents();
         $response_object = json_decode($response_body, false);
 
-        // Attach previous items.
-        if ($items) {
-            $response_object->items = array_merge($items, $response_object->items);
+        // Merge the current page's items with the collected items.
+        if (property_exists($response_object, 'items')) {
+            $all_items = array_merge($all_items, $response_object->items);
         }
 
-        // Set paging.
-        if (!array_key_exists('limit', $_GET)) {
-            $page = true;
+        // Check if there is a next cursor for pagination.
+        if (property_exists($response_object, 'nextCursor')) {
+            $cursor = $response_object->nextCursor;
         } else {
-            $page = $alwayspage;
+            $cursor = null;
         }
 
-        // Check if there are more results to fetch.
-        if ($page && property_exists($response_object, 'nextCursor')) {
-            $items = $response_object->items;
-            $query['cursor'] = $response_object->nextCursor;
-            $response_object = $this->restCall($endpoint, $query, $method, true, $items);
-        }
+        // Determine if we need to keep paging.
+        $page = !array_key_exists('limit', $_GET) || $alwayspage;
 
-        return $response_object;
-    }
+    } while ($page && $cursor !== null);
+
+    // Return the complete collection of items.
+    return (object)[
+        'items' => $all_items
+    ];
+}
+
 
     /**
      * Gets a category for a course.
@@ -190,8 +175,8 @@ class sync {
 
         global $DB;
 
-        $categoryid = get_config('enrol_campusonline', 'rootcoursecategory');
-        $subcategories = get_config('enrol_campusonline', 'subcategories');
+        $categoryid = $this->config->rootcoursecategory;
+        $subcategories = $this->config->subcategories;
         $subcategories = explode('\\', $subcategories);
 
         foreach ($subcategories as $name) {
@@ -204,7 +189,7 @@ class sync {
 
             if (!$category) {
 
-                if (get_config('enrol_campusonline', 'createcoursecatetories') == 0) {
+                if ($this->config->createcoursecatetories == 0) {
 
                     // Log error.
                     $message = "ERROR: could not find Moodle course category $name and not allowed to create new categories. Create the category manually, or configure CAMPUSOnline to be able to create new categories.";
@@ -250,7 +235,7 @@ class sync {
         $allcourses = array();
 
         // Get semester(s).
-        $semesters = get_config('enrol_campusonline', 'semester');
+        $semesters = $this->config->semester;
         $semesters = explode(',', $semesters);
 
         foreach ($semesters as $semester) {
@@ -277,7 +262,6 @@ class sync {
             if (property_exists($result, 'items')) {
                 $courses = $result->items;
                 $courses = $this->enrichCourses($courses);
-
             } else {
                 $courses = array();
             }
@@ -359,13 +343,14 @@ class sync {
      * Gets the Moodle User ID of a CAMPUSOnline user via its uid or email.
      *
      * @param string $uid
-     * @param string $usertype 'student' or 'employee'
+     * @param array $userdata
      *
      * @return int $userid
      */
-    public function getMoodleUserId($uid, $usertype) {
+    public function getMoodleUserId($uid, $userdata = null) {
 
         global $DB;
+        $userid = null;
 
         // Get user id via uid in our user profile field.
         $fieldid = $this->person_uid_fieldid;
@@ -376,68 +361,69 @@ class sync {
             return $record->userid;
         }
 
-        // Get full person data from CAMPUSOnline.
-        $person = $this->getPerson($uid, $usertype);
-        $persondata = $this->getPersonData($person->uid);
-        $userdata = array_merge((array) $person, (array) $persondata);
+        // Get full person data from CAMPUSOnline if needed.
+        if (!$userdata) {
+            $userdata = $this->getPersonData($uid);
+        }
+
+        // Get external keys if configured. TODO: check if this works with real data.
+        if ($this->externalkey && $this->externalsystemkey) {
+            $externalkeys = $this->getPersonExternalKey($uid);
+            $userdata = array_merge($userdata, $externalkeys);
+        }
 
         // Try to find user via fallback identifiers.
         $fields = locallib::USER_ID_FIELDS_IGNORE;
         $fields = array_diff($fields, ['id']);
 
         foreach ($fields as $field) {
-            $valueconfig = get_config('enrol_campusonline', "user_$field");
+            $fieldname = "user_$field";
+            $valueconfig = $this->config->$fieldname;
 
             if ($field && $valueconfig) {
-                $value = locallib::getFieldValue('user_' . $field, $userdata);
+                $value = locallib::getFieldValue("user_$field", $userdata);
 
                 if ($user = $DB->get_record('user', [$field => $value])) {
                     $userid = $user->id;
-                    $this->updateMoodleUserUids($userid, $uid, $usertype);
-
-                    // Log success.
-                    $message = "Found Moodle user $userid for CAMPUSOnline $usertype $uid via the value for field $field. UIDs will be updated in Moodle.";
-                    $this->trace->output("   - $message");
-                    locallib::writeLog('get_user', $message, 0);
-
-                    return $userid;
                 }
             }
         }
 
-        // Try to find user via custom fallback.
-        if ($field = get_config('enrol_campusonline', 'usermoodlefield')) {
-            $fields[] = $field;
+        // Fallback profile field value.
+        if (!$userid) {
+            if ($field = $this->config->usermoodlefield) {
+                $value = locallib::getFieldValue("user_profile_field_$field", $userdata);
+
+                // Find user via profile field value.
+                $fieldid = $DB->get_record('user_info_field', ['shortname' => $field])->id;
+                $sql = "SELECT * FROM {user_info_data} WHERE fieldid = ? AND data = ?";
+                $params = array('fieldid' => $fieldid, 'data' => $value);
+                if ($records = $DB->get_records_sql($sql, $params)) {
+                    $record = reset($records);
+                    $userid = $record->userid;
+                }
+            }
+        }
+
+
+        if ($userid) {
+            // Log success.
+            $message = "Found Moodle user $userid for CAMPUSOnline person $uid via the value for field $field. UIDs will be updated in Moodle.";
+            $this->trace->output("   - $message");
+            locallib::writeLog('get_user', $message, 0);
+
+            // Set UID.
+            locallib::setCustomUserFields($user, $userdata, true);
+
+            return $userid;
         }
 
         // Log warning.
-        $message = "WARNING: could not find Moodle user for CAMPUSOnline $usertype $uid.";
+        $message = "WARNING: could not find Moodle user for CAMPUSOnline person $uid.";
         $this->trace->output("   - $message");
         locallib::writeLog('get_user', $message, 1);
 
         return null;
-    }
-
-    /**
-     * Gets data for a student from CAMPUSonline.
-     *
-     * @param string $uid
-     * @param bool $usertype 'student' or 'employee'
-     *
-     * @return array $studentdata
-     */
-    public function getPerson($uid, $usertype) {
-
-        // Get person.
-        if ($usertype == 'student') {
-            $endpoint = "/co-sm-core/study/api/student-persons/$uid";
-        } else {
-            $endpoint = "/co-brm-core/org/api/employee-persons/$uid";
-        }
-        $person = $this->restCall($endpoint);
-        $person->__type = $usertype;
-
-        return $person;
     }
 
     /**
@@ -449,7 +435,7 @@ class sync {
      */
     public function getPersonData($uid) {
 
-        $endpoint = "/co-brm-core/pers/api/personal-claims";
+        $endpoint = "co-brm-core/pers/api/personal-claims";
         $query = [
             'claim' => 'CO_CLAIM_ALL',
             'person_uid' => $uid,
@@ -463,10 +449,36 @@ class sync {
             $this->trace->output("   - $message");
             locallib::writeLog('get_user_data', $message, 1);
             return array();
+        } else {
+            $persondata = (array)$result->items[0];
         }
 
-        // Return persondata.
-        return $result->items[0];
+        return $persondata;
+    }
+
+    /**
+     * Gets external keys for person for user identification.
+     *
+     * @return array
+     */
+    public function getPersonExternalKey($uid) {
+
+        $endpoint = "co-brm-core/pers/api/person-identifiers/mappings";
+        $query = [
+            'source_claim' => 'CO_CLAIM_PERSON_UID',
+            'target_claim' => 'CO_CLAIM_EXTERNAL_SYSTEM_UID',
+            'uid' => $uid,
+            'external_key' => $this->externalkey,
+            'external_system_key' => $this->externalsystemkey,
+        ];
+
+        $result = $this->restCall($endpoint, $query);
+
+        if (property_exists($result, 'mappings')) {
+            return (array)$result->mappings;
+        } else {
+            return array();
+        }
     }
 
     /**
@@ -478,43 +490,26 @@ class sync {
      */
     public function getPersons($limit = null) {
 
-        $limit = $limit / 2;
-
         // Get employees.
-        $endpoint = 'co-brm-core/org/api/employee-persons';
+        $endpoint = "co-brm-core/pers/api/personal-claims";
         $query = [
+            'claim' => 'CO_CLAIM_ALL',
             'limit' => $limit,
         ];
+
         $result = $this->restCall($endpoint, $query);
 
         // Analyze response.
         if (property_exists($result, 'items')) {
-            $employees = $result->items;
-            foreach ($employees as $employee) {
-                $employee->__type = 'employee';
-            }
+            $personobjects = $result->items;
         } else {
-            $employees = array();
+            $personobjects = array();
         }
 
-        // Get students.
-        $endpoint = '/co-sm-core/study/api/student-persons/';
-        $query = [
-            'limit' => $limit,
-        ];
-        $result = $this->restCall($endpoint, $query);
-        if (property_exists($result, 'items')) {
-            $students = $result->items;
-            foreach ($students as $student) {
-                $student->__type = 'student';
-            }
-        } else {
-            $students = array();
+        foreach ($personobjects as $personobject) {
+            $persons[] = (array) $personobject;
         }
 
-        // Merge and return.
-        $persons['employees'] = $employees;
-        $persons['students'] = $students;
         return $persons;
     }
 
@@ -526,7 +521,7 @@ class sync {
     public function syncCourseDelta() {
 
         // Set timeframe.
-        $timeframe = get_config('enrol_campusonline', 'modificationtimeframe');
+        $timeframe = $this->config->modificationtimeframe;
 
         // Get todays date minus timeframe days.
         $date = new \DateTime();
@@ -534,7 +529,7 @@ class sync {
         $date = $date->format('Y-m-d');
 
         // Get semester(s).
-        $semesters = get_config('enrol_campusonline', 'semester');
+        $semesters = $this->config->semester;
         $semesters = explode(',', $semesters);
 
         // Get modified courses.
@@ -562,7 +557,6 @@ class sync {
         foreach ($course_uids as $course_uid) {
             $this->syncCourses([$course_uid]);
         }
-
     }
 
     /**
@@ -585,10 +579,10 @@ class sync {
         }
 
         // Get config.
-        $updatecourseurls = get_config('enrol_campusonline', 'updatecourseurls');
-        $updatecourses = get_config('enrol_campusonline', 'updateexistingcourses');
-        $grouptocourse = get_config('enrol_campusonline', 'grouptocourse');
-        $grouptogroup = get_config('enrol_campusonline', 'grouptogroup');
+        $updatecourseurls = $this->config->updatecourseurls;
+        $updatecourses = $this->config->updateexistingcourses;
+        $grouptocourse = $this->config->grouptocourse;
+        $grouptogroup = $this->config->grouptogroup;
 
         // Start output.
         $number = count($courses);
@@ -648,7 +642,7 @@ class sync {
                         locallib::setCustomCourseFields($courseid, $coursedata);
 
                         // Write back URL to CAMPUSonline.
-                        $this->setMoodleCourseUrl($course);
+                        $this->setMoodleCourseUrl($course, $group_uid);
 
                         // Log success.
                         if ($separatecourses) {
@@ -681,7 +675,7 @@ class sync {
 
                     // Update course URL in CAMPUSonline.
                     if ($updatecourseurls == 1) {
-                        $this->setMoodleCourseUrl($course);
+                        $this->setMoodleCourseUrl($course, $group_uid);
                     }
 
                     // Skip.
@@ -824,11 +818,10 @@ class sync {
 
             // Get role.
             if (property_exists($enrolment, 'functionKey')) {
-                $usertype = 'employee';
-                $roleid = get_config('enrol_campusonline', 'role_' . $enrolment->functionKey);
+                $rolekey = 'role_' . $enrolment->functionKey;
+                $roleid = $this->config->$rolekey;
             } else {
-                $usertype = 'student';
-                $roleid = get_config('enrol_campusonline', 'studentrole');
+                $roleid = $this->config->studentrole;
             }
 
             // Skip if role should not be synced.
@@ -838,13 +831,13 @@ class sync {
 
             // Get Moodle user.
             $uid = $enrolment->personUid;
-            $userid = $this->getMoodleUserId($uid, $usertype);
+            $userid = $this->getMoodleUserId($uid);
 
             // Create new user if needed & allowed.
             if (!$userid) {
-                if (get_config('enrol_campusonline', 'enrolsynccreateusers')) {
+                if ($this->config->enrolsynccreateusers) {
 
-                    if (!$userid = $this->createMoodleUser($uid, $usertype)) {
+                    if (!$userid = $this->createMoodleUser($uid)) {
                         continue;
                     }
 
@@ -935,7 +928,7 @@ class sync {
                 }
             }
 
-            // // Suspend enrolments with no roles are left.
+            // Suspend enrolments with no roles left.
             $roles = get_user_roles($context, $userid);
             if (empty($roles)) {
                 $enrolment = $DB->get_record('user_enrolments', ['enrolid' => $enrolid, 'userid' => $userid]);
@@ -946,6 +939,7 @@ class sync {
                 locallib::writeLog('enrol_user', $message, 0, $courseid);
             }
         }
+
 
         // Create/update groups.
         foreach ($group_members as $group_uid => $members) {
@@ -1018,31 +1012,86 @@ class sync {
      */
     public function syncUsers() {
 
-        echo "not yet implemented";
-        die();
+        $persons = $this->getPersons();
 
-        global $CFG, $DB;
+        foreach ($persons as $person) {
 
+            // Get Moodle user.
+            $uid = $person['uid'];
+            $userid = $this->getMoodleUserId($uid, $person);
 
+            // Create new user if needed & allowed.
+            if (!$userid) {
+                if ($this->config->enrolsynccreateusers) {
 
+                    if (!$userid = $this->createMoodleUser($uid)) {
+                        continue;
+                    }
+
+                } else {
+
+                    // Log warning.
+                    $message = "WARNING: skipped syncing user data for CAMPUSonline user $uid - user does not exist in Moodle.";
+                    $this->trace->output("   - $message");
+                    locallib::writeLog('sync_user', $message, 1, $courseid);
+                    continue;
+                }
+            }
+
+            // Load Moodle User.
+            $user = \core_user::get_user($userid);
+
+            // Update user data.
+            $needsupdate = false;
+            foreach (locallib::USER_FIELDS as $field => $default) {
+
+                // Only update email if allowed.
+                if ($field == 'email' && !$this->config->user_allowemailupdate) {
+                    continue;
+                }
+
+                $value = locallib::getFieldValue("user_$field", $person);
+
+                // Sanitize usernames.
+                if ($field == 'username') {
+                    $value = strtolower($value);
+                }
+
+                if ($user->$field != $value) {
+                    $user->$field = $value;
+                    $needsupdate = true;
+                }
+            }
+
+            if ($needsupdate) {
+                user_update_user($user, false);
+            }
+
+            // Load profile data into user object.
+            $needsupdatep = locallib::setCustomUserFields($user, $person);
+
+            // Log update.
+            if ($needsupdate || $needsupdatep) {
+                $message = "Updated Moodle user $userid with data from CAMPUSonline user $uid.";
+                $this->trace->output("   - $message");
+                locallib::writeLog('sync_user', $message, 0, null);
+            }
+        }
     }
 
     /**
      * Creates a new Moodle user.
      *
      * @param string $uid
-     * @param string $usertype 'student' or 'employee'
      *
      * @return int $userid
      */
-    private function createMoodleUser($uid, $usertype) {
+    private function createMoodleUser($uid) {
 
         global $CFG;
 
         // Get full person data from CAMPUSOnline.
-        $person = $this->getPerson($uid, $usertype);
-        $persondata = $this->getPersonData($person->uid);
-        $userdata = array_merge((array) $person, (array) $persondata);
+        $userdata = $this->getPersonData($uid);
 
         // Build user.
         $user = new \stdClass();
@@ -1057,9 +1106,9 @@ class sync {
             $user->$field = $value;
         }
         $user->auth = locallib::getFieldValue('user_auth', $userdata);
+        $user->password = locallib::getFieldValue('user_password', $userdata);
         $user->mnethostid = $CFG->mnet_localhost_id;
         $user->confirmed = 1;
-        $user->password = locallib::getFieldValue('user_password', $userdata);
 
         foreach (locallib::USER_FIELDS_NOEMPTY as $check) {
             if ($user->$check == '') {
@@ -1081,7 +1130,8 @@ class sync {
         }
 
         // Update custom fields.
-        locallib::setCustomUserFields($userid, $userdata);
+        $user = \core_user::get_user($userid);
+        locallib::setCustomUserFields($user, $userdata);
 
         $this->trace->output("   - $message");
         locallib::writeLog('create_user', $message, $status);
@@ -1144,7 +1194,7 @@ class sync {
      */
     private function getCourseGroups($course_uid) {
 
-        $endpoint = "/co-tm-core/course/api/courses/$course_uid/groups";
+        $endpoint = "co-tm-core/course/api/courses/$course_uid/groups";
         $result = $this->restCall($endpoint, null);
 
         // Analyze response.
@@ -1163,6 +1213,10 @@ class sync {
      */
     private function getOrgData() {
 
+        if ($this->orgdata) {
+            return;
+        }
+
         $endpoint = 'co-brm-core/org/api/organisations';
         $result = $this->restCall($endpoint, null, 'GET', true);
 
@@ -1179,6 +1233,10 @@ class sync {
      * Gets semester data from CAMPUSonline.
      */
     private function getSemesterData() {
+
+        if ($this->semesterdata) {
+            return;
+        }
 
         $endpoint = 'co-sm-core/semester/api/semesters';
         $result = $this->restCall($endpoint, null, 'GET', true);
@@ -1206,6 +1264,7 @@ class sync {
         $url = $moodle_url->__toString();
         $query = [
             'courseUid' => $course_uid,
+            'courseGroupUid' => $group_uid,
             'externalUrl' => $url,
         ];
 
@@ -1227,47 +1286,51 @@ class sync {
     }
 
     /**
-     * Updates user profile fields holding CAMPUSonline UIDs.
+     * Gets access token for REST calls.
      *
-     * @param string $userid Moodle user id
-     * @param string $uid CAMPUSonline person uid
-     * @param string $usertype 'student' or 'employee'
-     *
+     * @return string $token
      */
-    private function updateMoodleUserUids($userid, $uid, $usertype) {
+    private function updateToken() {
 
-        global $DB;
+        $path = $this->config->endpoint;
+        $clientid = $this->config->clientid;
+        $secret = $this->config->clientsecret;
 
-        foreach (locallib::CO_USER_FIELDS as $field => $value) {
-
-            // Get field id of our user profile field.
-            $property = str_replace('user_profilefield_campusonline_', '', $field);
-            $property = $property . '_fieldid';
-            $fieldid = $this->$property;
-
-            // Update field value.
-            $sql = "SELECT * FROM {user_info_data} WHERE fieldid = ? AND userid = ?";
-            $params = array('fieldid' => $fieldid, 'userid' => $userid);
-            $records = $DB->get_records_sql($sql, $params);
-            if ($records) {
-                $record = reset($records);
-                $record->data = $uid;
-                $DB->update_record('user_info_data', $record);
-            } else {
-                $record = new \stdClass();
-                $record->userid = $userid;
-                $record->fieldid = $fieldid;
-                $record->data = $uid;
-                $DB->insert_record('user_info_data', $record);
-            }
-
+        if (!$path || !$clientid || !$secret) {
+            $this->error = get_string('error:config', 'enrol_campusonline');
+            return;
         }
 
-        // Log UID update.
-        $fieldname = 'campusonline_' . $usertype . '_uid';
-        $message = "Updated Moodle user $userid profile fields CAMPUSonline uids for person $uid.";
-        $this->trace->output("   - $message");
-        locallib::writeLog('update_user', $message, 0, $userid);
-    }
+        $path = rtrim($path, '/');
+        $url = $path . '/public/sec/auth/realms/CAMPUSonline_SP/protocol/openid-connect/token';
+        $client = new Client([
+            'base_uri' => $url,
+            'timeout' => 10.0,
+            'connect_timeout' => 2.0,
+        ]);
+        $response = $client->request('POST', $url, [
+            'headers' => [
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ],
+            'form_params' => [
+                'grant_type' => 'client_credentials',
+                'client_id' => $clientid,
+                'client_secret' => $secret
+            ]
+        ]);
 
+        // Analyze response.
+        $response_body = $response->getBody()->getContents();
+        $response_object = json_decode($response_body, false);
+        $response_array = (array)$response_object;
+
+        // Analyze response.
+        if (array_key_exists('error', $response_array)) {
+            $this->error = $response_array['error'] . ': ' . $response_array['error_description'];
+        } elseif (array_key_exists('access_token', $response_array)) {
+            $this->token = $response_array['access_token'];
+        } else {
+            $this->error = $response_array['error'] . ': ' . get_string('error:unknown', 'enrol_campusonline');
+        }
+    }
 }

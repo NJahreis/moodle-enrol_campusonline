@@ -66,9 +66,7 @@ class locallib {
     ];
 
     // CAMPUSonline internal custom user fields.
-    public const CO_USER_FIELDS = ['user_profilefield_campusonline_person_uid' => '{uid}',
-                                   'user_profilefield_campusonline_student_uid' => '{studentInternalId}',
-                                   'user_profilefield_campusonline_employee_uid' => '{employeeInternalId}'
+    public const CO_USER_FIELDS = ['user_profile_field_campusonline_person_uid' => '{uid}',
     ];
 
     // Fields that use PARAM_BOOL instead of PARAM_TEXT.
@@ -213,7 +211,7 @@ class locallib {
         foreach ($records as $record) {
             $name = $record->shortname;
             if ($userdata) {
-                $customfields[$record->id] = self::getFieldValue('user_profilefield_' . $name, $userdata);
+                $customfields[$record->id] = self::getFieldValue('user_profile_field_' . $name, $userdata);
             } else {
                 // For settings.php
                 $customfields[$record->shortname] = $record->name;
@@ -232,7 +230,6 @@ class locallib {
      * @return string $value
      */
     public static function getFieldValue($field, $data) {
-        global $DB;
 
         // Get hardcoded defaults.
         if (array_key_exists($field, self::CO_USER_FIELDS)) {
@@ -349,38 +346,37 @@ class locallib {
     /**
      * Sets user custom fields.
      *
-     * @param string $userid
-     * @param array $userdata
+     * @param object $user
+     * @param array $person
+     * @param boolean $onlyuid only set person uid.
      *
      * @return boolean $updated
      */
-    public static function setCustomUserFields($userid, $userdata) {
-
-        global $DB;
+    public static function setCustomUserFields($user, $person, $onlyuid = false) {
 
         $updated = false;
-        $user = \core_user::get_user($userid);
-        $customfields = self::getCustomUserFieldData($userdata);
+        profile_load_data($user);
+        if ($onlyuid) {
+            $profilefields = self::CO_USER_FIELDS;
+        } else {
+            $profilefields = locallib::getCustomUserFieldData(null);
+        }
 
-        // We update customfields directly via the DB,
-        // because dealing with the customfield API is ridiculously complicated.
-        foreach ($customfields as $fieldid => $value) {
-            if ($data = $DB->get_record('user_info_data', ['fieldid' => $fieldid, 'userid' => $userid])) {
-                $oldvalue = $data->data;
-                if ($oldvalue != $value) {
-                    $data->data = $value;
-                    $DB->update_record('user_info_data', $data);
+        // Update profile fields.
+        foreach ($profilefields as $profilefield => $name) {
+
+            $fieldname = "profile_field_$profilefield";
+
+            if ($value = self::getFieldValue("user_profile_field_$profilefield", $person)) {
+                if (!property_exists($user, $fieldname) || $user->$fieldname != $value) {
+                    $user->$fieldname = $value;
                     $updated = true;
                 }
-            } else {
-                $data = new \stdClass();
-                $data->fieldid = $fieldid;
-                $data->userid = $userid;
-                $data->data = $value;
-                $data->dataformat = 0;
-                $DB->insert_record('user_info_data', $data);
-                $updated = true;
             }
+        }
+
+        if ($updated) {
+            profile_save_data($user);
         }
 
         return $updated;

@@ -28,14 +28,14 @@ $string['pluginname'] = 'CAMPUSonline enrolment';
 $string['privacy:metadata'] = 'Das CAMPUSonline-Einschreibungs-Plugin speichert keine persönlichen Daten.';
 $string['task:sync'] = 'CAMPUSonline-Kurse & Einschreibungen FULL Sync';
 $string['task:sync_delta'] = 'CAMPUSonline-Kurse & Einschreibungen MODIFICATIONS Sync';
-$string['task:user_sync'] = 'CAMPUSonline-Benutzersynchronisation';
+$string['task:user_sync'] = 'CAMPUSonline User Sync';
 
 $string['allevents'] = 'Alle Ereignisse';
-$string['allowemailupdate'] = 'Erlaube Benutzersynchronisation, um E-Mail-Adressen zu aktualisieren';
-$string['allowemailupdate_desc'] = 'Erlaubt der Benutzersynchronisation, die E-Mail-Adressen bestehender Benutzer zu ändern. Beachten Sie, dass dies zu Problemen führen kann, da auf einigen Moodle-Websites Benutzer ihre E-Mail-Adresse zum Einloggen verwenden.';
+$string['allowemailupdate'] = 'Erlaube User Sync E-Mail-Adressen zu ändern';
+$string['allowemailupdate_desc'] = 'Erlaubt dem User Sync, die E-Mail-Adressen bestehender Benutzer zu ändern. Beachten Sie, dass dies zu Problemen führen kann, da auf einigen Moodle-Websites Benutzer ihre E-Mail-Adresse zum Einloggen verwenden.';
 $string['authmethod'] = 'Authentifizierungsmethode';
-$string['availableToken'] = 'Verfügbare Token';
-$string['availableToken_disclaimer'] = 'Einige davon könnten nur für Mitarbeiter oder Studierende verfügbar sein, aber nicht für beide.';
+$string['availabletokens'] = 'Verfügbare Token';
+$string['availabletokens_disclaimer'] = 'Einige davon könnten nur für Mitarbeiter oder Studierende verfügbar sein, aber nicht für beide.';
 $string['backtosettings'] = 'Zurück zu den Moduleinstellungen';
 $string['clientid'] = 'Client-ID';
 $string['clientid_desc'] = 'Client-ID für den Zugriff auf CAMPUSonline';
@@ -63,6 +63,7 @@ $string['createcoursecatetories'] = 'Kursbereiche erstellen';
 $string['createcoursecatetories_desc'] = 'Erlaubt diesen Tasks, Kursbereiche zu erstellen, wenn sie nicht existieren.';
 $string['deletedcourse'] = 'Gelöschter Kurs (ID: {$a})';
 $string['donotsyncrole'] = '- Diese Rolle nicht synchronisieren -';
+$string['employees'] = 'Mitarbeiter';
 $string['endpoint'] = 'CAMPUSonline-Endpoint';
 $string['endpoint_desc'] = 'Adresse des CAMPUSonline OAuth2-Endpoints';
 $string['enrolmentsyncsettings'] = 'Kurs- und Teilnehmer Sync';
@@ -73,8 +74,9 @@ $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>Die Tasks sollten nachts laufen, da sie ziemlich lange dauern können</li>
     <li>Zusätzlich kann man einen <strong>einzelnen Kurs synchronisieren</strong>, indem man die Schaltfläche "Kurs mit CAMPUSonline synchronisieren" auf der Kurs-Teilnehmerseite betätigt (nur für Kurse verfügbar, die über CAMPUSonline erstellt wurden, und erfordert die Berechtigung enrol/campusonline:synccourse)</li></ul>';
 $string['enrolsynccreateusers'] = 'Benutzer erstellen';
-$string['enrolsynccreateusers_desc'] = 'Erlaubt diesen Tasks, Benutzer zu erstellen, die in Moodle nicht existieren oder nicht gefunden werden können. <strong>Aktivieren Sie dies nur, nachdem Sie sichergestellt haben, dass die Benutzeridentifikation korrekt funktioniert</strong>, andernfalls könnten viele doppelte Benutzer in Moodle entstehen!';
+$string['enrolsynccreateusers_desc'] = 'Erlaubt diesem Tasks, Benutzer zu erstellen, die in Moodle nicht existieren oder nicht gefunden werden können. <strong>Aktivieren Sie dies nur, nachdem Sie sichergestellt haben, dass die Benutzeridentifikation korrekt funktioniert</strong>, andernfalls könnten viele doppelte Benutzer in Moodle entstehen!';
 $string['error:cannotconnect'] = 'Keine Verbindung zum CAMPUSonline-Endpoint möglich. Fehler: {$a}';
+$string['error:config'] = 'Fehlende Verbindungseinstellungen!';
 $string['error:endpointmissing'] = 'Sie müssen in den Einstellungen einen gültigen Endpoint angeben.';
 $string['error:uidfieldnotfound'] = 'CAMPUSOnline-Benutzerprofilfeld nicht gefunden - installieren Sie das Plugin erneut oder erstellen Sie das/die Feld(er) manuell neu.';
 $string['error:unknown'] = 'Unbekannter Fehler.';
@@ -83,7 +85,7 @@ $string['errorsonly'] = 'Nur Fehler';
 $string['externalkey'] = 'Externer Schlüssel';
 $string['externalkey_desc'] = 'Falls für die Benutzeridentifikation erforderlich, können Sie eine <strong>externen System-UID</strong> von CAMPUSonline abrufen. Eine externe System-UID besteht aus dem Schlüssel des externen Systems (external_system_key) und der eindeutigen ID im externen System (external_key).';
 $string['externalsystemkey'] = 'Externer Systemschlüssel';
-$string['externalsystemkey_desc'] = 'Siehe oben - wenn beide Werte gesetzt sind, wird die externe System-UID zu den verfügbaren Token für Benutzer hinzugefügt und kann zur Identifikation verwendet werden.';
+$string['externalsystemkey_desc'] = 'Siehe oben - wenn beide Werte gesetzt sind, wird die externe System-UID zu den verfügbaren <strong>Token</strong> für Benutzer hinzugefügt und kann zur Identifikation verwendet werden.';
 $string['grouptocourse'] = 'Gruppe zu Kurs';
 $string['grouptocourse_desc'] = 'Komma-separierte Liste von elearningEventTypeKeys. Für diese E-Learning-Ereignistypen werden separate Moodle-Kurse für jede der Gruppen erstellt.';
 $string['grouptogroup'] = 'Gruppe zu Gruppe';
@@ -94,7 +96,7 @@ $string['groupsyncsettings_desc'] = '<ul>
     <li>CAMPUSonline-<strong>Gruppen</strong> können entweder in Moodle-Kursgruppen synchronisiert oder es können <strong>separate Kurse</strong> für jede Gruppe erstellt werden</li>
     <li>Wenn Sie keine Gruppen für einige E-Learning-Typen synchronisieren möchten, können Sie die Gruppenzuordnung nur für bestimmte Ereignistypen konfigurieren</li>
     </ul>';
-$string['initialpassword'] = 'Passwort';
+$string['initialpassword'] = 'Initialpasswort';
 $string['initialpassword_desc'] = 'Stellen Sie sicher, dass Sie ein Initialpasswort festlegen, das den Komplexitätsstandards entspricht, oder die Benutzererstellung schlägt fehl, <strong>selbst für Benutzer mit Authentifizierungsmethoden, die das Passwort nicht verwenden!</strong>';
 $string['lectureshiproles'] = 'Wählen Sie Moodle-Rollen für CAMPUSonline-Lehramtrollen aus.';
 $string['logduration'] = 'Logs aufbewahren für (Tage)';
@@ -114,6 +116,8 @@ $string['rolemappings_desc'] = 'Wählen Sie Moodle-Rollen für CAMPUSonline Roll
 $string['rolemappings_notconnected'] = 'Keine Verbindung zu CAMPUSOnline möglich. Überprüfen Sie Ihre Verbindungseinstellungen und laden Sie diese Seite neu, um Zuordnungen für CAMPUSonline-Rollen hinzuzufügen.';
 $string['rootcoursecategory'] = 'Oberster Kursbereich';
 $string['rootcoursecategory_desc'] = 'Kursbereich, in die Kurse synchronisiert werden. Wenn Sie "TOP" auswählen, benötigen Sie Regeln, um Unterkategorien zu erstellen, andernfalls schlägt die Synchronisation fehl.';
+$string['restcalls'] = 'Zeige jeden REST Call beim Ausführen der Tasks';
+$string['restcalls_desc'] = 'Zeigt Informationen über jeden REST Call beim Ausführen des Tasks an, schreibt aber nicht ins Logfile. Für Debugging.';
 $string['runtask'] = 'Task ausführen';
 $string['runtask_delta'] = 'Task für MODIFICATIONS Sync ausführen';
 $string['runtask_full'] = 'Task für FULL Sync ausführen';
@@ -147,6 +151,8 @@ $string['useridsettings_desc'] = '<ul>
     <li>Die in <strong>Benutzer Sync</strong> konfigurierten Werte für dieses Feld werden als Suchkriterien verwendet</li></ul>';
 $string['usermoodlefield'] = 'Benutzerdefiniertes Feld als Fallback für die Benutzeridentifikation';
 $string['usermoodlefield_desc'] = 'Wenn ein Benutzer auf keine andere Weise gefunden wird (siehe oben), wird dieses Feld verwendet, um den Benutzer in Moodle zu finden.';
+$string['usersynccreateusers'] = 'Benutzer erstellen';
+$string['usersynccreateusers_desc'] = 'Erlaubt dem User Sync Task, Benutzer zu erstellen, die in Moodle nicht existieren oder nicht gefunden werden können. <strong>Aktivieren Sie dies nur, nachdem Sie sichergestellt haben, dass die Benutzeridentifikation korrekt funktioniert</strong>, andernfalls könnten viele doppelte Benutzer in Moodle entstehen!';
 $string['usersyncsettings'] = 'Benutzer Sync';
 $string['usersyncsettings_desc'] = '<ul>
     <li>Dieser Task ist <strong>optional</strong> und sollte deaktiviert bleiben, wenn die Nutzerdaten bereits auf anderem Weg nach Moodle gesynct werden (z.B. SSO-Systeme)</li>

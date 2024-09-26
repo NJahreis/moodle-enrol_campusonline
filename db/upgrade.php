@@ -43,14 +43,6 @@ function xmldb_enrol_campusonline_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024091701, 'enrol', 'campusonline');
     }
 
-    // Create custom user profile fields.
-    if ($oldversion < 2024070906) {
-        $categoryid = create_custom_profile_field_category('enrol_campusonline', 'CAMPUSOnline');
-        create_custom_profile_field('campusonline_student_uid', 'Student UID', 'text', $categoryid);
-        create_custom_profile_field('campusonline_employee_uid', 'Employee UID', 'text', $categoryid);
-        upgrade_plugin_savepoint(true, 2024070906, 'enrol', 'campusonline');
-    }
-
     return true;
 }
 

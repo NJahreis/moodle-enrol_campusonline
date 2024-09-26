@@ -122,10 +122,10 @@ if ($ADMIN->fulltree) {
     ));
 
     // ----- Course category settings -----
-    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawcoursedata', 'limit' => 10));
+    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawcoursedata', 'limit' => 20));
     $buttons = html_writer::link($url, get_string('showrawcoursedata', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
-    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewcourses', 'limit' => 10));
+    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewcourses', 'limit' => 20));
     $buttons .= html_writer::link($url, get_string('previewcourses', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
     $settings->add(new admin_setting_heading(
@@ -342,10 +342,10 @@ if ($ADMIN->fulltree) {
         array('action' => 'edit', 'task' => 'enrol_campusonline\task\user_sync_task'));
     $buttons = html_writer::link($url, get_string('configuretask', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
-    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawuserdata', 'limit' => 10));
+    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawuserdata', 'limit' => 20));
     $buttons .= html_writer::link($url, get_string('showrawuserdata', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
-    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewusers', 'limit' => 10));
+    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewusers', 'limit' => 20));
     $buttons .= html_writer::link($url, get_string('previewusers', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
     $buttons .= '<br>';
@@ -409,8 +409,11 @@ if ($ADMIN->fulltree) {
     }
     // Custom fields.
     foreach ($customfields as $shortname => $fullname) {
+        if (array_key_exists("profile_field_$shortname", locallib::CO_USER_FIELDS)) {
+            continue;
+        }
         $settings->add(new admin_setting_configtext(
-            'enrol_campusonline/user_profilefield_' . $shortname,
+            'enrol_campusonline/user_profile_field_' . $shortname,
             $fullname,
             '',
             '',
@@ -418,6 +421,13 @@ if ($ADMIN->fulltree) {
             50
         ));
     }
+    // Create users.
+    $settings->add(new admin_setting_configcheckbox(
+        'enrol_campusonline/usersynccreateusers',
+        get_string('usersynccreateusers', 'enrol_campusonline'),
+        get_string('usersynccreateusers_desc', 'enrol_campusonline'),
+        1,
+    ));
 
     // ----- Log settings -----
     $url = new moodle_url('/enrol/campusonline/logs.php');
@@ -447,5 +457,12 @@ if ($ADMIN->fulltree) {
         '',
         7,
         PARAM_INT,
+    ));
+    // API info.
+    $settings->add(new admin_setting_configcheckbox(
+        'enrol_campusonline/restcalls',
+        get_string('restcalls', 'enrol_campusonline'),
+        get_string('restcalls_desc', 'enrol_campusonline'),
+        0,
     ));
 }
