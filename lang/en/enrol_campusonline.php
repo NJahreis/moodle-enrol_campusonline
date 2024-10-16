@@ -161,8 +161,6 @@ $string['useridsettings_desc'] = '<ul>
     <li>Once identified, the CAMPUSonline person UID will be set in the custom user profile field <strong>CAMPUSonline_person_uid</strong> (created upon plugin installation)</li></ul>';
 $string['usermoodlefield'] = 'Custom field as callback for user identification';
 $string['usermoodlefield_desc'] = 'If a user is not found via any other means (see above), this field will be used to find the user in Moodle.';
-$string['usersynccreateusers'] = 'Create users';
-$string['usersynccreateusers_desc'] = 'Allows the user sync task to create users that do not exist or cannot be found in Moodle. <strong>Only activate this after making sure that user identification works correctly</strong>, otherwise you might end up with a lot of duplicate users in Moodle!';
 $string['usersyncsettings'] = 'User sync & values';
 $string['usersyncsettings_desc'] = '<ul>
     <li>This sync task is <strong>optional</strong>, and should only be enabled if userdata is <strong>not already synced via other means</strong> (eg SSO systems)</li>

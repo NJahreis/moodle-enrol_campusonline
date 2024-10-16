@@ -472,13 +472,6 @@ if ($ADMIN->fulltree) {
             50
         ));
     }
-    // Create users.
-    $settings->add(new admin_setting_configcheckbox(
-        'enrol_campusonline/usersynccreateusers',
-        get_string('usersynccreateusers', 'enrol_campusonline'),
-        get_string('usersynccreateusers_desc', 'enrol_campusonline'),
-        1,
-    ));
     // Sync user data upon login.
     $settings->add(new admin_setting_configcheckbox(
         'enrol_campusonline/syncusersonlogin',

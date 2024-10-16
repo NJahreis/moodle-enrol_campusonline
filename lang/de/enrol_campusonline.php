@@ -163,8 +163,6 @@ $string['useridsettings_desc'] = '<ul>
     <li>Sobald ein Benutzer in CAMPUSonline gefunden wird, wird das Benutzerprofilfeld <strong>campusonline_person_uid</strong> mit der CAMPUSonline Person UID befüllt (dieses Feld wird bei der Plugin-Installation erstellt)</li></ul>';
 $string['usermoodlefield'] = 'Benutzerdefiniertes Feld als Fallback für die Benutzeridentifikation';
 $string['usermoodlefield_desc'] = 'Wenn ein Benutzer auf keine andere Weise gefunden wird (siehe oben), wird dieses Feld verwendet, um den Benutzer in Moodle zu finden.';
-$string['usersynccreateusers'] = 'Benutzer erstellen';
-$string['usersynccreateusers_desc'] = 'Erlaubt dem Benutzerdaten Sync Task, Benutzer zu erstellen, die in Moodle nicht existieren oder nicht gefunden werden können. <strong>Aktivieren Sie dies nur, nachdem Sie sichergestellt haben, dass die Benutzeridentifikation korrekt funktioniert</strong>, andernfalls könnten viele doppelte Benutzer in Moodle entstehen!';
 $string['usersyncsettings'] = 'Benutzerdaten Sync';
 $string['usersyncsettings_desc'] = '<ul>
     <li>Dieser Task ist <strong>optional</strong> und sollte deaktiviert bleiben, wenn die Nutzerdaten bereits auf anderem Weg nach Moodle gesynct werden (z.B. SSO-Systeme)</li>
