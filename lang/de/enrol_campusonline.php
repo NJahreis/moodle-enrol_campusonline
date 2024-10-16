@@ -158,8 +158,8 @@ $string['updateexistingcourses_desc'] = 'Erlaubt diesem Tasks, Namen oder Kursbe
 $string['usercount'] = 'Rohdaten für {$a} Benutzer:';
 $string['useridsettings'] = 'Identifikation bestehender Benutzer';
 $string['useridsettings_desc'] = '<ul>
-    <li>Falls Ihre Moodle-Benutzer <strong>nicht über CAMPUSonline-Sync</strong> erstellt wurden, müssen sie über andere Methoden identifiziert werden</li>
-    <li>Falls notwendig, können Sie zusätzliche <strong>externe IDs</strong> von CAMPUSonline abrufen, um Benutzer über diese Werte in Moodle zu finden</li>
+    <li>Dieser Sync Task verknüpft bestehende Moodle-Benutzer mit CAMPUSonline Personen. Standardmäßig wird dieser Task nicht geplant ausgeführt, und sollte nur manuell gestartet werden</li>
+    <li>Es wird der CAMPUSonline person-identifiers/mappings Endpoint benutzt, um die <strong>Person UID</strong>mittels einer beliebigen anderen ID zu ermitteln</li>
     <li>Sobald ein Benutzer in CAMPUSonline gefunden wird, wird das Benutzerprofilfeld <strong>campusonline_person_uid</strong> mit der CAMPUSonline Person UID befüllt (dieses Feld wird bei der Plugin-Installation erstellt)</li></ul>';
 $string['usermoodlefield'] = 'Benutzerdefiniertes Feld als Fallback für die Benutzeridentifikation';
 $string['usermoodlefield_desc'] = 'Wenn ein Benutzer auf keine andere Weise gefunden wird (siehe oben), wird dieses Feld verwendet, um den Benutzer in Moodle zu finden.';
