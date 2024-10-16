@@ -21,7 +21,6 @@
  * @copyright  2024, TU Graz
  * @author     think-modular (stefan.weber@think-modular.com)
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
- * @copyright  2024, Michael Lorenzoni
  */
 
 namespace enrol_campusonline;

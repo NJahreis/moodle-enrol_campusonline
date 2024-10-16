@@ -16,8 +16,9 @@
 /**
  * Privacy Subsystem implementation for enrol_database.
  *
- * @package    enrol_database
- * @copyright  2018 Carlos Escobedo <carlos@moodle.com>
+ * @package    enrol_campusonline
+ * @copyright  2024, TU Graz
+ * @author     think-modular (stefan.weber@think-modular.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace enrol_database\privacy;
