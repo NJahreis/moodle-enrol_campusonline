@@ -28,6 +28,16 @@ use enrol_campusonline\locallib;
 
 if ($ADMIN->fulltree) {
 
+    // Readme.
+    $url = new moodle_url('/enrol/campusonline/readme.php');
+    $link = html_writer::link($url, get_string('readme', 'enrol_campusonline'),
+    array('target' => '_blank'));
+    $settings->add(new admin_setting_heading(
+        'enrol_campusonline/readme',
+        '',
+        $link,
+    ));
+
     // ----- Connection settings -----
     $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'testconnection'));
     $button = html_writer::link($url, get_string('testconnection', 'enrol_campusonline'),
@@ -298,31 +308,57 @@ if ($ADMIN->fulltree) {
         50
     ));
 
-
     // ----- User id settings -----
+    $url = new moodle_url('/admin/tool/task/scheduledtasks.php',
+        array('action' => 'edit', 'task' => 'enrol_campusonline\task\user_id_task'));
+    $buttons = html_writer::link($url, get_string('configuretask', 'enrol_campusonline'),
+        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
+    $url = new moodle_url('/admin/tool/task/schedule_task.php',
+        array('action' => 'edit', 'task' => 'enrol_campusonline\task\user_id_task'));
+    $buttons .= html_writer::link($url, get_string('runtask', 'enrol_campusonline'),
+        array('target' => '_blank', 'class' => 'btn btn-primary m-1'));
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/useridsettings',
         get_string('useridsettings', 'enrol_campusonline'),
-        get_string('useridsettings_desc', 'enrol_campusonline'),
+        get_string('useridsettings_desc', 'enrol_campusonline') . $buttons,
     ));
-    // User identification - Moodle field.
-    $options = [0 => get_string('none')];
-    $customfields = locallib::getCustomUserFieldData(null);
+    // Source claim.
+    $options = ['CO_CLAIM_MATRICULATION_NUMBER' => 'MATRICULATION_NUMBER',
+                'CO_CLAIM_PERSON_UID' => 'PERSON_UID',
+                'CO_CLAIM_PERSON_INTERNAL_ID ' => 'PERSON_INTERNAL_ID',
+                'CO_CLAIM_EXT_IDENT_ID' => 'EXT_IDENT_ID',
+                'CO_CLAIM_STUDENT_INTERNAL_ID' => 'STUDENT_INTERNAL_ID',
+                'CO_CLAIM_EMPLOYEE_INTERNAL_ID ' => 'EMPLOYEE_INTERNAL_ID',
+                'CO_CLAIM_EXTPERS_INTERNAL_ID ' => 'EXTPERS_INTERNAL_ID',
+                'CO_CLAIM_USERNAME' => 'USERNAME',
+                'CO_CLAIM_EXTERNAL_SYSTEM_UID' => 'EXTERNAL_SYSTEM_UID'
+                ];
+    $settings->add(new admin_setting_configselect(
+        'enrol_campusonline/sourceclaim',
+        get_string('sourceclaim', 'enrol_campusonline'),
+        get_string('sourceclaim_desc', 'enrol_campusonline'),
+        'CO_CLAIM_PERSON_UID',
+        $options,
+    ));
+    // Source field.
+    $options = ['username' => get_string('username'),
+                'email' => get_string('email'),
+                'idnumber' => get_string('idnumber')];
     foreach ($customfields as $shortname => $fullname) {
-        $options[$shortname] = $fullname;
+        $options['profile_field_' . $shortname] = $fullname;
     }
     $settings->add(new admin_setting_configselect(
-        'enrol_campusonline/usermoodlefield',
-        get_string('usermoodlefield', 'enrol_campusonline'),
-        get_string('usermoodlefield_desc', 'enrol_campusonline'),
-        'email',
+        'enrol_campusonline/sourcefield',
+        get_string('sourcefield', 'enrol_campusonline'),
+        get_string('sourcefield_desc', 'enrol_campusonline'),
+        'idnumber',
         $options,
     ));
     // External key.
     $settings->add(new admin_setting_configtext(
         'enrol_campusonline/user_externalkey',
         get_string('externalkey', 'enrol_campusonline'),
-        get_string('externalkey_desc', 'enrol_campusonline'),
+        '',
         '',
         PARAM_TEXT,
         50
@@ -335,6 +371,21 @@ if ($ADMIN->fulltree) {
         '',
         PARAM_TEXT,
         50
+    ));
+    // Attempts.
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/idattempts',
+        get_string('idattempts', 'enrol_campusonline'),
+        get_string('idattempts_desc', 'enrol_campusonline'),
+        3,
+        PARAM_INT,
+    ));
+    // Auto-id new users.
+    $settings->add(new admin_setting_configcheckbox(
+        'enrol_campusonline/autoidnewusers',
+        get_string('autoidnewusers', 'enrol_campusonline'),
+        get_string('autoidnewusers_desc', 'enrol_campusonline'),
+        1,
     ));
 
     // ----- User sync settings -----
@@ -397,13 +448,13 @@ if ($ADMIN->fulltree) {
             50
         ));
 
-        // Allow email update.
-        if ($field == 'email') {
+        // Allow username/email update.
+        if ($field == 'username' || $field == 'email') {
             $settings->add(new admin_setting_configcheckbox(
-                'enrol_campusonline/user_allowemailupdate',
-                get_string('allowemailupdate', 'enrol_campusonline'),
-                get_string('allowemailupdate_desc', 'enrol_campusonline'),
-                1,
+                'enrol_campusonline/user_allow' . $field . 'update',
+                get_string('allow' . $field . 'update', 'enrol_campusonline'),
+                get_string('allow' . $field . 'update_desc', 'enrol_campusonline'),
+                ($field == 'username') ? 0 : 1,
             ));
         }
     }
@@ -426,6 +477,13 @@ if ($ADMIN->fulltree) {
         'enrol_campusonline/usersynccreateusers',
         get_string('usersynccreateusers', 'enrol_campusonline'),
         get_string('usersynccreateusers_desc', 'enrol_campusonline'),
+        1,
+    ));
+    // Sync user data upon login.
+    $settings->add(new admin_setting_configcheckbox(
+        'enrol_campusonline/syncusersonlogin',
+        get_string('syncusersonlogin', 'enrol_campusonline'),
+        get_string('syncusersonlogin_desc', 'enrol_campusonline'),
         1,
     ));
 

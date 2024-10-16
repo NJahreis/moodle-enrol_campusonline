@@ -15,18 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version metadata for the enrol_campusonline plugin.
+ * CAMPUSonline enrolment plugin.
  *
- * @package   enrol_campusonline
- * @copyright 2024, Lucas Reeh <lr86gm@gmail.com>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    enrol_campusonline
+ * @copyright  2024, TU Graz
+ * @author     think-modular (stefan.weber@think-modular.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2024101602;
-$plugin->requires = 2023100902;
-$plugin->component = 'enrol_campusonline';
-$plugin->release = '1.1.0';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->dependencies = [];
+$observers = [
+    [
+        'eventname'   => '\core\event\user_loggedin',
+        'callback'    => 'enrol_campusonline\observer\login_observer::event',
+    ],
+    [
+        'eventname' => '\core\event\user_created',
+        'callback' => 'enrol_campusonline\observer\user_created::event',
+    ]
+];

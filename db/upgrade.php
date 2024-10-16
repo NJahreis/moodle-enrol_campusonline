@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * CAMPUSOnline enrolment plugin.
+ * CAMPUSonline enrolment plugin.
  *
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
@@ -36,9 +36,27 @@ function xmldb_enrol_campusonline_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
+    // Create custom user profile field for identification retries.
+    if ($oldversion < 2024101601) {
+        $categoryid = create_custom_profile_field_category('enrol_campusonline', 'CAMPUSonline');
+        create_custom_profile_field('campusonline_id_attempts', 'Failed attempts to find this user in CAMPUSonline', 'text', $categoryid);
+        upgrade_plugin_savepoint(true, 2024101601, 'enrol', 'campusonline');
+    }
+
+    // Update attributes of personUID custom user profile field.
+    if ($oldversion < 2024101501) {
+        $field = $DB->get_record('user_info_field', ['shortname' => 'campusonline_person_uid']);
+        if ($field) {
+            $field->visible = 0;
+            $field->locked = 1;
+            $DB->update_record('user_info_field', $field);
+        }
+        upgrade_plugin_savepoint(true, 2024101501, 'enrol', 'campusonline');
+    }
+
     // Create new personUID custom user profile field.
     if ($oldversion < 2024091701) {
-        $categoryid = create_custom_profile_field_category('enrol_campusonline', 'CAMPUSOnline');
+        $categoryid = create_custom_profile_field_category('enrol_campusonline', 'CAMPUSonline');
         create_custom_profile_field('campusonline_person_uid', 'Person UID', 'text', $categoryid);
         upgrade_plugin_savepoint(true, 2024091701, 'enrol', 'campusonline');
     }
@@ -96,8 +114,8 @@ function create_custom_profile_field($shortname, $name, $datatype, $categoryid) 
     $data->categoryid = $categoryid;
     $data->sortorder = 1;
     $data->required = 0;
-    $data->locked = 0;
-    $data->visible = 1;
+    $data->locked = 1;
+    $data->visible = 0;
     $data->forceunique = 0;
     $data->signup = 0;
     $data->defaultdata = '';

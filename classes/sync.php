@@ -30,6 +30,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ConnectException;
 
+require_once($CFG->dirroot . '/user/lib.php');
+
 defined('MOODLE_INTERNAL') || die;
 
 class sync {
@@ -38,14 +40,14 @@ class sync {
     private $error;
     private $token;
     private $trace;
-    private $employee_uid_fieldid;
     private $externalkey;
     private $externalsystemkey;
     private $person_uid_fieldid;
+    private $attempts_fieldid;
     private $orgdata;
     private $semesterdata;
 
-    const GROUP_DESC = "Created by CAMPUSOnline";
+    const CREATED_BY = "Created by CAMPUSonline";
 
     /**
      * Constructor.
@@ -64,7 +66,8 @@ class sync {
         $this->externalsystemkey = $this->config->user_externalsystemkey;
 
         try {
-            $this->person_uid_fieldid = $DB->get_record('user_info_field', ['shortname' => 'campusonline_person_uid'])->id;
+            $this->person_uid_fieldid = $DB->get_field('user_info_field', 'id', ['shortname' => 'campusonline_person_uid']);
+            $this->attempts_fieldid = $DB->get_field('user_info_field', 'id', ['shortname' => 'campusonline_id_attempts']);
         } catch (Exception $e) {
             throw new moodle_exception('error:uidfieldnotfound', 'enrol_campusonline', '', $shortname);
         }
@@ -86,83 +89,6 @@ class sync {
     public function getError() {
         return $this->error;
     }
-
-/**
- * Calls REST API with pagination.
- *
- * @param string $endpoint The API endpoint to call.
- * @param array $query Query parameters to pass to the API.
- * @param string $method HTTP method (GET by default).
- * @param string $alwayspage Whether to always page through the API.
- *
- * @return object All collected items from paginated API responses.
- */
-private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage = false) {
-
-    // Set base URL and initialize the HTTP client.
-    $url = $this->config->endpoint . '/' . $endpoint;
-    $client = new Client([
-        'base_uri' => $url,
-        'timeout' => 10.0,
-        'connect_timeout' => 2.0,
-    ]);
-
-    $all_items = [];
-    $cursor = null;
-    if ($this->config->restcalls) {
-        $this->trace->output("        debug: fetching data from CAMPUSonline endpoint $endpoint");
-    }
-
-    do {
-
-        // Update the query with the cursor, if available.
-        if ($cursor !== null) {
-            $query['cursor'] = $cursor;
-            $this->updateToken();
-
-            if ($this->config->restcalls) {
-                $count = count($all_items);
-                $this->trace->output("        debug: paging to cursor $cursor, collected $count items so far");
-            }
-        }
-
-        // Make the API request.
-        $response = $client->request($method, $url, [
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . $this->token
-            ],
-            'query' => $query
-        ]);
-
-        // Decode the response.
-        $response_body = $response->getBody()->getContents();
-        $response_object = json_decode($response_body, false);
-
-        // Merge the current page's items with the collected items.
-        if (property_exists($response_object, 'items')) {
-            $all_items = array_merge($all_items, $response_object->items);
-        }
-
-        // Check if there is a next cursor for pagination.
-        if (property_exists($response_object, 'nextCursor')) {
-            $cursor = $response_object->nextCursor;
-        } else {
-            $cursor = null;
-        }
-
-        // Determine if we need to keep paging.
-        $page = !array_key_exists('limit', $_GET) || $alwayspage;
-
-    } while ($page && $cursor !== null);
-
-    // Return the complete collection of items.
-    return (object)[
-        'items' => $all_items
-    ];
-}
-
 
     /**
      * Gets a category for a course.
@@ -192,9 +118,8 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
                 if ($this->config->createcoursecatetories == 0) {
 
                     // Log error.
-                    $message = "ERROR: could not find Moodle course category $name and not allowed to create new categories. Create the category manually, or configure CAMPUSOnline to be able to create new categories.";
-                    $this->trace->output("   - $message");
-                    locallib::writeLog('create_category', $message, 2);
+                    $message = "ERROR: could not find Moodle course category $name and not allowed to create new categories. Create the category manually, or configure CAMPUSonline to be able to create new categories.";
+                    locallib::writeLog('create_category', $message, 2, null, $this->trace, 3);
 
                     return false;
 
@@ -202,14 +127,13 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
 
                     // Log creation.
                     $message = "Created new Moodle course category $name.";
-                    $this->trace->output("   - $message");
-                    locallib::writeLog('create_category', $message, 0);
+                    locallib::writeLog('create_category', $message, 0, $this->trace, 3);
 
                     // Create new category.
                     $categorydata = new \stdClass();
                     $categorydata->name = $name;
                     $categorydata->parent = $categoryid;
-                    $categorydata->description = self::GROUP_DESC;
+                    $categorydata->description = self::CREATED_BY;
                     $category = \core_course_category::create($categorydata);
                     $categoryid = $category->id;
                 }
@@ -340,14 +264,14 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
     }
 
     /**
-     * Gets the Moodle User ID of a CAMPUSOnline user via its uid or email.
+     * Gets the Moodle User ID of a CAMPUSonline user via its uid.
      *
      * @param string $uid
-     * @param array $userdata
+     * @param bool $log
      *
      * @return int $userid
      */
-    public function getMoodleUserId($uid, $userdata = null) {
+    public function getMoodleUserId($uid, $log = true) {
 
         global $DB;
         $userid = null;
@@ -361,79 +285,24 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
             return $record->userid;
         }
 
-        // Get full person data from CAMPUSOnline if needed.
-        if (!$userdata) {
-            $userdata = $this->getPersonData($uid);
-        }
-
-        // Get external keys if configured. TODO: check if this works with real data.
-        if ($this->externalkey && $this->externalsystemkey) {
-            $externalkeys = $this->getPersonExternalKey($uid);
-            $userdata = array_merge($userdata, $externalkeys);
-        }
-
-        // Try to find user via fallback identifiers.
-        $fields = locallib::USER_ID_FIELDS_IGNORE;
-        $fields = array_diff($fields, ['id']);
-
-        foreach ($fields as $field) {
-            $fieldname = "user_$field";
-            $valueconfig = $this->config->$fieldname;
-
-            if ($field && $valueconfig) {
-                $value = locallib::getFieldValue("user_$field", $userdata);
-
-                if ($user = $DB->get_record('user', [$field => $value])) {
-                    $userid = $user->id;
-                }
-            }
-        }
-
-        // Fallback profile field value.
-        if (!$userid) {
-            if ($field = $this->config->usermoodlefield) {
-                $value = locallib::getFieldValue("user_profile_field_$field", $userdata);
-
-                // Find user via profile field value.
-                $fieldid = $DB->get_record('user_info_field', ['shortname' => $field])->id;
-                $sql = "SELECT * FROM {user_info_data} WHERE fieldid = ? AND data = ?";
-                $params = array('fieldid' => $fieldid, 'data' => $value);
-                if ($records = $DB->get_records_sql($sql, $params)) {
-                    $record = reset($records);
-                    $userid = $record->userid;
-                }
-            }
-        }
-
-
-        if ($userid) {
-            // Log success.
-            $message = "Found Moodle user $userid for CAMPUSOnline person $uid via the value for field $field. UIDs will be updated in Moodle.";
-            $this->trace->output("   - $message");
-            locallib::writeLog('get_user', $message, 0);
-
-            // Set UID.
-            locallib::setCustomUserFields($user, $userdata, true);
-
-            return $userid;
-        }
-
         // Log warning.
-        $message = "WARNING: could not find Moodle user for CAMPUSOnline person $uid.";
-        $this->trace->output("   - $message");
-        locallib::writeLog('get_user', $message, 1);
+        if ($log) {
+            $message = "WARNING: could not find Moodle user for CAMPUSonline person $uid. Try running the user identification task first.";
+            locallib::writeLog('get_user', $message, 1, null, $this->trace, 3);
+        }
 
         return null;
     }
 
     /**
-     * Gets additional person data from CAMPUSOnline.
+     * Gets additional person data from CAMPUSonline.
      *
      * @param string $uid
+     * @param bool $log
      *
      * @return array $persondata
      */
-    public function getPersonData($uid) {
+    public function getPersonData($uid, $log = true) {
 
         $endpoint = "co-brm-core/pers/api/personal-claims";
         $query = [
@@ -445,9 +314,10 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
 
         // Log error.
         if (!property_exists($result, 'items') || empty($result->items)) {
-            $message = "WARNING: could not get full person data for CAMPUSonline user $uid.";
-            $this->trace->output("   - $message");
-            locallib::writeLog('get_user_data', $message, 1);
+            if ($log) {
+                $message = "WARNING: could not get full person data for CAMPUSonline user $uid.";
+                locallib::writeLog('get_user_data', $message, 1, null, $this->trace, 3);
+            }
             return array();
         } else {
             $persondata = (array)$result->items[0];
@@ -482,13 +352,13 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
     }
 
     /**
-     * Gets persons from CAMPUSonline for preview.
+     * Gets persons from CAMPUSonline.
      *
      * @param int $limit
      *
      * @return array $persons
      */
-    public function getPersons($limit = null) {
+    public function getPersons($limit = null, $person_uids = null) {
 
         // Get employees.
         $endpoint = "co-brm-core/pers/api/personal-claims";
@@ -496,6 +366,10 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
             'claim' => 'CO_CLAIM_ALL',
             'limit' => $limit,
         ];
+
+        if ($person_uids) {
+            $query['person_uid'] = implode(',', $person_uids);
+        }
 
         $result = $this->restCall($endpoint, $query);
 
@@ -511,6 +385,153 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
         }
 
         return $persons;
+    }
+
+    /**
+     * Maps CAMPUSonline persons to existing Moodle users and updates their person UID.
+     *
+     * @param array $users
+     *
+     */
+    public function identifyMoodleUsers($users) {
+
+        global $CFG, $DB;
+
+        require_once($CFG->dirroot . '/user/profile/lib.php');
+
+        $sourcefield = $this->config->sourcefield;
+        $sourceclaim = $this->config->sourceclaim;
+        $max_attempts = (int) $this->config->idattempts;
+        if (str_contains($sourcefield, 'profile_field_')) {
+            $sourcefield = str_replace('profile_field_', '', $sourcefield);
+            $profilefield = true;
+        } else {
+            $profilefield = false;
+        }
+
+        $total = count($users);
+        $skipped = 0;
+        foreach ($users as $key => $user) {
+
+            // Skip users that already have a Person UID.
+            if (locallib::getPersonUid($user->id)) {
+                unset($users[$key]);
+                $skipped++;
+            }
+        }
+
+        $number = count($users);
+        if (PHP_SAPI == 'cli') {
+            $this->trace->output("Identifying $number or $total Moodle users ($skipped already have a CAMPUSonline person UID set...)");
+        }
+
+        foreach ($users as $user) {
+
+            $userid = $user->id;
+            if (PHP_SAPI == 'cli') {
+                $this->trace->output(" - Identifying Moodle user $userid");
+            }
+            profile_load_custom_fields($user);
+
+            // Skip users that have reached the maximum attempts.
+            $attempt = (int) $user->profile['campusonline_id_attempts'];
+            if ($attempt >= $max_attempts) {
+                if (PHP_SAPI == 'cli') {
+                    $this->trace->output("   - Maximum attempts reached for Moodle user $userid. Skipping user.");
+                }
+                continue;
+            }
+
+            // Get uid value.
+            $uid = null;
+            if ($profilefield) {
+                if (property_exists($user, 'profile')) {
+                    if (array_key_exists($sourcefield, $user->profile)) {
+                        $uid = $user->profile[$sourcefield];
+                    }
+                }
+            } else {
+                $uid = $user->$sourcefield;
+            }
+
+            // Skip users that do not have an uid value.
+            if (!$uid) {
+
+                // Update attempts.
+                $user->profile_field_campusonline_id_attempts = $attempt + 1;
+                $result = profile_save_data($user);
+
+                // Log.
+                $message = "Could not find value for field $sourcefield in Moodle user $userid on attempt $attempt.";
+                locallib::writeLog('identify_user', $message, 0, null, $this->trace, 3);
+                continue;
+            }
+
+            // Skip users that have a uid that is already set to another Moodle user.
+            if ($moodle_user_id = $this->getMoodleUserId($uid, false)) {
+                $message = "WARNING: CAMPUSonline person $uid is already mapped to Moodle user $moodle_user_id. Skipping user $userid.";
+                locallib::writeLog('identify_user', $message, 1, null, $this->trace, 3);
+                continue;
+            }
+
+            // If source claim equals target claim, that means we already have the Person UID, and can try fetching the person to see if it is valid.
+            if ($this->config->sourceclaim == 'CO_CLAIM_PERSON_UID') {
+                if($this->getPersonData($uid, false)) {
+
+                    // Save Person UID to user profile.
+                    $user->profile_field_campusonline_person_uid = $uid;
+                    profile_save_data($user);
+
+                    // Log success.
+                    $message = "Moodle user $userid successfully mapped to CAMPUSonline person $uid.";
+                    locallib::writeLog('identify_user', $message, 0, null, $this->trace, 3);
+                    continue;
+                }
+
+            } else {
+
+                // Fetch Person UID using the source claim.
+                $endpoint = 'co-brm-core/pers/api/person-identifiers/mappings';
+                $query = [
+                    'target_claim' => 'CO_CLAIM_PERSON_UID',
+                    'source_claim' => $sourceclaim,
+                    'uid' => $uid
+                ];
+                if ($this->config->sourceclaim == 'CO_CLAIM_EXTERNAL_SYSTEM') {
+                    $query['external_key'] = $this->config->externalkey;
+                    $query['external_system_key'] = $this->config->externalsystemkey;
+                }
+                $result = $this->restCall($endpoint, $query);
+
+                // Analyze response.
+                if (property_exists($result, 'mappings')) {
+
+                    $mapping = $result->mappings;
+                    if (property_exists($mapping, $uid)) {
+                        $person_uid = $mapping->$uid;
+
+                        // Save Person UID to user profile.
+                        $user->profile_field_campusonline_person_uid = $person_uid;
+                        profile_save_data($user);
+
+                        // Log success.
+                        $message = "Moodle user $userid successfully mapped to CAMPUSonline person $person_uid via $sourceclaim = $uid.";
+                        locallib::writeLog('identify_user', $message, 0, null, $this->trace, 3);
+                        continue;
+                    }
+                }
+            }
+
+            // Update attempts.
+            $user->profile_field_campusonline_id_attempts = $attempt + 1;
+            $result = profile_save_data($user);
+
+            // Log.
+            $message = "Could not find CAMPUSonline person $uid for Moodle user $userid on attempt $attempt.";
+            locallib::writeLog('identify_user', $message, 0, null, $this->trace, 3);
+            continue;
+
+        }
     }
 
     /**
@@ -586,13 +607,17 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
 
         // Start output.
         $number = count($courses);
-        $this->trace->output("Syncing $number courses ...");
+        if (PHP_SAPI == 'cli') {
+            $this->trace->output("Syncing $number courses ...");
+        }
 
         // Sync courses.
         foreach ($courses as $coursedata) {
 
             $course_uid = $coursedata['course:uid'];
-            $this->trace->output(" - Syncing CAMPUSonline course $course_uid");
+            if (PHP_SAPI == 'cli') {
+                $this->trace->output(" - Syncing CAMPUSonline course $course_uid");
+            }
 
             // Check if we need to make separate courses for each group.
             $separatecourses = false;
@@ -641,29 +666,25 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
                         // Add custom fields.
                         locallib::setCustomCourseFields($courseid, $coursedata);
 
-                        // Write back URL to CAMPUSonline.
-                        $this->setMoodleCourseUrl($course, $group_uid);
-
                         // Log success.
                         if ($separatecourses) {
+                            $this->setMoodleCourseUrl($course, $group_uid);
                             $message = "Created Moodle course $courseid for CAMPUSonline course $course_uid group $group_uid.";
                         } else {
+                            $this->setMoodleCourseUrl($course);
                             $message = "Created Moodle course $courseid for CAMPUSonline course $course_uid.";
                         }
-
-                        $this->trace->output("   - $message");
-                        locallib::writeLog('create_course', $message, 0, $courseid);
+                        locallib::writeLog('create_course', $message, 0, $courseid, $this->trace, 3);
 
                     } else {
 
                         // Log error.
-                        if ($$separatecourses) {
+                        if ($separatecourses) {
                             $message = "ERROR: could not create Moodle course for CAMPUSonline course $course_uid group $group.";
                         } else {
                             $message = "ERROR: could not create Moodle course for CAMPUSonline course $course_uid.";
                         }
-                        $this->trace->output("   - $message");
-                        locallib::writeLog('create_course', $message, 2);
+                        locallib::writeLog('create_course', $message, 2, null, $this->trace, 3);
                     }
 
                     // Add our enrolment method.
@@ -675,7 +696,11 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
 
                     // Update course URL in CAMPUSonline.
                     if ($updatecourseurls == 1) {
-                        $this->setMoodleCourseUrl($course, $group_uid);
+                        if ($separatecourses) {
+                            $this->setMoodleCourseUrl($course, $group_uid);
+                        } else {
+                            $this->setMoodleCourseUrl($course);
+                        }
                     }
 
                     // Skip.
@@ -705,8 +730,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
                         } else {
                             $message = "Updated Moodle course settings for $courseid with data from CAMPUSonline course $course_uid.";
                         }
-                        $this->trace->output("   - $message");
-                        locallib::writeLog('update_course', $message, 0, $courseid);
+                        locallib::writeLog('update_course', $message, 0, $courseid, $this->trace, 3);
                     }
                 }
 
@@ -772,16 +796,14 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
             $course->defaultgroupingid = $grouping_id;
             $DB->update_record('course', $course);
             $message = "Created grouping for CAMPUSonline groups in course $courseid";
-            $this->trace->output("   - $message");
-            locallib::writeLog('sync_groups', $message, 0, $courseid);
+            locallib::writeLog('sync_groups', $message, 0, $courseid, $this->trace, 3);
             return;
         }
 
         // Check if enrolment method is active.
         if (!$enrol = $DB->get_record('enrol', ['courseid' => $courseid, 'enrol' => 'campusonline', 'status' => 0])) {
             $message = "WARNING: skipping enrolments for Moodle course $courseid - enrolment method has been deactivated.";
-            $this->trace->output("   - $message");
-            locallib::writeLog('enrol_user', $message, 1, $courseid);
+            locallib::writeLog('enrol_user', $message, 1, $courseid, $this->trace, 3);
             return;
         }
 
@@ -845,8 +867,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
 
                     // Log warning.
                     $message = "WARNING: skipping enrolment for CAMPUSonline user $uid - user does not exist in Moodle.";
-                    $this->trace->output("   - $message");
-                    locallib::writeLog('enrol_user', $message, 1, $courseid);
+                    locallib::writeLog('enrol_user', $message, 1, $courseid, $this->trace, 3);
                     continue;
                 }
             }
@@ -869,8 +890,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
 
                 // Log success.
                 $message = "Enrolled Moodle user $userid in Moodle course $courseid.";
-                $this->trace->output("   - $message");
-                locallib::writeLog('enrol_user', $message, 0, $courseid);
+                locallib::writeLog('enrol_user', $message, 0, $courseid, $this->trace, 3);
 
             // Activate enrolment if needed.
             } else {
@@ -882,8 +902,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
 
                     // Log success.
                     $message = "Activated enrolment for Moodle user $userid in Moodle course $courseid.";
-                    $this->trace->output("   - $message");
-                    locallib::writeLog('enrol_user', $message, 0, $courseid);
+                    locallib::writeLog('enrol_user', $message, 0, $courseid, $this->trace, 3);
                 }
             }
 
@@ -891,8 +910,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
             if (!user_has_role_assignment($userid, $roleid, $context->id)) {
                 $success = role_assign($roleid, $userid, $context->id);
                 $message = "Assigned role $roleid to Moodle user $userid in Moodle course $courseid.";
-                $this->trace->output("   - $message");
-                locallib::writeLog('enrol_user', $message, 0, $courseid);
+                locallib::writeLog('enrol_user', $message, 0, $courseid, $this->trace, 3);
             }
 
             // Add to assigned roles for later cleanup.
@@ -923,8 +941,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
                 if (!array_key_exists($userid, $assigned_roles) || !in_array($role->roleid, $assigned_roles[$userid])) {
                     $success = role_unassign($role->roleid, $userid, $context->id);
                     $message = "Removed role $role->roleid from Moodle user $userid in Moodle course $courseid.";
-                    $this->trace->output("   - $message");
-                    locallib::writeLog('enrol_user', $message, 0, $courseid);
+                    locallib::writeLog('enrol_user', $message, 0, $courseid, $this->trace, 3);
                 }
             }
 
@@ -935,8 +952,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
                 $enrolment->status = 1;
                 $DB->update_record('user_enrolments', $enrolment);
                 $message = "Suspended enrolment for Moodle user $userid in Moodle course $courseid.";
-                $this->trace->output("   - $message");
-                locallib::writeLog('enrol_user', $message, 0, $courseid);
+                locallib::writeLog('enrol_user', $message, 0, $courseid, $this->trace, 3);
             }
         }
 
@@ -954,7 +970,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
                 $group->courseid = $courseid;
                 $group->name = $groups[$group_uid];
                 $group->idnumber = $group_uid;
-                $group->description = self::GROUP_DESC;
+                $group->description = self::CREATED_BY;
                 $group->timecreated = time();
                 $group->timemodified = time();
                 $groupid = groups_create_group($group);
@@ -969,8 +985,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
                 }
 
                 $message = "Created Moodle group $group->name for CAMPUSonline group $group_uid.";
-                $this->trace->output("   - $message");
-                locallib::writeLog('sync_groups', $message, 0, $courseid);
+                locallib::writeLog('sync_groups', $message, 0, $courseid, $this->trace, 3);
             }
 
             // Add to array with moodle group ids for later cleanup.
@@ -981,8 +996,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
                 if (!groups_is_member($groupid, $userid)) {
                     groups_add_member($groupid, $userid);
                     $message = "Added user $userid to Moodle group $group->name.";
-                    $this->trace->output("   - $message");
-                    locallib::writeLog('sync_groups', $message, 0, $courseid);
+                    locallib::writeLog('sync_groups', $message, 0, $courseid, $this->trace, 3);
                 }
             }
         }
@@ -997,8 +1011,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
                 if (!array_key_exists($groupid, $group_members_moodle) || !in_array($member->id, $group_members_moodle[$groupid])) {
                     groups_remove_member($groupid, $member->id);
                     $message = "Removed user $member->id from Moodle group $group->name.";
-                    $this->trace->output("   - $message");
-                    locallib::writeLog('sync_groups', $message, 0, $courseid);
+                    locallib::writeLog('sync_groups', $message, 0, $courseid, $this->trace, 3);
                 }
             }
         }
@@ -1018,7 +1031,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
 
             // Get Moodle user.
             $uid = $person['uid'];
-            $userid = $this->getMoodleUserId($uid, $person);
+            $userid = $this->getMoodleUserId($uid);
 
             // Create new user if needed & allowed.
             if (!$userid) {
@@ -1032,50 +1045,65 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
 
                     // Log warning.
                     $message = "WARNING: skipped syncing user data for CAMPUSonline user $uid - user does not exist in Moodle.";
-                    $this->trace->output("   - $message");
-                    locallib::writeLog('sync_user', $message, 1, $courseid);
+                    locallib::writeLog('sync_user', $message, 1, $courseid, $this->trace, 3);
                     continue;
                 }
             }
 
             // Load Moodle User.
             $user = \core_user::get_user($userid);
+            $this->updateMoodleUser($user, $person);
+        }
+    }
 
-            // Update user data.
-            $needsupdate = false;
-            foreach (locallib::USER_FIELDS as $field => $default) {
+    /**
+     * Updates a single Moodle users's data.
+     *
+     * @param object $user
+     * @param array $person
+     *
+     * @return void
+     */
+    public function updateMoodleUser($user, $person) {
 
-                // Only update email if allowed.
-                if ($field == 'email' && !$this->config->user_allowemailupdate) {
-                    continue;
-                }
+        $uid = $person['uid'];
+        $needsupdate = false;
+        foreach (locallib::USER_FIELDS as $field => $default) {
 
-                $value = locallib::getFieldValue("user_$field", $person);
-
-                // Sanitize usernames.
-                if ($field == 'username') {
-                    $value = strtolower($value);
-                }
-
-                if ($user->$field != $value) {
-                    $user->$field = $value;
-                    $needsupdate = true;
-                }
+            // Only update username if allowed.
+            if ($field == 'username' && !$this->config->user_allowusernameupdate) {
+                continue;
             }
 
-            if ($needsupdate) {
-                user_update_user($user, false);
+            // Only update email if allowed.
+            if ($field == 'email' && !$this->config->user_allowemailupdate) {
+                continue;
             }
 
-            // Load profile data into user object.
-            $needsupdatep = locallib::setCustomUserFields($user, $person);
+            $value = locallib::getFieldValue("user_$field", $person);
 
-            // Log update.
-            if ($needsupdate || $needsupdatep) {
-                $message = "Updated Moodle user $userid with data from CAMPUSonline user $uid.";
-                $this->trace->output("   - $message");
-                locallib::writeLog('sync_user', $message, 0, null);
+            // Sanitize usernames.
+            if ($field == 'username') {
+                $value = strtolower($value);
             }
+
+            if ($user->$field != $value) {
+                $user->$field = $value;
+                $needsupdate = true;
+            }
+        }
+
+        if ($needsupdate) {
+            user_update_user($user, false);
+        }
+
+        // Load profile data into user object.
+        $needsupdatep = locallib::setCustomUserFields($user, $person);
+
+        // Log update.
+        if ($needsupdate || $needsupdatep) {
+            $message = "Updated Moodle user $user->id with data from CAMPUSonline user $uid.";
+            locallib::writeLog('sync_user', $message, 0, null, $this->trace, 3);
         }
     }
 
@@ -1090,7 +1118,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
 
         global $CFG;
 
-        // Get full person data from CAMPUSOnline.
+        // Get full person data from CAMPUSonline.
         $userdata = $this->getPersonData($uid);
 
         // Build user.
@@ -1113,8 +1141,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
         foreach (locallib::USER_FIELDS_NOEMPTY as $check) {
             if ($user->$check == '') {
                 $message = "ERROR: could not create Moodle user for CAMPUSonline user $uid - required field $check is empty.";
-                $this->trace->output("   - $message");
-                locallib::writeLog('create_user', $message, 2);
+                locallib::writeLog('create_user', $message, 2, null, $this->trace, 3);
                 return null;
             }
         }
@@ -1132,9 +1159,7 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
         // Update custom fields.
         $user = \core_user::get_user($userid);
         locallib::setCustomUserFields($user, $userdata);
-
-        $this->trace->output("   - $message");
-        locallib::writeLog('create_user', $message, $status);
+        locallib::writeLog('create_user', $message, $status, null, $this->trace, 3);
         return $userid;
     }
 
@@ -1251,12 +1276,108 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
     }
 
     /**
+     * Calls REST API with pagination.
+     *
+     * @param string $endpoint The API endpoint to call.
+     * @param array $query Query parameters to pass to the API.
+     * @param string $method HTTP method (GET by default).
+     * @param string $alwayspage Whether to always page through the API.
+     *
+     * @return object All collected items from paginated API responses.
+     */
+    private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage = false) {
+
+        // Set base URL and initialize the HTTP client.
+        $url = $this->config->endpoint . '/' . $endpoint;
+        $client = new Client([
+            'base_uri' => $url,
+            'timeout' => 10.0,
+            'connect_timeout' => 2.0,
+        ]);
+
+        // Set payload key.
+        if ($method == 'GET') {
+            $payload = 'query';
+        } else {
+            $payload = 'json';
+        }
+
+        $all_items = [];
+        $cursor = null;
+
+        // Debug message.
+        if ($this->config->restcalls && PHP_SAPI === 'cli') {
+            if ($query) {
+                $json_query = json_encode($query);
+            } else {
+                $json_query = '';
+            }
+            $this->trace->output("        $method CAMPUSonline endpoint $endpoint data $json_query");
+        }
+
+        do {
+
+            // Update the query with the cursor, if available.
+            if ($cursor !== null) {
+                $query['cursor'] = $cursor;
+                $this->updateToken();
+
+                // Debug message.
+                if ($this->config->restcalls && PHP_SAPI === 'cli') {
+                    $count = count($all_items);
+                    $this->trace->output("            paging to cursor $cursor, collected $count items so far");
+                }
+            }
+
+            // Make the API request.
+            $response = $client->request($method, $url, [
+                'headers' => [
+                    'accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $this->token
+                ],
+                $payload => $query
+            ]);
+
+            // Decode the response.
+            $response_body = $response->getBody()->getContents();
+            $response_object = json_decode($response_body, false);
+
+            // Merge the current page's items with the collected items.
+            if (property_exists($response_object, 'items')) {
+                $all_items = array_merge($all_items, $response_object->items);
+            }
+
+            // Check if there is a next cursor for pagination.
+            if (property_exists($response_object, 'nextCursor')) {
+                $cursor = $response_object->nextCursor;
+            } else {
+                $cursor = null;
+            }
+
+            // Determine if we need to keep paging.
+            $page = !array_key_exists('limit', $_GET) || $alwayspage;
+
+        } while ($page && $cursor !== null);
+
+        // Return the complete collection of items.
+        if ($all_items) {
+            return (object)[
+                'items' => $all_items
+            ];
+        }
+        return ($response_object);
+    }
+
+    /**
      * Sets the moodle course URL in CAMPUSonline.
      *
      * @param object $course
+     * @param string $group_uid
+     *
      * @return void
      */
-    private function setMoodleCourseUrl($course) {
+    private function setMoodleCourseUrl($course, $group_uid = null) {
 
         $course_uid = explode(':', $course->idnumber)[0];
         $endpoint = 'co-tm-core/course/api/e-learning-infos';
@@ -1264,25 +1385,29 @@ private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage
         $url = $moodle_url->__toString();
         $query = [
             'courseUid' => $course_uid,
-            'courseGroupUid' => $group_uid,
             'externalUrl' => $url,
         ];
+        if ($group_uid) {
+            $query['courseGroupUid'] = $group_uid;
+        }
 
         // Log success.
         if ($result = $this->restCall($endpoint, $query, 'POST')) {
             if (property_exists($result, 'externalUrl')) {
                 $url = $result->externalUrl;
                 $message = "Updated CAMPUSonline course $course->idnumber with Moodle course URL $url.";
-                $this->trace->output("   - $message");
-                locallib::writeLog('update_course', $message, 0, $course->id);
+                locallib::writeLog('update_course', $message, 0, $course->id, $this->trace, 3);
                 return;
             }
         }
 
+        echo "<pre>";
+        var_dump($result);
+        die();
+
         // Error.
         $message = "ERROR: could not update CAMPUSonline course $course->idnumber with Moodle course URL.";
-        $this->trace->output("   - $message");
-        locallib::writeLog('update_course', $message, 2, $course->id);
+        locallib::writeLog('update_course', $message, 2, $course->id, $this->trace, 3);
     }
 
     /**

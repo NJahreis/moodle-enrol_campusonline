@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * CAMPUSOnline enrolment plugin.
+ * CAMPUSonline enrolment plugin.
  *
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
@@ -41,6 +41,16 @@ $tasks = array(
         'blocking'  => 0,
         'minute'    => '*',
         'hour'      => '*',
+        'day'       => '*',
+        'dayofweek' => '*',
+        'month'     => '*',
+        'disabled'  => true,
+    ),
+    array(
+        'classname' => '\\enrol_campusonline\\task\\user_id_task',
+        'blocking'  => 0,
+        'minute'    => '*',
+        'hour'      => '3',
         'day'       => '*',
         'dayofweek' => '*',
         'month'     => '*',

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Class user_sync_task
+ * CAMPUSonline enrolment plugin.
  *
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
@@ -23,31 +23,36 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace enrol_campusonline\task;
+namespace enrol_campusonline\observer;
 
-defined('MOODLE_INTERNAL') || die;
+defined('MOODLE_INTERNAL') || die();
 
 use enrol_campusonline\sync;
 use enrol_campusonline\locallib;
 
-class user_sync_task extends \core\task\scheduled_task {
+class login_observer {
 
     /**
-     * Task name.
+     * Triggered when a user logs in.
+     *
+     * @param object $event
      */
-    public function get_name() {
-        return get_string('task:user_sync', 'enrol_campusonline');
-    }
-
-    /**
-     * Executes the task.
-     */
-    public function execute() {
+    public static function event($event) {
         global $DB;
 
-        // We may need a lot of memory here.
-        \core_php_time_limit::raise();
-        raise_memory_limit(MEMORY_HUGE);
+        if (get_config('enrol_campusonline', 'syncusersonlogin') == 0) {
+            return;
+        }
+
+        // Get user.
+        $userid = $event->__get('objectid');
+        $user = \core_user::get_user($userid);
+
+        // Get person UID.
+        if (!$person_uid = locallib::getPersonUid($userid)) {
+            return;
+        }
+        $person_uids = [$person_uid];
 
         // Initialize sync.
         $trace = new \text_progress_trace();
@@ -55,15 +60,18 @@ class user_sync_task extends \core\task\scheduled_task {
 
         if ($sync->isConnected()) {
 
-            // Sync users.
-            $sync->syncUsers($trace);
+            // Sync user.
+            $persons = $sync->getPersons(5, $person_uids);
+            $person = reset($persons);
+            $sync->updateMoodleUser($user, $person);
 
         } else {
 
             // Log error.
             $message = 'ERROR: could not connect to CAMPUSonline. Check your connection settings.';
-            $trace->output($message);
             locallib::writeLog('connect', $message, 2);
         }
+
     }
 }
+

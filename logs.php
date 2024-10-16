@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * CAMPUSOnline enrolment plugin.
+ * CAMPUSonline enrolment plugin.
  *
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz

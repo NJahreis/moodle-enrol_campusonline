@@ -30,24 +30,35 @@ defined('MOODLE_INTERNAL') || die;
 use enrol_campusonline\sync;
 use enrol_campusonline\locallib;
 
-class user_sync_task extends \core\task\scheduled_task {
+class user_id_task extends \core\task\scheduled_task {
 
     /**
      * Task name.
      */
     public function get_name() {
-        return get_string('task:user_sync', 'enrol_campusonline');
+        return get_string('task:user_id', 'enrol_campusonline');
     }
 
     /**
      * Executes the task.
      */
     public function execute() {
-        global $DB;
+        global $CFG, $DB;
 
         // We may need a lot of memory here.
         \core_php_time_limit::raise();
         raise_memory_limit(MEMORY_HUGE);
+
+        // Fetch all users who are not deleted, not suspended, and not the guest user.
+        $sql = "SELECT id, username, idnumber, email
+        FROM {user}
+        WHERE deleted = 0
+        AND suspended = 0
+        AND id != :guestuserid";
+
+        // Execute the query and exclude the guest user.
+        $params = ['guestuserid' => $CFG->siteguest];
+        $users = $DB->get_records_sql($sql, $params);
 
         // Initialize sync.
         $trace = new \text_progress_trace();
@@ -55,8 +66,8 @@ class user_sync_task extends \core\task\scheduled_task {
 
         if ($sync->isConnected()) {
 
-            // Sync users.
-            $sync->syncUsers($trace);
+            // Identify user.
+            $sync->identifyMoodleUsers($users);
 
         } else {
 

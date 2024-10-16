@@ -51,10 +51,10 @@ class locallib {
 
     // User fields available for mapping and their default value.
     public const USER_FIELDS = ['username' => 'co_{uid}',
+                                'email' => '{email}',
                                 'idnumber' => '{uid}',
                                 'firstname' => '{givenName}',
                                 'lastname' => '{surname}',
-                                'email' => '{email}',
                                 'phone1' => '',
                                 'institution' => '',
                                 'department' => '',
@@ -108,7 +108,7 @@ class locallib {
     }
 
     /**
-     * Builds a course from CAMPUSOnline data.
+     * Builds a course from CAMPUSonline data.
      *
      * @param object $coursedata
      * @param string $group_name
@@ -139,7 +139,7 @@ class locallib {
     }
 
     /**
-     * Builds a user from CAMPUSOnline data.
+     * Builds a user from CAMPUSonline data.
      *
      * @param object $userdata
      *
@@ -269,6 +269,23 @@ class locallib {
     }
 
     /**
+     * Gets a person UID for a user.
+     *
+     * @param int $userid
+     *
+     * @return string $person_uid
+     */
+    public static function getPersonUid($userid) {
+
+        global $DB;
+
+        if ($fieldid = $DB->get_field('user_info_field', 'id', ['shortname' => 'campusonline_person_uid'])) {
+            return $DB->get_field('user_info_data', 'data', ['userid' => $userid, 'fieldid' => $fieldid]);
+        }
+        return null;
+    }
+
+    /**
      * Converts object or array data into strings.
      *
      * @param mixed $value
@@ -389,12 +406,21 @@ class locallib {
      * @param string $message
      * @param int $status
      * @param string $courseid
+     * @param progress_trace $trace
+     * @param int $indent
      *
      */
-    public static function writeLog($event, $message, $status, $courseid = null) {
+    public static function writeLog($event, $message, $status, $courseid = null, $trace = null, $indent = 0) {
 
         global $DB;
 
+        // Write trace.
+        if ($trace && PHP_SAPI == 'cli') {
+            $output = str_repeat(' ', $indent) . "- $message";
+            $trace->output($output);
+        }
+
+        // Write log.
         if ($status < get_config('enrol_campusonline', 'loglevel')) {
             return;
         }
