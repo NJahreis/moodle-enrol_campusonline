@@ -1401,10 +1401,6 @@ class sync {
             }
         }
 
-        echo "<pre>";
-        var_dump($result);
-        die();
-
         // Error.
         $message = "ERROR: could not update CAMPUSonline course $course->idnumber with Moodle course URL.";
         locallib::writeLog('update_course', $message, 2, $course->id, $this->trace, 3);
