@@ -1,8 +1,6 @@
 <?php
-// Dieser Code wird innerhalb des Moodle-Umfelds ausgeführt,
-// um sicherzustellen, dass alle Moodle-Funktionen verfügbar sind.
 
-require_once(__DIR__ . '/config.php'); // Moodle-Initialisierung, Pfad anpassen falls nötig
+require_once('../../config.php');
 
 // Erstellen der URL zum Anzeigen eines Kurses
 $courseviewurl = new moodle_url('/course/view.php');
