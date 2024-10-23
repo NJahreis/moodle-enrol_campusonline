@@ -331,7 +331,8 @@ if ($ADMIN->fulltree) {
                 'CO_CLAIM_EMPLOYEE_INTERNAL_ID ' => 'EMPLOYEE_INTERNAL_ID',
                 'CO_CLAIM_EXTPERS_INTERNAL_ID ' => 'EXTPERS_INTERNAL_ID',
                 'CO_CLAIM_USERNAME' => 'USERNAME',
-                'CO_CLAIM_EXTERNAL_SYSTEM_UID' => 'EXTERNAL_SYSTEM_UID'
+                'CO_CLAIM_EXTERNAL_SYSTEM_UID' => 'EXTERNAL_SYSTEM_UID',
+                'CO_CLAIM_EMAIL_ALL' => 'CO_CLAIM_EMAIL_ALL'
                 ];
     $settings->add(new admin_setting_configselect(
         'enrol_campusonline/sourceclaim',
