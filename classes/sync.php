@@ -304,7 +304,7 @@ class sync {
      */
     public function getPersonData($uid, $log = true) {
 
-        $endpoint = "co-brm-core/pers/api/personal-claims";
+        $endpoint = "co-brm-core/pers/api/person-claims";
         $query = [
             'claim' => 'CO_CLAIM_ALL',
             'person_uid' => $uid,
@@ -361,7 +361,7 @@ class sync {
     public function getPersons($limit = null, $person_uids = null) {
 
         // Get employees.
-        $endpoint = "co-brm-core/pers/api/personal-claims";
+        $endpoint = "co-brm-core/pers/api/person-claims";
         $query = [
             'claim' => 'CO_CLAIM_ALL',
             'limit' => $limit,
