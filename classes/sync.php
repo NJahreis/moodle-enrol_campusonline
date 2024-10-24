@@ -127,7 +127,7 @@ class sync {
 
                     // Log creation.
                     $message = "Created new Moodle course category $name.";
-                    locallib::writeLog('create_category', $message, 0, $this->trace, 3);
+                    locallib::writeLog('create_category', $message, 0, null, $this->trace, 3);
 
                     // Create new category.
                     $categorydata = new \stdClass();
