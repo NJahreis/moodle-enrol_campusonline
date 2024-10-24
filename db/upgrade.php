@@ -36,6 +36,16 @@ function xmldb_enrol_campusonline_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
+    // Rename our custom user profile field for person_uid.
+    if ($oldversion < 2024102402) {
+        $field = $DB->get_record('user_info_field', ['shortname' => 'campusonline_person_uid']);
+        if ($field) {
+            $field->name = 'campusonline_person_uid';
+            $DB->update_record('user_info_field', $field);
+        }
+        upgrade_plugin_savepoint(true, 2024102402, 'enrol', 'campusonline');
+    }
+
     // Create custom user profile field for identification retries.
     if ($oldversion < 2024101601) {
         $categoryid = create_custom_profile_field_category('enrol_campusonline', 'CAMPUSonline');

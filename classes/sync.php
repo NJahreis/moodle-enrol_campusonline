@@ -1330,33 +1330,57 @@ class sync {
             }
 
             // Make the API request.
-            $response = $client->request($method, $url, [
-                'headers' => [
-                    'accept' => 'application/json',
-                    'Content-Type' => 'application/json',
-                    'Authorization' => 'Bearer ' . $this->token
-                ],
-                $payload => $query
-            ]);
+            try {
+                $response = $client->request($method, $url, [
+                    'headers' => [
+                        'accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Authorization' => 'Bearer ' . $this->token
+                    ],
+                    $payload => $query
+                ]);
 
-            // Decode the response.
-            $response_body = $response->getBody()->getContents();
-            $response_object = json_decode($response_body, false);
+                // Decode the response.
+                $response_body = $response->getBody()->getContents();
+                $response_object = json_decode($response_body, false);
 
-            // Merge the current page's items with the collected items.
-            if (property_exists($response_object, 'items')) {
-                $all_items = array_merge($all_items, $response_object->items);
+                // Merge the current page's items with the collected items.
+                if (property_exists($response_object, 'items')) {
+                    $all_items = array_merge($all_items, $response_object->items);
+                }
+
+                // Check if there is a next cursor for pagination.
+                if (property_exists($response_object, 'nextCursor')) {
+                    $cursor = $response_object->nextCursor;
+                } else {
+                    $cursor = null;
+                }
+
+                // Determine if we need to keep paging.
+                $page = !array_key_exists('limit', $_GET) || $alwayspage;
+
+            // Error handling.
+            } catch (RequestException $e) {
+                $error = $e->getMessage();
+                $message = "Requestion exception: $error.";
+                locallib::writeLog('error', $message, 0, null, $this->trace);
+
+                // Create object with exception message.
+                $response_object = new \stdClass();
+                $response_object->exception = $error;
+                return $response_object;
+
+            // Error handling.
+            } catch (ConnectionException $e) {
+                $error = $e->getMessage();
+                $message = "Connection exception: $error.";
+                locallib::writeLog('error', $message, 0, null, $this->trace);
+
+                // Create object with exception message.
+                $response_object = new \stdClass();
+                $response_object->exception = $error;
+                return $response_object;
             }
-
-            // Check if there is a next cursor for pagination.
-            if (property_exists($response_object, 'nextCursor')) {
-                $cursor = $response_object->nextCursor;
-            } else {
-                $cursor = null;
-            }
-
-            // Determine if we need to keep paging.
-            $page = !array_key_exists('limit', $_GET) || $alwayspage;
 
         } while ($page && $cursor !== null);
 

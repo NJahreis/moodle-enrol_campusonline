@@ -464,13 +464,13 @@ if ($ADMIN->fulltree) {
         }
     }
     // Custom fields.
-    foreach ($customfields as $shortname => $fullname) {
-        if (array_key_exists("profile_field_$shortname", locallib::CO_USER_FIELDS)) {
+    foreach ($profilefields as $profilefield) {
+        if ($profilefield->shortname == 'profile_field_campusonline_person_uid') {
             continue;
         }
         $settings->add(new admin_setting_configtext(
-            'enrol_campusonline/user_profile_field_' . $shortname,
-            $fullname,
+            'enrol_campusonline/user_profile_field_' . $profilefield->shortname,
+            $profilefield->name,
             '',
             '',
             PARAM_TEXT,
@@ -521,4 +521,12 @@ if ($ADMIN->fulltree) {
         get_string('restcalls_desc', 'enrol_campusonline'),
         0,
     ));
+    // PHP logging.
+    $settings->add(new admin_setting_configcheckbox(
+        'enrol_campusonline/phplogging',
+        get_string('phplogging', 'enrol_campusonline'),
+        '',
+        0,
+    ));
+
 }

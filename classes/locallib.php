@@ -371,6 +371,8 @@ class locallib {
      */
     public static function setCustomUserFields($user, $person, $onlyuid = false) {
 
+        require_once($CFG->dirroot . '/user/profile/lib.php');
+
         $updated = false;
         profile_load_data($user);
         if ($onlyuid) {
@@ -425,6 +427,15 @@ class locallib {
             return;
         }
 
+        // Write PHP log.
+        if (get_config('enrol_campusonline', 'phplogging')) {
+            error_log("enrol_campusonline: $event: $message");
+        }
+
+        // Truncate message to 255 chars.
+        $message = substr($message, 0, 255);
+
+        // Write moodle log.
         $log = new \stdClass();
         $log->timestamp = time();
         $log->event = $event;
@@ -432,6 +443,7 @@ class locallib {
         $log->status = $status;
         $log->courseid = $courseid;
         $DB->insert_record('enrol_campusonline_logs', $log);
+
     }
 
     /**

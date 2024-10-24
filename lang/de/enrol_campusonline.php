@@ -116,6 +116,7 @@ $string['modificationtimeframe_desc'] = '<ul>
     <li>Wie viele Tage zurück sollen Änderungen aus CAMPUSonline für den <strong>Modification Sync</strong> abgerufen werden</li>
     <li>0 = nur heutige Änderungen abrufen</li>
     <li>Derzeit stellt CAMPUSonline maximal <strong>7 Tage</strong> Änderungen zur Verfügung - wenn Sie den Modification Sync in längeren Intervallen ausführen, gehen Modifikationen verloren. Stellen Sie daher sicher, dass Sie den Aufgabenplan entsprechend konfigurieren</li></ul>';
+$string['phplogging'] = 'Zusätzlich ins PHP error log schreiben';
 $string['previewcourses'] = 'Vorschau für Kurse mit diesen Einstellungen';
 $string['previewusers'] = 'Vorschau für Benutzer mit diesen Einstellungen';
 $string['readme'] = 'Bitte lesen Sie die Dokumentation für mehr Information, wie man das Plugin in verschiedenen Anwendungsszenarien richtig konfiguriert.';
