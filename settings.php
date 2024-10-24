@@ -345,8 +345,12 @@ if ($ADMIN->fulltree) {
     $options = ['username' => get_string('username'),
                 'email' => get_string('email'),
                 'idnumber' => get_string('idnumber')];
-    foreach ($customfields as $shortname => $fullname) {
-        $options['profile_field_' . $shortname] = $fullname;
+    $profilefields = profile_get_custom_fields();
+    foreach ($profilefields as $profilefield) {
+        if ($profilefield->shortname == 'profile_field_campusonline_person_uid') {
+            continue;
+        }
+        $options['profile_field_' . $profilefield->shortname] = $profilefield->name;
     }
     $settings->add(new admin_setting_configselect(
         'enrol_campusonline/sourcefield',
