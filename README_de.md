@@ -1,4 +1,4 @@
-# CAMPUSonline enrolment sync DEUTSHC
+# CAMPUSonline enrolment sync
 
 This plugin syncs courses, enrolments and (on demand) users from CAMPUSoline.
 

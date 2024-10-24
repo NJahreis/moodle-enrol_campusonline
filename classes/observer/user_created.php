@@ -19,7 +19,7 @@
  *
  * @package    enrol_campusonline
  * @author     think-modular (stefan.weber@think-modular.com)
- * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @copyright  2024, Michael Lorenzoni
  */
 

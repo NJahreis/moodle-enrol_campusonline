@@ -20,18 +20,13 @@
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
  * @author     think-modular (stefan.weber@think-modular.com)
- * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 use enrol_campusonline\sync;
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
- * Database enrolment plugin implementation.
- * @author  Petr Skoda - based on code by Martin Dougiamas, Martin Langhoff and others
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 class enrol_campusonline_plugin extends enrol_plugin {
 
     /**

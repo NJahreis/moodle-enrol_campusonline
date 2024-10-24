@@ -18,7 +18,7 @@
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
  * @author     think-modular (stefan.weber@think-modular.com)
- * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die;
@@ -29,7 +29,7 @@ use enrol_campusonline\locallib;
 if ($ADMIN->fulltree) {
 
     // Readme.
-    $url = new moodle_url('/enrol/campusonline/readme.php');
+    $url = new moodle_url('/enrol/campusonline/show_readme.php');
     $link = html_writer::link($url, get_string('readme', 'enrol_campusonline'),
     array('target' => '_blank'));
     $settings->add(new admin_setting_heading(
