@@ -371,7 +371,8 @@ class locallib {
      */
     public static function setCustomUserFields($user, $person, $onlyuid = false) {
 
-        require_once($CFG->dirroot . '/user/profile/lib.php');
+        // Test if /user/profile/lib.php include throws an error.
+        // require_once($CFG->dirroot . '/user/profile/lib.php');
 
         $updated = false;
         profile_load_data($user);
