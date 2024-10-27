@@ -2,9 +2,14 @@
 
 This plugin syncs courses, enrolments and (on demand) users from CAMPUSoline.
 
-## Installation
+## Installation in Moodle
 - Install like any other Moodle plugin (put the plugin into /enrol/campusonline in your Moodle installation)
 - Enable CAMPUSonline sync in the 'manage enrol plugin' settings (/admin/settings.php?section=manageenrols)
+
+## Installation in CAMPUSonline
+
+- In the Wiki of this project, you will find detailed installation instructions that need to be completed in your CAMPUSonline system.
+- https://gitlab.campusonline.community/community/moodle-enrol_campusonline/-/wikis/home/Campusonline-Installation
 
 ## Configurations
 - Configure the plugin on its configuration page, and use the in-built preview functions to fine-tune your sync settings, before enabling the sync tasks.
