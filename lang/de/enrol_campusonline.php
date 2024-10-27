@@ -97,7 +97,7 @@ $string['grouptocourse_desc'] = 'Komma-separierte Liste von elearningEventTypeKe
 $string['grouptogroup'] = 'Gruppe zu Gruppe';
 $string['grouptogroup_desc'] = 'Komma-separierte Liste von elearningEventTypeKeys. Für diese E-Learning-Ereignistypen werden CAMPUSonline-Gruppen in Moodle-Gruppen synchronisiert.
 <p>Wenn leer werden Moodle-Gruppen für <strong>ALLE</strong> Typen erstellt, die nicht für separate Kurse konfiguriert sind (empfohlen).</p>';
-$string['groupsyncsettings'] = 'Gruppeneinstellungen';
+$string['groupsyncsettings'] = 'Strategie zur Erzeugung von Kursen';
 $string['groupsyncsettings_desc'] = '<ul>
     <li>CAMPUSonline-<strong>Gruppen</strong> können entweder in Moodle-Kursgruppen synchronisiert oder es können <strong>separate Kurse</strong> für jede Gruppe erstellt werden</li>
     <li>Wenn Sie keine Gruppen für einige E-Learning-Typen synchronisieren möchten, können Sie die Gruppenzuordnung nur für bestimmte Ereignistypen konfigurieren</li>
