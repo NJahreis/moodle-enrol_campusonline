@@ -67,6 +67,10 @@ echo $OUTPUT->header();
 $url = new moodle_url('/admin/settings.php?section=enrolsettingscampusonline');
 echo html_writer::link($url, get_string('backtosettings', 'enrol_campusonline'), array('class' => 'btn btn-secondary m-1'));
 
+// Get config.
+$orgfilter = get_config('enrol_campusonline', 'orgfilter');
+$orgs = explode(',', $orgfilter);
+
 // Show raw course data.
 if ($function == 'showrawcoursedata') {
 
@@ -74,7 +78,17 @@ if ($function == 'showrawcoursedata') {
     $courses = $sync->getCourses(null, $limit);
     $count = 0;
     $tokens = array();
-    foreach ($courses as $course) {
+
+    foreach ($courses as $key => $course) {
+
+        // Skip courses that are not in the configured orgs.
+        if ($orgfilter) {
+            if (!in_array($course['org:uid'], $orgs)) {
+                unset($courses[$key]);
+                continue;
+            }
+        }
+
         foreach ($course as $key => $value) {
             if (is_scalar($value)) {
                 $tokens[$key] = $key;
@@ -116,7 +130,16 @@ if ($function == 'showrawcoursedata') {
     // Table data.
     $data = array();
     $courses = $sync->getCourses(null, $limit);
-    foreach ($courses as $coursedata) {
+    foreach ($courses as $key => $coursedata) {
+
+        // Skip courses that are not in the configured orgs.
+        if ($orgfilter) {
+            if (!in_array($coursedata['org:uid'], $orgs)) {
+                unset($coursedata[$key]);
+                continue;
+            }
+        }
+
         $course = locallib::buildCourse($coursedata);
         $categoryid = $sync->getCourseCategory($coursedata);
 

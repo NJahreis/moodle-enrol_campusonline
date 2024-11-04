@@ -116,6 +116,12 @@ class enrol_campusonline_plugin extends enrol_plugin {
  * @return bool
  */
 function enrol_campusonline_myprofile_navigation(core_user\output\myprofile\tree $tree, $user, $iscurrentuser, $course) {
+
+    $context = context_system::instance();
+    if (!has_capability('enrol/campusonline:syncuser', $context)) {
+        return false;
+    }
+
     $url = new moodle_url('/enrol/campusonline/sync_user.php',
         array('userid' => $user->id, 'limit' => 1, 'traceoutput' => 1));
     $string = get_string('usersyncsingle', 'enrol_campusonline');

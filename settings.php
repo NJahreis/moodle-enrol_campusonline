@@ -101,6 +101,12 @@ if ($ADMIN->fulltree) {
         get_string('semester_desc', 'enrol_campusonline'),
         '2024W, 2025S',
     ));
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/orgfilter',
+        get_string('orgfilter', 'enrol_campusonline'),
+        get_string('orgfilter_desc', 'enrol_campusonline'),
+        '',
+    ));
     // Create users.
     $settings->add(new admin_setting_configcheckbox(
         'enrol_campusonline/enrolsynccreateusers',

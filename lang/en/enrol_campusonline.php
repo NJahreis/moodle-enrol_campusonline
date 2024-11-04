@@ -43,6 +43,10 @@ $string['autoidnewusers_desc'] = 'Will automatically try to identify any newly c
 $string['availabletokens'] = 'Available tokens';
 $string['availabletokens_disclaimer'] = 'Some of these might only be available for employees or students, but not for both.';
 $string['backtosettings'] = 'Back to module settings';
+$string['campusonline:unenrol'] = 'Unenrol CAMPUSonline enrolments';
+$string['campusonline:config'] = 'Configure CAMPUSonline enrolments';
+$string['campusonline:synccourse'] = 'Sync a single course with CAMPUSonline';
+$string['campusonline:syncuser'] = 'Sync a single user with CAMPUSonline';
 $string['clientid'] = 'Client ID';
 $string['clientid_desc'] = 'Client ID to access CAMPUSonline';
 $string['clientsecret'] = 'Client secret';
@@ -115,6 +119,8 @@ $string['modificationtimeframe_desc'] = '<ul>
     <li>How many days back modifications should be fetched from CAMPUSonline for the <strong>modification sync</strong></li>
     <li>0 = only get today\'s modifications</li>
     <li>At the moment, CAMPUSonline provides a maximum of <strong>7 days</strong> worth of modifications - when running the modification sync task in longer intervals, modifications will get lost, so make sure to <strong>configure the task schedule accordingly</strong></li></ul>';
+$string['orgfilter'] = 'Organisations';
+$string['orgfilter_desc'] = 'Only sync specific organisations. Leave empty to sync all organisations or provide a comma-separated list of organisation UIDs.';
 $string['phplogging'] = 'Log to PHP log';
 $string['previewcourses'] = 'Preview courses with these settings';
 $string['previewusers'] = 'Preview users with these settings';

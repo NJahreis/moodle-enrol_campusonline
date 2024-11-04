@@ -31,7 +31,7 @@ global $DB;
 // Check permissions.
 $userid = required_param('userid', PARAM_RAW);
 $context = context_system::instance();
-require_login($course);
+require_login();
 require_capability('enrol/campusonline:syncuser', $context);
 
 // Set page.

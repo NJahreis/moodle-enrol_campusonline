@@ -616,6 +616,17 @@ class sync {
         // Sync courses.
         foreach ($courses as $coursedata) {
 
+            // Skip courses that are not in the configured orgs.
+            if ($orgfilter = $this->config->orgfilter) {
+                $orgs = explode(',', $orgfilter);
+                if (!in_array($coursedata['org:uid'], $orgs)) {
+                    if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+                        $this->trace->output(" - Skipping CAMPUSonline course $course_uid since it does not match the organisation filter");
+                    }
+                    continue;
+                }
+            }
+
             $course_uid = $coursedata['course:uid'];
             if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
                 $this->trace->output(" - Syncing CAMPUSonline course $course_uid");
@@ -1309,6 +1320,10 @@ class sync {
         } else {
             $payload = 'json';
         }
+
+        // echo "<pre>";
+        // var_dump($query);
+        // die();
 
         $all_items = [];
         $cursor = null;
