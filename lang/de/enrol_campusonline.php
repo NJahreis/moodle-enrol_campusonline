@@ -57,6 +57,7 @@ $string['coursecatsettings_desc'] = '<ul>
     <li>Die Kursbereiche können mithilfe von Werten aus CAMPUSonline als <strong>Token</strong> erstellt werden</li>
     <li>Wenn sich die resultierende Kursbereiche für einen aktiv synchronisierten Kurs ändert, wird der Kurs <strong>verschoben</strong></li></ul>';
 $string['coursecount'] = 'Rohdaten für {$a} Kurse:';
+$string['coursecount_syncdata'] = 'Werte für {$a} Kurse:';
 $string['coursepreview'] = 'Kurs-Sync Vorschau';
 $string['coursesyncsettings'] = 'Kursdaten';
 $string['coursesyncsettings_desc'] = '<ul>
@@ -157,6 +158,7 @@ $string['updatecourseurls_desc'] = 'Schreibt die Moodle-Kurs-URL jedes Mal nach 
 $string['updateexistingcourses'] = 'Vorhandene Kurse aktualisieren';
 $string['updateexistingcourses_desc'] = 'Erlaubt diesem Tasks, Namen oder Kursbereiche bestehender Moodle-Kurse zu ändern, wenn sie sich in CAMPUSonline ändern.';
 $string['usercount'] = 'Rohdaten für {$a} Benutzer:';
+$string['usercount_syncdata'] = 'Vorschau von Daten für {$a} Benutzer:';
 $string['useridsettings'] = 'Identifikation bestehender Benutzer';
 $string['useridsettings_desc'] = '<ul>
     <li>Dieser Sync Task verknüpft bestehende Moodle-Benutzer mit CAMPUSonline Personen. Standardmäßig wird dieser Task nicht geplant ausgeführt, und sollte nur manuell gestartet werden</li>
@@ -166,11 +168,12 @@ $string['usermoodlefield'] = 'Benutzerdefiniertes Feld als Fallback für die Ben
 $string['usermoodlefield_desc'] = 'Wenn ein Benutzer auf keine andere Weise gefunden wird (siehe oben), wird dieses Feld verwendet, um den Benutzer in Moodle zu finden.';
 $string['usersyncsettings'] = 'Benutzerdaten Sync';
 $string['usersyncsettings_desc'] = '<ul>
-    <li>Dieser Task ist <strong>optional</strong> und sollte deaktiviert bleiben, wenn die Nutzerdaten bereits auf anderem Weg nach Moodle gesynct werden (z.B. SSO-Systeme)</li>
-    <li>Unabhängig davon, ob die Synchronisationsaufgabe aktiv ist, sollten Sie die Feldwerte dennoch festlegen, da sie auch für die <strong>Identifikation bestehender Benutzer</strong> und <strong>Benutzererstellung</strong> (wenn konfiguriert) verwendet werden</li>
+    <li>Benutzer können bei der Anmeldung automatisch gesynct werden, oder manuell über den Link <strong>Diesen Benutzer mit CAMPUSonline syncen</strong> auf der Benutzerprofil Seite.</li>
+    <li>Die konfigurierten Feldwerte werden auch für <strong>Benutzererstellung</strong> durch den Kurs Sync verwendet</li>
     <li><strong>Benutzernamen müssen eindeutig</strong> sein und Felder müssen mit gültigen Werten für ihre jeweiligen Feldtypen gefüllt sein, da sonst Fehler bei der Benutzererstellung auftreten!</li>
     <li>Folgende Felder dürfen <strong>nicht leer</strong> sein, sonst schlägt die Benutzererstellung fehl: user_auth, user_password, user_username, user_email</li>
     <li>CAMPUSonline <strong>Personen-UID</strong>, <strong>Studenten-UID</strong> und <strong>Mitarbeiter-UID</strong> werden automatisch in den entsprechenden Benutzerprofilfeldern synchronisiert</li>
     <li>Klicken Sie auf <strong>Token und Rohdaten anzeigen</strong>, um verfügbare Felder/Token zu sehen</li></ul>';
+$string['usersyncsingle'] = 'Diesen Benutzer mit CAMPUSonline synchronisieren';
 $string['viewlogs'] = 'Logs anzeigen';
 $string['warningsanderrors'] = 'Warnings und Errors';

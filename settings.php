@@ -394,21 +394,12 @@ if ($ADMIN->fulltree) {
     ));
 
     // ----- User sync settings -----
-    $url = new moodle_url('/admin/tool/task/scheduledtasks.php',
-        array('action' => 'edit', 'task' => 'enrol_campusonline\task\user_sync_task'));
-    $buttons = html_writer::link($url, get_string('configuretask', 'enrol_campusonline'),
-        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
     $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawuserdata', 'limit' => 20));
-    $buttons .= html_writer::link($url, get_string('showrawuserdata', 'enrol_campusonline'),
+    $buttons = html_writer::link($url, get_string('showrawuserdata', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
     $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewusers', 'limit' => 20));
     $buttons .= html_writer::link($url, get_string('previewusers', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
-    $buttons .= '<br>';
-    $url = new moodle_url('/admin/tool/task/schedule_task.php',
-        array('action' => 'edit', 'task' => 'enrol_campusonline\task\user_sync_task'));
-    $buttons .= html_writer::link($url, get_string('runtask', 'enrol_campusonline'),
-        array('target' => '_blank', 'class' => 'btn btn-primary m-1'));
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/usersyncsettings',
         get_string('usersyncsettings', 'enrol_campusonline'),

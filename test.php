@@ -143,7 +143,7 @@ if ($function == 'showrawcoursedata') {
 
     $table->data = $data;
 
-    echo html_writer::tag('h3', get_string('coursecount', 'enrol_campusonline', count($courses)));
+    echo html_writer::tag('h3', get_string('coursecount_syncdata', 'enrol_campusonline', count($courses)));
     echo html_writer::table($table);
 
 // Show raw user data.
@@ -213,8 +213,14 @@ if ($function == 'showrawcoursedata') {
 
     $table->data = $data;
 
-    echo html_writer::tag('h3', get_string('usercount', 'enrol_campusonline', $limit));
+    echo html_writer::tag('h3', get_string('usercount_syncdata', 'enrol_campusonline', $limit));
     echo html_writer::table($table);
+
+// Sync single user.
+} elseif ($function == 'usersyncsingle') {
+
+    echo "tba";
+
 }
 
 echo $OUTPUT->footer();

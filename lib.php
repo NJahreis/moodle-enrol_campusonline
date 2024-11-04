@@ -105,5 +105,24 @@ class enrol_campusonline_plugin extends enrol_plugin {
             return false;
         }
     }
+}
 
+/**
+ * Add link to myprofile page.
+ *
+ * @param \core_user\output\myprofile\tree $tree Tree object
+ * @param stdClass $user user object
+ * @param bool $iscurrentuser
+ * @param stdClass $course Course object
+ *
+ * @return bool
+ */
+function enrol_campusonline_myprofile_navigation(core_user\output\myprofile\tree $tree, $user, $iscurrentuser, $course) {
+    $url = new moodle_url('/enrol/campusonline/test.php',
+        array('function' => 'usersyncsingle', 'userid' => $user->id));
+    $string = get_string('usersyncsingle', 'enrol_campusonline');
+    $node = new core_user\output\myprofile\node('miscellaneous', 'syncwithcampusonline', $string, null, $url);
+    $tree->add_node($node);
+
+    return true;
 }

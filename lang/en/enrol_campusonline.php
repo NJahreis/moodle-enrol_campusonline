@@ -57,6 +57,7 @@ $string['coursecatsettings_desc'] = '<ul>
     <li>The course category tree can be built using values from CAMPUSonline as <strong>tokens</strong></li>
     <li>If the resulting course category changes for a course that is actively synced, the course will be <strong>moved</strong></li></ul>';
 $string['coursecount'] = 'Raw data for {$a} courses:';
+$string['coursecount_syncdata'] = 'Synced data for {$a} courses:';
 $string['coursepreview'] = 'Course sync preview';
 $string['coursesyncsettings'] = 'Course values';
 $string['coursesyncsettings_desc'] = '<ul>
@@ -155,6 +156,7 @@ $string['updatecourseurls_desc'] = 'Writes back the Moodle course URL to CAMPUSo
 $string['updateexistingcourses'] = 'Update existing courses';
 $string['updateexistingcourses_desc'] = 'Allows the sync task to change names or categories of existing Moodle courses if they change in CAMPUSonline.';
 $string['usercount'] = 'Raw data for {$a} users:';
+$string['usercount_syncdata'] = 'Synced data for {$a} users:';
 $string['useridsettings'] = 'Identification of existing users';
 $string['useridsettings_desc'] = '<ul>
     <li>This sync task matches existing Moodle users to CAMPUSonline users, it is not scheduled by default, and should only be run manually</li>
@@ -164,11 +166,12 @@ $string['usermoodlefield'] = 'Custom field as callback for user identification';
 $string['usermoodlefield_desc'] = 'If a user is not found via any other means (see above), this field will be used to find the user in Moodle.';
 $string['usersyncsettings'] = 'User sync & values';
 $string['usersyncsettings_desc'] = '<ul>
-    <li>This sync task is <strong>optional</strong>, and should only be enabled if userdata is <strong>not already synced via other means</strong> (eg SSO systems)</li>
-    <li>Regardless whether the sync task is active, you should still set the field values, since they are also used for <strong>user identification</strong> and <strong>user creation</strong> (if configured)</li>
+    <li>You can sync user data on user login, or sync single users manually by clicking the <strong>sync this user with CAMPUSonline</strong> button on the user profile page</li>
+    <li>The mapping settings will also be applied to <strong>user creation</strong> by the course sync</li>
     <li><strong>usernames need to be unique</strong>, and fields are filled with valid values for their respective field types, or there will be errors creating users!</li>
     <li>These values are <strong>required</strong>, otherwise user creation will fail: user_auth, user_password, user_username, user_email</li>
     <li>CAMPUSonline <strong>person UID</strong>, <strong>student UID</strong> and <strong>employee UID</strong> will be automatically synced in the respective user profile fields</li>
     <li>Click on <strong>Show tokens and raw data</strong> to see available fields/tokens</li></ul>';
+$string['usersyncsingle'] = 'Sync this user with CAMPUSonline';
 $string['viewlogs'] = 'View logs';
 $string['warningsanderrors'] = 'warnings and errors';
