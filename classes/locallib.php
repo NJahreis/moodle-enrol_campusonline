@@ -426,7 +426,7 @@ class locallib {
         global $DB;
 
         // Write trace.
-        if ($trace && PHP_SAPI == 'cli') {
+        if ($trace && (PHP_SAPI == 'cli' || $_GET['traceoutput'])) {
             $output = str_repeat(' ', $indent) . "- $message";
             $trace->output($output);
         }

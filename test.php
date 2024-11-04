@@ -43,7 +43,8 @@ $PAGE->set_title(get_string('pluginname', 'enrol_campusonline'));
 $PAGE->set_heading(get_string($function, 'enrol_campusonline'));
 
 // Init sync.
-$sync = new sync(new \text_progress_trace());
+$trace = new \text_progress_trace();
+$sync = new sync($trace);
 
 // Test connection.
 if ($function == 'testconnection') {
@@ -70,7 +71,7 @@ echo html_writer::link($url, get_string('backtosettings', 'enrol_campusonline'),
 if ($function == 'showrawcoursedata') {
 
     // Count and get tokens.
-    $courses = $sync->getCourses($limit);
+    $courses = $sync->getCourses(null, $limit);
     $count = 0;
     $tokens = array();
     foreach ($courses as $course) {
@@ -114,7 +115,7 @@ if ($function == 'showrawcoursedata') {
 
     // Table data.
     $data = array();
-    $courses = $sync->getCourses($limit);
+    $courses = $sync->getCourses(null, $limit);
     foreach ($courses as $coursedata) {
         $course = locallib::buildCourse($coursedata);
         $categoryid = $sync->getCourseCategory($coursedata);
@@ -150,7 +151,7 @@ if ($function == 'showrawcoursedata') {
 } elseif ($function == 'showrawuserdata') {
 
     // Count and get tokens.
-    $persons = $sync->getPersons($limit);
+    $persons = $sync->getPersons(null, $limit);
     $tokens = array();
     foreach ($persons as $person) {
         $person = (array) $person;
@@ -194,7 +195,7 @@ if ($function == 'showrawcoursedata') {
 
     // Table data.
     $data = array();
-    $persons = $sync->getPersons($limit);
+    $persons = $sync->getPersons(null, $limit);
 
     foreach ($persons as $persondata) {
 
@@ -215,12 +216,6 @@ if ($function == 'showrawcoursedata') {
 
     echo html_writer::tag('h3', get_string('usercount_syncdata', 'enrol_campusonline', $limit));
     echo html_writer::table($table);
-
-// Sync single user.
-} elseif ($function == 'usersyncsingle') {
-
-    echo "tba";
-
 }
 
 echo $OUTPUT->footer();

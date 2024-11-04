@@ -150,11 +150,10 @@ class sync {
     /**
      * Gets courses for preview or sync.
      *
-     * @param int $limit how many courses to get.
      * @param string $course_uids if provided, only fetches these courses.
      * @return array
      */
-    public function getCourses($limit = null, $course_uids = null) {
+    public function getCourses($course_uids = null, $limit = null) {
 
         $allcourses = array();
 
@@ -354,11 +353,9 @@ class sync {
     /**
      * Gets persons from CAMPUSonline.
      *
-     * @param int $limit
-     *
      * @return array $persons
      */
-    public function getPersons($limit = null, $person_uids = null) {
+    public function getPersons($person_uids = null, $limit = null) {
 
         // Get employees.
         $endpoint = "co-brm-core/pers/api/person-claims";
@@ -421,14 +418,19 @@ class sync {
         }
 
         $number = count($users);
-        if (PHP_SAPI == 'cli') {
-            $this->trace->output("Identifying $number or $total Moodle users ($skipped already have a CAMPUSonline person UID set...)");
+        if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+            if ($number > 1) {
+                $this->trace->output("Identifying $number of $total Moodle users ($skipped already have a CAMPUSonline person UID set...)");
+            } else {
+                $this->trace->output("Moodle user has no person UID set. Trying to identify Moodle user in CAMPUSonline...");
+            }
+
         }
 
         foreach ($users as $user) {
 
             $userid = $user->id;
-            if (PHP_SAPI == 'cli') {
+            if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
                 $this->trace->output(" - Identifying Moodle user $userid");
             }
             profile_load_custom_fields($user);
@@ -436,7 +438,7 @@ class sync {
             // Skip users that have reached the maximum attempts.
             $attempt = (int) $user->profile['campusonline_id_attempts'];
             if ($attempt >= $max_attempts) {
-                if (PHP_SAPI == 'cli') {
+                if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
                     $this->trace->output("   - Maximum attempts reached for Moodle user $userid. Skipping user.");
                 }
                 continue;
@@ -594,7 +596,7 @@ class sync {
 
         // Get course(s).
         if ($course_uids) {
-            $courses = $this->getCourses(null, $course_uids);
+            $courses = $this->getCourses($course_uids);
         } else {
             $courses = $this->getCourses();
         }
@@ -607,7 +609,7 @@ class sync {
 
         // Start output.
         $number = count($courses);
-        if (PHP_SAPI == 'cli') {
+        if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
             $this->trace->output("Syncing $number courses ...");
         }
 
@@ -615,7 +617,7 @@ class sync {
         foreach ($courses as $coursedata) {
 
             $course_uid = $coursedata['course:uid'];
-            if (PHP_SAPI == 'cli') {
+            if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
                 $this->trace->output(" - Syncing CAMPUSonline course $course_uid");
             }
 
@@ -1104,6 +1106,12 @@ class sync {
         if ($needsupdate || $needsupdatep) {
             $message = "Updated Moodle user $user->id with data from CAMPUSonline user $uid.";
             locallib::writeLog('sync_user', $message, 0, null, $this->trace, 3);
+        } else {
+
+            // Write trace output that no update is necessary.
+            if ($_GET['traceoutput']) {
+                $this->trace->output(" - No update necessary for Moodle user $user->id with data from CAMPUSonline user $uid.");
+            }
         }
     }
 

@@ -48,4 +48,11 @@ $capabilities = array(
             'manager' => CAP_ALLOW,
         )
     ),
+    'enrol/campusonline:syncuser' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
+        )
+    ),
 );

@@ -61,7 +61,7 @@ class login_observer {
         if ($sync->isConnected()) {
 
             // Sync user.
-            $persons = $sync->getPersons(5, $person_uids);
+            $persons = $sync->getPersons($person_uids);
             $person = reset($persons);
             $sync->updateMoodleUser($user, $person);
 

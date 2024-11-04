@@ -95,10 +95,8 @@ class enrol_campusonline_plugin extends enrol_plugin {
 
         $context = context_course::instance($instance->courseid);
         if (has_capability('enrol/campusonline:synccourse', $context)) {
-            $synclink = new moodle_url(
-                '/enrol/campusonline/sync_course.php',
-                ['courseid' => $instance->courseid]
-            );
+            $synclink = new moodle_url('/enrol/campusonline/sync_course.php',
+                array('courseid' => $instance->courseid, 'traceoutput' => 1));
             $button = new enrol_user_button($synclink, get_string('syncthiscourse', 'enrol_campusonline'), 'get');
             return $button;
         } else {
@@ -118,8 +116,8 @@ class enrol_campusonline_plugin extends enrol_plugin {
  * @return bool
  */
 function enrol_campusonline_myprofile_navigation(core_user\output\myprofile\tree $tree, $user, $iscurrentuser, $course) {
-    $url = new moodle_url('/enrol/campusonline/test.php',
-        array('function' => 'usersyncsingle', 'userid' => $user->id));
+    $url = new moodle_url('/enrol/campusonline/sync_user.php',
+        array('userid' => $user->id, 'limit' => 1, 'traceoutput' => 1));
     $string = get_string('usersyncsingle', 'enrol_campusonline');
     $node = new core_user\output\myprofile\node('miscellaneous', 'syncwithcampusonline', $string, null, $url);
     $tree->add_node($node);
