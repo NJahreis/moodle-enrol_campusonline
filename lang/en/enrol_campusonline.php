@@ -114,6 +114,7 @@ $string['modificationtimeframe_desc'] = '<ul>
     <li>How many days back modifications should be fetched from CAMPUSonline for the <strong>modification sync</strong></li>
     <li>0 = only get today\'s modifications</li>
     <li>At the moment, CAMPUSonline provides a maximum of <strong>7 days</strong> worth of modifications - when running the modification sync task in longer intervals, modifications will get lost, so make sure to <strong>configure the task schedule accordingly</strong></li></ul>';
+$string['phplogging'] = 'Log to PHP log';
 $string['previewcourses'] = 'Preview courses with these settings';
 $string['previewusers'] = 'Preview users with these settings';
 $string['readme'] = 'Please read the readme file for more information on how to correctly setup this plugin in various scenarios.';

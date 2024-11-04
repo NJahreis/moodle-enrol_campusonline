@@ -465,7 +465,7 @@ if ($ADMIN->fulltree) {
     }
     // Custom fields.
     foreach ($profilefields as $profilefield) {
-        if ($profilefield->shortname == 'profile_field_campusonline_person_uid') {
+        if (in_array($profilefield->shortname, locallib::IGNORE_FIELDS)) {
             continue;
         }
         $settings->add(new admin_setting_configtext(

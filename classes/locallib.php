@@ -75,6 +75,14 @@ class locallib {
                                 'groupmodeforce',
     ];
 
+    // Our own custom fields that should be ignored in mapping.
+    public const IGNORE_FIELDS = ['campusonline_person_uid',
+                                  'campusonline_id_attempts',
+    ];
+
+
+
+
 
     /**
      * Add our enrolment method to a course.
@@ -371,8 +379,8 @@ class locallib {
      */
     public static function setCustomUserFields($user, $person, $onlyuid = false) {
 
-        // Test if /user/profile/lib.php include throws an error.
-        // require_once($CFG->dirroot . '/user/profile/lib.php');
+        global $CFG;
+        require_once($CFG->dirroot . '/user/profile/lib.php');
 
         $updated = false;
         profile_load_data($user);

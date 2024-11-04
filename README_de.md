@@ -1,18 +1,23 @@
-# CAMPUSonline enrolment sync
+# CAMPUSonline Enrolment
+Dieses Plugin synchronisiert Kurse, Einschreibungen und (bei Bedarf) Benutzer aus CAMPUSonline.
 
-This plugin syncs courses, enrolments and (on demand) users from CAMPUSoline.
+## Offizielles Moodle Plugin-Verzeichnis
+- Dieses Plugin ist auch im offiziellen Moodle Plugin-Verzeichnis verfügbar.
+- https://moodle.org/plugins/enrol_campusonline
 
-## Installation
-- Install like any other Moodle plugin (put the plugin into /enrol/campusonline in your Moodle installation)
-- Enable CAMPUSonline sync in the 'manage enrol plugin' settings (/admin/settings.php?section=manageenrols)
+## Installation in Moodle
+- Installieren Sie das Plugin wie jedes andere Moodle-Plugin (platzieren Sie es im Verzeichnis /enrol/campusonline in Ihrer Moodle-Installation).
+- Aktivieren Sie die CAMPUSonline-Synchronisation in den Einstellungen für Einschreibe-Plugins (/admin/settings.php?section=manageenrols).
 
-## Configurations
-- Configure the plugin on its configuration page, and use the in-built preview functions to fine-tune your sync settings, before enabling the sync tasks.
-- It is recommended to run a full sync manually or weekly, and then schedule only the modification sync task, to improve performance.
-- Read the info on the settings page carefully, everything you need should be provided there.
+## Installation in CAMPUSonline
+- Im Wiki dieses Projekts finden Sie detaillierte Installationsanweisungen, die in Ihrem CAMPUSonline-System abgeschlossen werden müssen.
+- https://gitlab.campusonline.community/community/moodle-enrol_campusonline/-/wikis/home/Campusonline-Installation
 
-## Enrolment sync
+## Konfigurationen
+- Konfigurieren Sie das Plugin auf der Konfigurationsseite und nutzen Sie die integrierten Vorschaufunktionen, um Ihre Synchronisationseinstellungen anzupassen, bevor Sie die Synchronisationsaufgaben aktivieren.
+- Es wird empfohlen, eine vollständige Synchronisation manuell oder wöchentlich durchzuführen und anschließend nur die Modifikations-Synchronisationsaufgabe zu planen, um die Leistung zu verbessern.
+- Lesen Sie die Informationen auf der Einstellungsseite sorgfältig durch, dort finden Sie alles, was Sie benötigen.
 
-- CAMPUSonline enrolment sync will only remove roles and suspend enrolments of its own type.
-- If users are added to the course manually (or with any other enrolment method), CAMPUSonline sync will not touch those role assignments or enrolments.
-
+## Einschreibesynchronisation
+- Der CAMPUSonline Sync entfernt nur Rollen und setzt Einschreibungen des eigenen Typs aus.
+- Wenn Benutzer manuell (oder mit einer anderen Einschreibemethode) zu einem Kurs hinzugefügt werden, wird die CAMPUSonline-Synchronisation diese Rollen- oder Einschreibezuweisungen nicht ändern.
