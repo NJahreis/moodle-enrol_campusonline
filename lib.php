@@ -125,7 +125,7 @@ function enrol_campusonline_myprofile_navigation(core_user\output\myprofile\tree
     $url = new moodle_url('/enrol/campusonline/sync_user.php',
         array('userid' => $user->id, 'limit' => 1, 'traceoutput' => 1));
     $string = get_string('usersyncsingle', 'enrol_campusonline');
-    $node = new core_user\output\myprofile\node('miscellaneous', 'syncwithcampusonline', $string, null, $url);
+    $node = new core_user\output\myprofile\node('administration', 'syncwithcampusonline', $string, null, $url);
     $tree->add_node($node);
 
     return true;
