@@ -109,8 +109,8 @@ $string['groupsyncsettings_desc'] = '<ul>
     </ul>';
 $string['idattempts'] = 'Anzahl von Versuchen';
 $string['idattempts_desc'] = 'Ein Zähler für die fehlgeschlagenen Versuche einen Benutzer zu identifizieren wird in einem CAMPUSonline Benutzer Profilfeld geführt. Dieser Zähler kann von Admins zurückgesetzt werden, um erneut zu versuchen, den Benutzer in CAMPUSonline zu finden.';
-$string['initialpassword'] = 'Initialpasswort';
-$string['initialpassword_desc'] = 'Stellen Sie sicher, dass Sie ein Initialpasswort festlegen, das den Komplexitätsstandards entspricht, oder die Benutzererstellung schlägt fehl, <strong>selbst für Benutzer mit Authentifizierungsmethoden, die das Passwort nicht verwenden!</strong>';
+$string['initialpassword'] = 'Initialpasswort für neu erstellte Benutzer';
+$string['initialpassword_desc'] = 'Leerlassen, um eine zufällig generiertes Password für neue User zu verwenden (empfohlen). <p> Wenn Sie das Password selbst setzen, stellen Sie sicher, dass Sie ein Initialpasswort festlegen, das den Komplexitätsstandards entspricht, oder die Benutzererstellung schlägt fehl, <strong>selbst für Benutzer mit Authentifizierungsmethoden, die das Passwort nicht verwenden!</strong></p>';
 $string['lectureshiproles'] = 'Wählen Sie Moodle-Rollen für CAMPUSonline-Lehramtrollen aus.';
 $string['logduration'] = 'Logs aufbewahren für (Tage)';
 $string['loglevel'] = 'Log Level';

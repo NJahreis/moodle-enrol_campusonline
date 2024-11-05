@@ -411,6 +411,13 @@ if ($ADMIN->fulltree) {
         get_string('usersyncsettings', 'enrol_campusonline'),
         get_string('usersyncsettings_desc', 'enrol_campusonline') . $buttons,
     ));
+    // Sync user data upon login.
+    $settings->add(new admin_setting_configcheckbox(
+        'enrol_campusonline/syncusersonlogin',
+        get_string('syncusersonlogin', 'enrol_campusonline'),
+        get_string('syncusersonlogin_desc', 'enrol_campusonline'),
+        1,
+    ));
     // User auth.
     $authplugins = core_component::get_plugin_list('auth');
     $options = array();
@@ -429,7 +436,7 @@ if ($ADMIN->fulltree) {
         'enrol_campusonline/user_password',
         get_string('initialpassword', 'enrol_campusonline'),
         get_string('initialpassword_desc', 'enrol_campusonline'),
-        'Password123!',
+        '',
         PARAM_TEXT,
         50
     ));
@@ -474,13 +481,6 @@ if ($ADMIN->fulltree) {
             50
         ));
     }
-    // Sync user data upon login.
-    $settings->add(new admin_setting_configcheckbox(
-        'enrol_campusonline/syncusersonlogin',
-        get_string('syncusersonlogin', 'enrol_campusonline'),
-        get_string('syncusersonlogin_desc', 'enrol_campusonline'),
-        1,
-    ));
 
     // ----- Log settings -----
     $url = new moodle_url('/enrol/campusonline/logs.php');

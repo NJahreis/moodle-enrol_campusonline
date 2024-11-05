@@ -107,8 +107,8 @@ $string['groupsyncsettings_desc'] = '<ul>
     </ul>';
 $string['idattempts'] = 'Max attempts';
 $string['idattempts_desc'] = 'A counter for the number of failed attempts to identfy a user will be kept in a custom user profile field created by CAMPUSonline. You can reset this counter to re-try identifying a user.';
-$string['initialpassword'] = 'Initial password';
-$string['initialpassword_desc'] = 'Be sure to set an password that adheres to password complexity standards, or user creation will fail, <strong>even for users with authentification methods that will not even use the password!</strong>';
+$string['initialpassword'] = 'Initial password for newly created users';
+$string['initialpassword_desc'] = 'Leave empty to generate a random password for each user (recommended). <p> When setting, be sure to set an password that adheres to password complexity standards, or user creation will fail, <strong>even for users with authentification methods that will not even use the password!</strong></p>';
 $string['lectureshiproles'] = 'Select Moodle roles to use for CAMPUSonline lectureship roles.';
 $string['logduration'] = 'Keep logs for (days)';
 $string['loglevel'] = 'Log level';

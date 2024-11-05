@@ -159,6 +159,11 @@ class locallib {
         $user['auth'] = self::getFieldValue('user_auth', $userdata);
         $user['password'] = self::getFieldValue('user_password', $userdata);
 
+        // Set random password.
+        if (!$user['password']) {
+            $user['password'] = self::generatePassword();
+        }
+
         // Map additional fields.
         foreach(self::USER_FIELDS as $field => $default) {
             $user[$field] = self::getFieldValue('user_' . $field, $userdata);
@@ -453,6 +458,35 @@ class locallib {
         $log->courseid = $courseid;
         $DB->insert_record('enrol_campusonline_logs', $log);
 
+    }
+
+    /**
+     * Generates a random password.
+     *
+     * @return string $password
+     */
+    private static function generatePassword() {
+
+        global $CFG;
+
+        // Define character sets.
+        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $numbers = '0123456789';
+        $special_chars = '!@#$%^&*()-_=+{}[]<>?';
+
+        // Ensure at least one character from each type.
+        $password = '';
+        $length = (int)$CFG->minpasswordlength;
+        $length = $length / 3;
+        for ($i = 0; $i < $length; $i++) {
+            $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
+            $password .= $uppercase[random_int(0, strlen($uppercase) - 1)];
+            $password .= $special_chars[random_int(0, strlen($special_chars) - 1)];
+        }
+
+        // Shuffle because why not.
+        return str_shuffle($password);
     }
 
     /**
