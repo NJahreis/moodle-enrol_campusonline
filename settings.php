@@ -72,6 +72,45 @@ if ($ADMIN->fulltree) {
         '',
     ));
 
+    // ----- Course category settings -----
+    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawcoursedata', 'limit' => 20));
+    $buttons = html_writer::link($url, get_string('showrawcoursedata', 'enrol_campusonline'),
+        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
+    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewcourses', 'limit' => 20));
+    $buttons .= html_writer::link($url, get_string('previewcourses', 'enrol_campusonline'),
+        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
+    $settings->add(new admin_setting_heading(
+        'enrol_campusonline/coursecatsettings',
+        get_string('coursecatsettings', 'enrol_campusonline'),
+        get_string('coursecatsettings_desc', 'enrol_campusonline') . $buttons,
+    ));
+    // Root course category.
+    $options = core_course_category::make_categories_list();
+    array_unshift($options, 'TOP');
+    $settings->add(new admin_setting_configselect(
+        'enrol_campusonline/rootcoursecategory',
+        get_string('rootcoursecategory', 'enrol_campusonline'),
+        get_string('rootcoursecategory_desc', 'enrol_campusonline'),
+        0,
+        $options,
+    ));
+    // Subcategories.
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/subcategories',
+        get_string('subcategories', 'enrol_campusonline'),
+        get_string('subcategories_desc', 'enrol_campusonline'),
+        '{org:code}\{course:semesterKey}\{course:courseClassificationKey}',
+        PARAM_TEXT,
+        100
+    ));
+    // Create course categories.
+    $settings->add(new admin_setting_configcheckbox(
+        'enrol_campusonline/createcoursecatetories',
+        get_string('createcoursecatetories', 'enrol_campusonline'),
+        get_string('createcoursecatetories_desc', 'enrol_campusonline'),
+        1,
+    ));
+
     // ----- Enrolment sync settings -----
     $url = new moodle_url('/admin/tool/task/scheduledtasks.php',
         array('action' => 'edit', 'task' => 'enrol_campusonline\task\sync_task'));
@@ -135,45 +174,6 @@ if ($ADMIN->fulltree) {
         get_string('modificationtimeframe_desc', 'enrol_campusonline'),
         0,
         PARAM_INT,
-    ));
-
-    // ----- Course category settings -----
-    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawcoursedata', 'limit' => 20));
-    $buttons = html_writer::link($url, get_string('showrawcoursedata', 'enrol_campusonline'),
-        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
-    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewcourses', 'limit' => 20));
-    $buttons .= html_writer::link($url, get_string('previewcourses', 'enrol_campusonline'),
-        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
-    $settings->add(new admin_setting_heading(
-        'enrol_campusonline/coursecatsettings',
-        get_string('coursecatsettings', 'enrol_campusonline'),
-        get_string('coursecatsettings_desc', 'enrol_campusonline') . $buttons,
-    ));
-    // Root course category.
-    $options = core_course_category::make_categories_list();
-    array_unshift($options, 'TOP');
-    $settings->add(new admin_setting_configselect(
-        'enrol_campusonline/rootcoursecategory',
-        get_string('rootcoursecategory', 'enrol_campusonline'),
-        get_string('rootcoursecategory_desc', 'enrol_campusonline'),
-        0,
-        $options,
-    ));
-    // Subcategories.
-    $settings->add(new admin_setting_configtext(
-        'enrol_campusonline/subcategories',
-        get_string('subcategories', 'enrol_campusonline'),
-        get_string('subcategories_desc', 'enrol_campusonline'),
-        '{org:code}\{course:semesterKey}\{course:courseClassificationKey}',
-        PARAM_TEXT,
-        100
-    ));
-    // Create course categories.
-    $settings->add(new admin_setting_configcheckbox(
-        'enrol_campusonline/createcoursecatetories',
-        get_string('createcoursecatetories', 'enrol_campusonline'),
-        get_string('createcoursecatetories_desc', 'enrol_campusonline'),
-        1,
     ));
 
     // ----- Course sync settings -----
@@ -249,6 +249,37 @@ if ($ADMIN->fulltree) {
         ));
     }
 
+    // ----- Group sync settings -----
+    $settings->add(new admin_setting_heading(
+        'enrol_campusonline/groupsyncsettings',
+        get_string('groupsyncsettings', 'enrol_campusonline'),
+        get_string('groupsyncsettings_desc', 'enrol_campusonline')
+    ));
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/grouptocourse',
+        get_string('grouptocourse', 'enrol_campusonline'),
+        get_string('grouptocourse_desc', 'enrol_campusonline'),
+        'GROUP_TO_COURSE',
+        PARAM_TEXT,
+        50
+    ));
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/grouptogroup',
+        get_string('grouptogroup', 'enrol_campusonline'),
+        get_string('grouptogroup_desc', 'enrol_campusonline'),
+        'EVOR, ESEM, EUEB',
+        PARAM_TEXT,
+        50
+    ));
+    $settings->add(new admin_setting_configtext(
+        'enrol_campusonline/flatcourse',
+        get_string('flatcourse', 'enrol_campusonline'),
+        get_string('flatcourse_desc', 'enrol_campusonline'),
+        '',
+        PARAM_TEXT,
+        50
+    ));
+
     // ----- Role mappings -----
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/rolemappings',
@@ -290,29 +321,6 @@ if ($ADMIN->fulltree) {
             get_string('rolemappings_notconnected', 'enrol_campusonline'),
         ));
     }
-
-    // ----- Group sync settings -----
-    $settings->add(new admin_setting_heading(
-        'enrol_campusonline/groupsyncsettings',
-        get_string('groupsyncsettings', 'enrol_campusonline'),
-        get_string('groupsyncsettings_desc', 'enrol_campusonline')
-    ));
-    $settings->add(new admin_setting_configtext(
-        'enrol_campusonline/grouptocourse',
-        get_string('grouptocourse', 'enrol_campusonline'),
-        get_string('grouptocourse_desc', 'enrol_campusonline'),
-        'GROUP_TO_COURSE',
-        PARAM_TEXT,
-        50
-    ));
-    $settings->add(new admin_setting_configtext(
-        'enrol_campusonline/grouptogroup',
-        get_string('grouptogroup', 'enrol_campusonline'),
-        get_string('grouptogroup_desc', 'enrol_campusonline'),
-        '',
-        PARAM_TEXT,
-        50
-    ));
 
     // ----- User id settings -----
     $url = new moodle_url('/admin/tool/task/scheduledtasks.php',

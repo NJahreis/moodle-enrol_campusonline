@@ -46,8 +46,14 @@ class sync {
     private $attempts_fieldid;
     private $orgdata;
     private $semesterdata;
+    private $group_to_group;
+    private $group_to_course;
+    private $flat_course;
 
     const CREATED_BY = "Created by CAMPUSonline";
+    const GROUP_TO_COURSE = 'GROUP_TO_COURSE';
+    const GROUP_TO_GROUP = 'GROUP_TO_GROUP';
+    const FLAT_COURSE = 'FLAT_COURSE';
 
     /**
      * Constructor.
@@ -64,6 +70,9 @@ class sync {
         $this->trace = $trace;
         $this->externalkey = $this->config->user_externalkey;
         $this->externalsystemkey = $this->config->user_externalsystemkey;
+        $this->grouptocourse = preg_split('/\s*,\s*/', $this->config->grouptocourse);
+        $this->grouptogroup = preg_split('/\s*,\s*/', $this->config->grouptogroup);
+        $this->flatcourse = preg_split('/\s*,\s*/', $this->config->flatcourse);
 
         try {
             $this->person_uid_fieldid = $DB->get_field('user_info_field', 'id', ['shortname' => 'campusonline_person_uid']);
@@ -148,6 +157,28 @@ class sync {
     }
 
     /**
+     * Gets groups for a course.
+     *
+     * @param string $course_uid
+     * @return array groups
+     */
+    public function getCourseGroups($course_uid) {
+
+        $endpoint = "co-tm-core/course/api/courses/$course_uid/groups";
+        $result = $this->restCall($endpoint, null);
+
+        // Analyze response.
+        $groups = array();
+        if (property_exists($result, 'items')) {
+            foreach ($result->items as $item) {
+                $groups[$item->uid] = $item->name->value->de;
+            }
+        }
+
+        return $groups;
+    }
+
+    /**
      * Gets courses for preview or sync.
      *
      * @param string $course_uids if provided, only fetches these courses.
@@ -198,6 +229,39 @@ class sync {
         }
 
         return $allcourses;
+    }
+
+    /**
+     * Gets course sync strategy for a course.
+     *
+     * @param array $coursedata
+     * @return string $strategy
+     */
+    public function getCourseSyncStrategy($coursedata) {
+
+        // Get eLearningEventTypeKey.
+        if (array_key_exists('course:elearningEventTypeKey', $coursedata)) {
+            $elearning_type = $coursedata['course:elearningEventTypeKey'];
+        } else {
+
+            // Log error.
+            $message = "ERROR: no eLearningEventTypeKey for CAMPUSonline course $course_uid, skipping course.";
+            locallib::writeLog('create_course', $message, 2, null, $this->trace, 3);
+            return null;
+        }
+
+        if (in_array($elearning_type, $this->grouptocourse)) {
+            return self::GROUP_TO_COURSE;
+        } elseif(in_array($elearning_type, $this->grouptogroup)) {
+            return self::GROUP_TO_GROUP;
+        } elseif(in_array($elearning_type, $this->flatcourse)) {
+            return self::FLAT_COURSE;
+        } else {
+            if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+                $this->trace->output(" - Skipping CAMPUSonline course $course_uid - eLearningEventTypeKey $elearning_type is not configured for sync.");
+            }
+            return null;
+        }
     }
 
     /**
@@ -604,8 +668,6 @@ class sync {
         // Get config.
         $updatecourseurls = $this->config->updatecourseurls;
         $updatecourses = $this->config->updateexistingcourses;
-        $grouptocourse = $this->config->grouptocourse;
-        $grouptogroup = $this->config->grouptogroup;
 
         // Start output.
         $number = count($courses);
@@ -615,6 +677,8 @@ class sync {
 
         // Sync courses.
         foreach ($courses as $coursedata) {
+
+            $course_uid = $coursedata['course:uid'];
 
             // Skip courses that are not in the configured orgs.
             if ($orgfilter = $this->config->orgfilter) {
@@ -627,42 +691,40 @@ class sync {
                 }
             }
 
-            $course_uid = $coursedata['course:uid'];
-            if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
-                $this->trace->output(" - Syncing CAMPUSonline course $course_uid");
+            // Determine course sync strategy.
+            if (!$strategy = self::getCourseSyncStrategy($coursedata)) {
+                continue;
             }
 
-            // Check if we need to make separate courses for each group.
-            $separatecourses = false;
-            $groups = $this->getCourseGroups($coursedata['course:uid']);
-            if (array_key_exists('course:elearningEventTypeKey', $coursedata)) {
-                $elearning_type = $coursedata['course:elearningEventTypeKey'];
-                if (str_contains($grouptocourse, $elearning_type)) {
-                    $separatecourses = true;
-                }
+            // Start sync & log.
+            if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+                $this->trace->output(" - Syncing CAMPUSonline course $course_uid with strategy $strategy");
+            }
+
+            // Get groups if necessary.
+            if ($strategy !== self::FLAT_COURSE) {
+                $groups = $this->getCourseGroups($course_uid);
+            } else {
+                $groups = [0 => 'dummy'];
             }
 
             foreach ($groups as $group_uid => $group_name) {
 
-                // Single course or separate courses for each group.
-                if ($separatecourses) {
-                    $idnumber = "$course_uid:$group_uid";
-                } else {
-                    $idnumber = $course_uid;
-                }
-
                 // Prepare new course data.
-                if ($separatecourses) {
+                if ($strategy == self::GROUP_TO_COURSE) {
+                    $idnumber = "$course_uid:$group_uid";
                     $newcourse = locallib::buildCourse($coursedata, $group_name, $group_uid);
                 } else {
+                    $idnumber = $course_uid;
                     $newcourse = locallib::buildCourse($coursedata);
                 }
 
-                // Get category.
+                // Get category (only for first loop).
                 if (!$newcourse['category'] = $this->getCourseCategory($coursedata)) {
                     continue;
                 }
 
+                // Try to find existing course.
                 if (!$course = $DB->get_record('course', ['idnumber' => $idnumber])) {
 
                     // Create new course.
@@ -680,7 +742,7 @@ class sync {
                         locallib::setCustomCourseFields($courseid, $coursedata);
 
                         // Log success.
-                        if ($separatecourses) {
+                        if ($strategy == self::GROUP_TO_COURSE) {
                             $this->setMoodleCourseUrl($course, $group_uid);
                             $message = "Created Moodle course $courseid for CAMPUSonline course $course_uid group $group_uid.";
                         } else {
@@ -692,7 +754,7 @@ class sync {
                     } else {
 
                         // Log error.
-                        if ($separatecourses) {
+                        if ($strategy == self::GROUP_TO_COURSE) {
                             $message = "ERROR: could not create Moodle course for CAMPUSonline course $course_uid group $group.";
                         } else {
                             $message = "ERROR: could not create Moodle course for CAMPUSonline course $course_uid.";
@@ -705,11 +767,12 @@ class sync {
 
                 } else {
 
+                    // Update existing course.
                     $courseid = $course->id;
 
                     // Update course URL in CAMPUSonline.
                     if ($updatecourseurls == 1) {
-                        if ($separatecourses) {
+                        if ($strategy == self::GROUP_TO_COURSE) {
                             $this->setMoodleCourseUrl($course, $group_uid);
                         } else {
                             $this->setMoodleCourseUrl($course);
@@ -738,7 +801,7 @@ class sync {
                         locallib::setCustomCourseFields($courseid, $coursedata);
 
                         // Log success.
-                        if ($separatecourses) {
+                        if ($strategy == self::GROUP_TO_COURSE) {
                             $message = "Updated Moodle course settings for $courseid with data from CAMPUSonline course $course_uid group $group_uid.";
                         } else {
                             $message = "Updated Moodle course settings for $courseid with data from CAMPUSonline course $course_uid.";
@@ -747,27 +810,15 @@ class sync {
                     }
                 }
 
-                // Check if we need to sync groups for enrolments.
-                $syncgroups = false;
-                if (!$separatecourses) {
-                    if (empty($grouptogroup)) {
-                        $syncgroups = true;
-                    } elseif (array_key_exists('course:elearningEventTypeKey', $coursedata)) {
-                        if (str_contains($grouptogroup, $elearning_type)) {
-                            $syncgroups = true;
-                        }
-                    }
-                }
-
                 // Sync enrolments.
-                if ($syncgroups) {
+                if ($strategy == self::GROUP_TO_GROUP) {
                     $this->syncEnrolments($course, $groups);
                 } else {
                     $this->syncEnrolments($course);
                 }
 
                 // Break foreach loop in case of no separate groups.
-                if (!$separatecourses) {
+                if ($strategy !== self::GROUP_TO_COURSE) {
                     break;
                 }
             }
@@ -1228,28 +1279,6 @@ class sync {
         }
 
         return $enriched_courses;
-    }
-
-    /**
-     * Gets group for a course.
-     *
-     * @param string $course_uid
-     * @return array groups
-     */
-    private function getCourseGroups($course_uid) {
-
-        $endpoint = "co-tm-core/course/api/courses/$course_uid/groups";
-        $result = $this->restCall($endpoint, null);
-
-        // Analyze response.
-        $groups = array();
-        if (property_exists($result, 'items')) {
-            foreach ($result->items as $item) {
-                $groups[$item->uid] = $item->name->value->de;
-            }
-        }
-
-        return $groups;
     }
 
     /**

@@ -61,7 +61,7 @@ $string['coursecatsettings_desc'] = '<ul>
     <li>Die Kursbereiche können mithilfe von Werten aus CAMPUSonline als <strong>Token</strong> erstellt werden</li>
     <li>Wenn sich die resultierende Kursbereiche für einen aktiv synchronisierten Kurs ändert, wird der Kurs <strong>verschoben</strong></li></ul>';
 $string['coursecount'] = 'Rohdaten für {$a} Kurse:';
-$string['coursecount_syncdata'] = 'Werte für {$a} Kurse:';
+$string['coursecount_syncdata'] = '{$a->co} Kurse von CAMPUSonline geholt, Vorschau der Werte für {$a->moodle} zu syncende Moodle Kurse:';
 $string['coursepreview'] = 'Kurs-Sync Vorschau';
 $string['coursesyncsettings'] = 'Kursdaten';
 $string['coursesyncsettings_desc'] = '<ul>
@@ -77,7 +77,7 @@ $string['donotsyncrole'] = '- Diese Rolle nicht synchronisieren -';
 $string['employees'] = 'Mitarbeiter';
 $string['endpoint'] = 'CAMPUSonline-Endpoint';
 $string['endpoint_desc'] = 'Adresse des CAMPUSonline OAuth2-Endpoints';
-$string['enrolmentsyncsettings'] = 'Kurs Sync';
+$string['enrolmentsyncsettings'] = 'Kurs & Einschreibungs Sync';
 $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>Dieser Task erstellt und aktualisiert <strong>Kurse</strong> und deren <strong>Einschreibungen</strong></li>
     <li>Es gibt zwei Tasks: einen für <strong>vollständige</strong> Synchronisation und eine nur für <strong>Änderungen</strong></li>
@@ -97,15 +97,17 @@ $string['errorsonly'] = 'Nur Fehler';
 $string['externalkey'] = 'Externer Schlüssel';
 $string['externalsystemkey'] = 'Externer Systemschlüssel';
 $string['externalsystemkey_desc'] = 'Falls für die Benutzeridentifikation <strong>EXTERNAL_SYSYSTEM_UID</strong> verwendet wird, ist die Angabe von external_system_key und external_key notwendig, damit diese von CAMPUSonline geholt werden können.';
+$string['flatcourse'] = 'Kurs ohne Gruppen';
+$string['flatcourse_desc'] = 'Komma-separierte Liste von elearningEventTypeKeys. Für diese eLearningEventTypeKeys Kurse angelegt, aber Gruppen ignoriert.';
 $string['grouptocourse'] = 'Gruppe zu Kurs';
-$string['grouptocourse_desc'] = 'Komma-separierte Liste von elearningEventTypeKeys. Für diese E-Learning-Ereignistypen werden separate Moodle-Kurse für jede der Gruppen erstellt.';
+$string['grouptocourse_desc'] = 'Komma-separierte Liste von elearningEventTypeKeys. Für diese eLearningEventTypeKeys werden separate Moodle-Kurse für jede der Gruppen erstellt.';
 $string['grouptogroup'] = 'Gruppe zu Gruppe';
-$string['grouptogroup_desc'] = 'Komma-separierte Liste von elearningEventTypeKeys. Für diese E-Learning-Ereignistypen werden CAMPUSonline-Gruppen in Moodle-Gruppen synchronisiert.
+$string['grouptogroup_desc'] = 'Komma-separierte Liste von elearningEventTypeKeys. Für diese eLearningEventTypeKeys werden CAMPUSonline-Gruppen in Moodle-Gruppen synchronisiert.
 <p>Wenn leer werden Moodle-Gruppen für <strong>ALLE</strong> Typen erstellt, die nicht für separate Kurse konfiguriert sind (empfohlen).</p>';
-$string['groupsyncsettings'] = 'Strategie zur Erzeugung von Kursen';
+$string['groupsyncsettings'] = 'Modus für LV-Gruppen';
 $string['groupsyncsettings_desc'] = '<ul>
     <li>CAMPUSonline-<strong>Gruppen</strong> können entweder in Moodle-Kursgruppen synchronisiert oder es können <strong>separate Kurse</strong> für jede Gruppe erstellt werden</li>
-    <li>Wenn Sie keine Gruppen für einige E-Learning-Typen synchronisieren möchten, können Sie die Gruppenzuordnung nur für bestimmte Ereignistypen konfigurieren</li>
+    <li>Konfigurieren Sie alle eLearningEventTypeKeys die Sie synchronisieren möchten, Kurse mit nicht konfigurierte eLearningEventTypeKeys werden übersprungen.</li>
     </ul>';
 $string['idattempts'] = 'Anzahl von Versuchen';
 $string['idattempts_desc'] = 'Ein Zähler für die fehlgeschlagenen Versuche einen Benutzer zu identifizieren wird in einem CAMPUSonline Benutzer Profilfeld geführt. Dieser Zähler kann von Admins zurückgesetzt werden, um erneut zu versuchen, den Benutzer in CAMPUSonline zu finden.';

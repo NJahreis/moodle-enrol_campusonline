@@ -122,15 +122,18 @@ if ($function == 'showrawcoursedata') {
 
     // Table header.
     $table = new html_table();
-    $table->head = ['coursecategory', 'idnumber', 'shortname', 'fullname'];
+    $table->head = ['CO course_uid', 'mode', 'coursecategory', 'idnumber', 'shortname', 'fullname'];
     $table->head = array_merge($table->head, array_keys(locallib::COURSE_FIELDS));
     $customfields = locallib::getCustomCourseFieldData(null);
     $table->head = array_merge($table->head, $customfields);
 
     // Table data.
+    $count = 0;
     $data = array();
     $courses = $sync->getCourses(null, $limit);
     foreach ($courses as $key => $coursedata) {
+
+        $course_uid = $coursedata['course:uid'];
 
         // Skip courses that are not in the configured orgs.
         if ($orgfilter) {
@@ -140,34 +143,59 @@ if ($function == 'showrawcoursedata') {
             }
         }
 
-        $course = locallib::buildCourse($coursedata);
-        $categoryid = $sync->getCourseCategory($coursedata);
+        // Get course sync strategy.
+        if (!$strategy = $sync->getCourseSyncStrategy($coursedata)) {
+            $mode = 'SKIP';
+        } else {
+            $mode = $strategy;
+        }
+        $co = [$course_uid, $mode];
 
-        // Add custom fields.
-        $customfields = locallib::getCustomCourseFieldData($coursedata);
-        foreach ($customfields as $key => $value) {
-            $course['customfield_' . $key] = $value;
+        if ($strategy == $sync::GROUP_TO_COURSE) {
+            $groups = $sync->getCourseGroups($course_uid);
+        } else {
+            $groups = [0 => 'dummy'];
         }
 
-        // Convert category id to linked name of full category tree.
-        $categoryname = '';
-        $categoryidforlink = $categoryid;
-        while ($categoryid > 0) {
-            $category = $DB->get_record('course_categories', ['id' => $categoryid]);
-            $categoryname = $category->name . ' / ' . $categoryname;
-            $categoryid = $category->parent;
-        }
-        $categoryname = trim($categoryname, ' / ');
-        $url = new moodle_url('/course/index.php', array('categoryid' => $categoryidforlink));
-        $course['coursecategory'] = html_writer::link($url, $categoryname);
+        // Loop through groups.
+        foreach ($groups as $group_uid => $group_name) {
 
-        // Add to table.
-        $data[] = $course;
+            // Prepare new course data.
+            if ($strategy == $sync::GROUP_TO_COURSE) {
+                $course = locallib::buildCourse($coursedata, $group_name, $group_uid);
+            } else {
+                $course = locallib::buildCourse($coursedata);
+            }
+            $categoryid = $sync->getCourseCategory($coursedata);
+
+            // Add custom fields.
+            $customfields = locallib::getCustomCourseFieldData($coursedata);
+            foreach ($customfields as $key => $value) {
+                $course['customfield_' . $key] = $value;
+            }
+
+            // Convert category id to linked name of full category tree.
+            $categoryname = '';
+            $categoryidforlink = $categoryid;
+            while ($categoryid > 0) {
+                $category = $DB->get_record('course_categories', ['id' => $categoryid]);
+                $categoryname = $category->name . ' / ' . $categoryname;
+                $categoryid = $category->parent;
+            }
+            $categoryname = trim($categoryname, ' / ');
+            $url = new moodle_url('/course/index.php', array('categoryid' => $categoryidforlink));
+            $course['coursecategory'] = html_writer::link($url, $categoryname);
+
+            // Add to table.
+            $data[] = array_merge($co, $course);
+            $count++;
+        }
     }
 
     $table->data = $data;
 
-    echo html_writer::tag('h3', get_string('coursecount_syncdata', 'enrol_campusonline', count($courses)));
+    echo html_writer::tag('h3', get_string('coursecount_syncdata', 'enrol_campusonline',
+        array('co' => count($courses), 'moodle' => $count)));
     echo html_writer::table($table);
 
 // Show raw user data.

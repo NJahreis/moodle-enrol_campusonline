@@ -61,7 +61,7 @@ $string['coursecatsettings_desc'] = '<ul>
     <li>The course category tree can be built using values from CAMPUSonline as <strong>tokens</strong></li>
     <li>If the resulting course category changes for a course that is actively synced, the course will be <strong>moved</strong></li></ul>';
 $string['coursecount'] = 'Raw data for {$a} courses:';
-$string['coursecount_syncdata'] = 'Synced data for {$a} courses:';
+$string['coursecount_syncdata'] = 'Fetched {$a->co} courses from CAMPUSonline, previewing synced data for {$a->moodle} resulting courses:';
 $string['coursepreview'] = 'Course sync preview';
 $string['coursesyncsettings'] = 'Course values';
 $string['coursesyncsettings_desc'] = '<ul>
@@ -77,7 +77,7 @@ $string['donotsyncrole'] = '- do not sync this role -';
 $string['employees'] = 'Employees';
 $string['endpoint'] = 'CAMPUSonline endpoint';
 $string['endpoint_desc'] = 'Address of the CAMPUSonline oauth2 endpoint';
-$string['enrolmentsyncsettings'] = 'Course sync';
+$string['enrolmentsyncsettings'] = 'Course & enrolment sync';
 $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>These sync tasks create and update <strong>courses</strong> and their <strong>enrolments</strong></li>
     <li>There are two sync tasks: one for <strong>full</strong> sync, and one for <strong>modifications</strong> only</li>
@@ -96,14 +96,16 @@ $string['errorsonly'] = 'Errors only';
 $string['externalkey'] = 'External key';
 $string['externalsystemkey'] = 'External system key';
 $string['externalsystemkey_desc'] = 'When using <strong>EXTERNAL_SYSTEM_UID</strong> to identify your users, you need to provide the external_system_key and the external_key to fetch it from CAMPUSonline.';
+$string['flatcourse'] = 'Course without groups';
+$string['flatcourse_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, Moodle courses will be created, but groups ignored.';
 $string['grouptocourse'] = 'Group to course';
 $string['grouptocourse_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, separate Moodle courses will be created for each of the groups.';
 $string['grouptogroup'] = 'Group to group';
 $string['grouptogroup_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, CAMPUSonline groups will be synced into Moodle groups. <p>Leave this empty to sync groups into Moodle groups for <strong>all</strong> types except the ones configured for separate courses (recommended).</p>';
-$string['groupsyncsettings'] = 'Course creation strategy';
+$string['groupsyncsettings'] = 'Course group mode';
 $string['groupsyncsettings_desc'] = '<ul>
     <li>CAMPUSonline <strong>groups</strong> can either be synced into Moodle course groups, or <strong>separate courses</strong> can be created for each group</li>
-    <li>If you do no not want to sync groups at all for some elearning types, you can configure group to group only for specific event types</li>
+    <li>Configure all eLearningEventTypeKeys you want to sync, or courses will be skipped</li>
     </ul>';
 $string['idattempts'] = 'Max attempts';
 $string['idattempts_desc'] = 'A counter for the number of failed attempts to identfy a user will be kept in a custom user profile field created by CAMPUSonline. You can reset this counter to re-try identifying a user.';
@@ -164,7 +166,7 @@ $string['updatecourseurls_desc'] = 'Writes back the Moodle course URL to CAMPUSo
 $string['updateexistingcourses'] = 'Update existing courses';
 $string['updateexistingcourses_desc'] = 'Allows the sync task to change names or categories of existing Moodle courses if they change in CAMPUSonline.';
 $string['usercount'] = 'Raw data for {$a} users:';
-$string['usercount_syncdata'] = 'Synced data for {$a} users:';
+$string['usercount_syncdata'] = 'Fetched {$a} users from CAMPUSonline - preview of synced data:';
 $string['useridsettings'] = 'Identification of existing users';
 $string['useridsettings_desc'] = '<ul>
     <li>This sync task matches existing Moodle users to CAMPUSonline users, it is not scheduled by default, and should only be run manually</li>
