@@ -239,6 +239,9 @@ if ($ADMIN->fulltree) {
     // Custom fields.
     $customfields = locallib::getCustomCourseFieldData(null);
     foreach ($customfields as $shortname => $fullname) {
+        if (in_array($shortname, locallib::IGNORE_FIELDS)) {
+            continue;
+        }
         $settings->add(new admin_setting_configtext(
             'enrol_campusonline/course_customfield_' . $shortname,
             $fullname,

@@ -25,6 +25,7 @@
 
 namespace enrol_campusonline;
 
+use moodle_exception;
 use moodle_url;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -42,8 +43,7 @@ class sync {
     private $trace;
     private $externalkey;
     private $externalsystemkey;
-    private $person_uid_fieldid;
-    private $attempts_fieldid;
+    private $customfieldids;
     private $orgdata;
     private $semesterdata;
     private $group_to_group;
@@ -74,11 +74,17 @@ class sync {
         $this->grouptogroup = preg_split('/\s*,\s*/', $this->config->grouptogroup);
         $this->flatcourse = preg_split('/\s*,\s*/', $this->config->flatcourse);
 
-        try {
-            $this->person_uid_fieldid = $DB->get_field('user_info_field', 'id', ['shortname' => 'campusonline_person_uid']);
-            $this->attempts_fieldid = $DB->get_field('user_info_field', 'id', ['shortname' => 'campusonline_id_attempts']);
-        } catch (Exception $e) {
-            throw new moodle_exception('error:uidfieldnotfound', 'enrol_campusonline', '', $shortname);
+        // Get custom field ids so we dont have to deal with Moodle custom field API.
+        $fields = ['user_info_field:campusonline_person_uid',
+                   'customfield_field:campusonline_other_co_course_uids'
+                  ];
+        foreach ($fields as $field) {
+            list($table, $shortname) = explode(':', $field);
+            if (!$value = $DB->get_field($table, 'id', ['shortname' => $shortname])) {
+                throw new moodle_exception('error:uidfieldnotfound', 'enrol_campusonline', null, "$table: $shortname");
+            } else {
+                $this->customfieldids[$shortname] = $value;
+            }
         }
 
         // Get token.
@@ -340,7 +346,7 @@ class sync {
         $userid = null;
 
         // Get user id via uid in our user profile field.
-        $fieldid = $this->person_uid_fieldid;
+        $fieldid = $this->customfieldids['campusonline_person_uid'];
         $sql = "SELECT * FROM {user_info_data} WHERE fieldid = ? AND data = ?";
         $params = array('fieldid' => $fieldid, 'data' => $uid);
         if ($records = $DB->get_records_sql($sql, $params)) {
@@ -698,7 +704,7 @@ class sync {
 
             // Start sync & log.
             if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
-                $this->trace->output(" - Syncing CAMPUSonline course $course_uid with strategy $strategy");
+                $this->trace->output(" - Syncing CAMPUSonline course $course_uid with mode $strategy");
             }
 
             // Get groups if necessary.
@@ -1350,10 +1356,6 @@ class sync {
             $payload = 'json';
         }
 
-        // echo "<pre>";
-        // var_dump($query);
-        // die();
-
         $all_items = [];
         $cursor = null;
 
@@ -1455,31 +1457,60 @@ class sync {
      */
     private function setMoodleCourseUrl($course, $group_uid = null) {
 
+        global $DB;
+
+        // Add own uid.
         $course_uid = explode(':', $course->idnumber)[0];
+        $course_uids[] = $course_uid;
+
+        // Add other uids.
+        $handler = \core_customfield\handler::get_handler('core_course', 'course');
+        $datas = $handler->get_instance_data($course->id);
+        $metadata = [];
+        foreach ($datas as $data) {
+            if (empty($data->get_value())) {
+                continue;
+            }
+            $cat = $data->get_field()->get_category()->get('name');
+            $metadata[$data->get_field()->get('shortname')] = $cat . ': ' . $data->get_value();
+        }
+
+        // Get course custom field directly via DB, to avoid having to deal with custom field API.
+        $other_uids = $DB->get_field('customfield_data', 'charvalue',
+            ['instanceid' => $course->id, 'fieldid' => $this->customfieldids['campusonline_other_co_course_uids']]);
+        if ($other_uids) {
+            $other_uids = preg_split('/\s*,\s*/', $other_uids);
+            $course_uids = array_merge($course_uids, $other_uids);
+        }
+
+        // Create URL.
         $endpoint = 'co-tm-core/course/api/e-learning-infos';
         $moodle_url = new moodle_url('/course/view.php', array('id' => $course->id));
         $url = $moodle_url->__toString();
-        $query = [
-            'courseUid' => $course_uid,
-            'externalUrl' => $url,
-        ];
+
+        $query['externalUrl'] = $url;
         if ($group_uid) {
             $query['courseGroupUid'] = $group_uid;
         }
 
-        // Log success.
-        if ($result = $this->restCall($endpoint, $query, 'POST')) {
-            if (property_exists($result, 'externalUrl')) {
-                $url = $result->externalUrl;
-                $message = "Updated CAMPUSonline course $course->idnumber with Moodle course URL $url.";
-                locallib::writeLog('update_course', $message, 0, $course->id, $this->trace, 3);
-                return;
+        // Set Moodle course URL in CAMPUSonline.
+        foreach ($course_uids as $course_uid) {
+            $query['courseUid'] = $course_uid;
+
+            // Log success.
+            if ($result = $this->restCall($endpoint, $query, 'POST')) {
+                if (property_exists($result, 'externalUrl')) {
+                    $url = $result->externalUrl;
+                    $message = "Updated CAMPUSonline course $course_uid with Moodle course URL $url.";
+                    locallib::writeLog('update_course', $message, 0, $course->id, $this->trace, 3);
+                    continue;
+                }
+
+                // Error.
+                $message = "ERROR: could not update CAMPUSonline course $course_uid with Moodle course URL $url.";
+                locallib::writeLog('update_course', $message, 2, $course->id, $this->trace, 3);
             }
         }
-
-        // Error.
-        $message = "ERROR: could not update CAMPUSonline course $course->idnumber with Moodle course URL.";
-        locallib::writeLog('update_course', $message, 2, $course->id, $this->trace, 3);
     }
 
     /**

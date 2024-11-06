@@ -78,6 +78,7 @@ class locallib {
     // Our own custom fields that should be ignored in mapping.
     public const IGNORE_FIELDS = ['campusonline_person_uid',
                                   'campusonline_id_attempts',
+                                  'campusonline_other_co_course_uids',
     ];
 
 
