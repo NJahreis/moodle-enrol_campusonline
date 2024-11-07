@@ -57,20 +57,20 @@ function xmldb_enrol_campusonline_upgrade($oldversion) {
         }
 
         // Create field.
-        if (!$DB->get_record('customfield_field', ['shortname' => 'campusonline_other_co_course_uids'])) {
-            $field = new stdClass();
-            $field->shortname = 'campusonline_other_co_course_uids';
-            $field->name = 'Other CAMPUSonline courses linked to this Moodle course.';
-            $field->type = 'text';
-            $field->description = '<p dir="ltr">Comma-separated list of CAMPUSonline course UIDs that share this Moodle course.</p><p dir="ltr">Use this if you want to use the same Moodle course for multiple CAMPUSonline courses, so that the URL for this course will be written back to all of those courses.</p><p dir="ltr">This will not affect syncing of enrollments.</p>';
-            $field->descriptionformat = 1;
-            $field->sortorder = 0;
-            $field->categoryid = $categoryid;
-            $field->configdata = '{"required":"0","uniquevalues":"0","defaultvalue":"","displaysize":50,"maxlength":1333,"ispassword":"0","link":"","locked":"0","visibility":"1"}';
-            $field->timecreated = time();
-            $field->timemodified = time();
-            $DB->insert_record('customfield_field', $field);
-        }
+//        if (!$DB->get_record('customfield_field', ['shortname' => 'campusonline_other_co_course_uids'])) {
+//            $field = new stdClass();
+//            $field->shortname = 'campusonline_other_co_course_uids';
+//            $field->name = 'Other CAMPUSonline courses linked to this Moodle course.';
+//            $field->type = 'text';
+//            $field->description = '<p dir="ltr">Comma-separated list of CAMPUSonline course UIDs that share this Moodle course.</p><p dir="ltr">Use this if you want to use the same Moodle course for multiple CAMPUSonline courses, so that the URL for this course will be written back to all of those courses.</p><p dir="ltr">This will not affect syncing of enrollments.</p>';
+//            $field->descriptionformat = 1;
+//            $field->sortorder = 0;
+//            $field->categoryid = $categoryid;
+//            $field->configdata = '{"required":"0","uniquevalues":"0","defaultvalue":"","displaysize":50,"maxlength":1333,"ispassword":"0","link":"","locked":"0","visibility":"1"}';
+//            $field->timecreated = time();
+//            $field->timemodified = time();
+//            $DB->insert_record('customfield_field', $field);
+//        }
 
         upgrade_plugin_savepoint(true, 2024110504, 'enrol', 'campusonline');
     }
