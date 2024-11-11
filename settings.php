@@ -303,26 +303,29 @@ if ($ADMIN->fulltree) {
         $roles,
     ));
     // Lectureship roles.
-    $sync = new sync(new \text_progress_trace());
-    if ($sync->isConnected()) {
-        $functions = $sync->getLectureshipFunctions();
-        $default = 0;
-        foreach ($functions as $function) {
-            $settings->add(new admin_setting_configselect(
-                'enrol_campusonline/role_' . $function,
-                $function,
-                '',
-                $default,
-                $roles,
+    // Only call this when actually on our settings page, to avoid instanciating the sync class on other admin pages.
+    if (array_key_exists('section', $_GET) && $_GET['section'] == 'enrolsettingscampusonline') {
+        $sync = new sync(new \text_progress_trace());
+        if ($sync->isConnected()) {
+            $functions = $sync->getLectureshipFunctions();
+            $default = 0;
+            foreach ($functions as $function) {
+                $settings->add(new admin_setting_configselect(
+                    'enrol_campusonline/role_' . $function,
+                    $function,
+                    '',
+                    $default,
+                    $roles,
+                ));
+                $default = 4;
+            }
+        } else {
+            $settings->add(new admin_setting_heading(
+                'enrol_campusonline/rolemappings',
+                get_string('rolemappings', 'enrol_campusonline'),
+                get_string('rolemappings_notconnected', 'enrol_campusonline'),
             ));
-            $default = 4;
         }
-    } else {
-        $settings->add(new admin_setting_heading(
-            'enrol_campusonline/rolemappings',
-            get_string('rolemappings', 'enrol_campusonline'),
-            get_string('rolemappings_notconnected', 'enrol_campusonline'),
-        ));
     }
 
     // ----- User id settings -----

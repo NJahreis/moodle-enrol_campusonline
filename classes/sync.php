@@ -81,7 +81,11 @@ class sync {
         foreach ($fields as $field) {
             list($table, $shortname) = explode(':', $field);
             if (!$value = $DB->get_field($table, 'id', ['shortname' => $shortname])) {
-                throw new moodle_exception('error:uidfieldnotfound', 'enrol_campusonline', null, "$table: $shortname");
+                // Show error.
+                $message = get_string('error:uidfieldnotfound', 'enrol_campusonline', "$table: $shortname");
+                \core\notification::add($message,
+                    \core\output\notification::NOTIFY_ERROR);
+                locallib::writeLog('general', $message, 2, null, $this->trace, null);
             } else {
                 $this->customfieldids[$shortname] = $value;
             }
