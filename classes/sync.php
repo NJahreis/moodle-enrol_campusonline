@@ -302,7 +302,7 @@ class sync {
         // Get teacher enrolments.
         $endpoint = 'co-tm-core/course/api/lectureships';
         $query = [
-            'course_uid' => $course->idnumber,
+            'course_uid' => $course_uid,
         ];
         $result = $this->restCall($endpoint, $query);
 
