@@ -27,10 +27,6 @@
 // Basics.
 $string['pluginname'] = 'CAMPUSonline enrolment';
 $string['privacy:metadata'] = 'Das CAMPUSonline-Einschreibungs-Plugin speichert keine persönlichen Daten.';
-$string['task:sync'] = 'CAMPUSonline-Kurse & Einschreibungen FULL Sync';
-$string['task:sync_delta'] = 'CAMPUSonline-Kurse & Einschreibungen MODIFICATIONS Sync';
-$string['task:user_id'] = 'CAMPUSonline Benutzer Identifikation';
-$string['task:user_sync'] = 'CAMPUSonline Benutzerdaten Sync';
 
 $string['allevents'] = 'Alle Ereignisse';
 $string['allowemailupdate'] = 'Benutzerdaten Sync darf E-Mail-Adressen zu ändern';
@@ -56,9 +52,10 @@ $string['configuretask_delta'] = 'Task für MODIFICATIONS Sync konfigurieren';
 $string['configuretask_full'] = 'Task für FULL Sync konfigurieren';
 $string['connectionerror'] = 'Keine Verbindung zu CAMPUSonline möglich. Überprüfen Sie Ihre Verbindungseinstellungen. Bitte kontaktieren Sie Ihren Administrator.';
 $string['connectionsettings'] = 'Verbindung';
-$string['coursecatsettings'] = 'Kursbereich';
+$string['coursecatsettings'] = 'Unterbereiche für Kurse';
 $string['coursecatsettings_desc'] = '<ul>
-    <li>Die Kursbereiche können mithilfe von Werten aus CAMPUSonline als <strong>Token</strong> erstellt werden</li>
+    <li>Kurse werden prinzipiell in der Kurskategorie, die ihrer Organisation zugeordnet ist, abgelegt</li>
+    <li>Optional können Sie die Kurse unterhalb dieser Kategorie noch weiter strukturieren, indem Sie mittels Token Unterkategorien erstellen lassen</li>
     <li>Wenn sich die resultierende Kursbereiche für einen aktiv synchronisierten Kurs ändert, wird der Kurs <strong>verschoben</strong></li></ul>';
 $string['coursecount'] = 'Rohdaten für {$a} Kurse:';
 $string['coursecount_syncdata'] = '{$a->co} Kurse von CAMPUSonline geholt, Vorschau der Werte für {$a->moodle} zu syncende Moodle Kurse:';
@@ -70,8 +67,8 @@ $string['coursesyncsettings_desc'] = '<ul>
     <li>Diese Felder dürfen <strong>nicht leer</strong> sein, sonst schlägt die Kurserstellung fehl: course_fullname, course_shortname, course_format</li>
     <li>Wählen Sie Werte für andere Kursfelder (einschließlich benutzerdefinierter Kursfelder) durch Kombination von Text und <strong>Token</strong> für CAMPUSonline-Felder, z.B.: "CAMPUSONLINE_COURSE_{title}</li>
     <li>Zeigen Sie Rohdaten aus CAMPUSonline an, um verfügbare Felder/Token zu sehen</li></ul>';
-$string['createcoursecatetories'] = 'Kursbereiche erstellen';
-$string['createcoursecatetories_desc'] = 'Erlaubt diesen Tasks, Kursbereiche zu erstellen, wenn sie nicht existieren.';
+$string['createcoursecategories'] = 'Kursbereiche erstellen';
+$string['createcoursecategories_desc'] = 'Erlaubt dem Kurs & Einschreibungs Sync Task, Kursbereiche zu erstellen, wenn sie nicht existieren.';
 $string['deletedcourse'] = 'Gelöschter Kurs (ID: {$a})';
 $string['donotsyncrole'] = '- Diese Rolle nicht synchronisieren -';
 $string['employees'] = 'Mitarbeiter';
@@ -125,6 +122,10 @@ $string['modificationtimeframe_desc'] = '<ul>
     <li>Derzeit stellt CAMPUSonline maximal <strong>7 Tage</strong> Änderungen zur Verfügung - wenn Sie den Modification Sync in längeren Intervallen ausführen, gehen Modifikationen verloren. Stellen Sie daher sicher, dass Sie den Aufgabenplan entsprechend konfigurieren</li></ul>';
 $string['orgfilter'] = 'Organisationen';
 $string['orgfilter_desc'] = 'Nur bestimmte Organisationen syncen. Komma-separierte Liste von Organisations-UIDs.';
+$string['orgkey'] = 'Kennzeichnungs-Key für zu syncende Organisationseinheiten';
+$string['orgkey_desc'] = 'Mit diesem Schlüssel werden Organisationseinheiten in CAMPUSonline identifiziert.';
+$string['orgsyncsettings'] = 'Organisationseinheiten Sync';
+$string['orgsyncsettings_desc'] = 'tba';
 $string['phplogging'] = 'Zusätzlich ins PHP error log schreiben';
 $string['previewcourses'] = 'Vorschau für Kurse mit diesen Einstellungen';
 $string['previewusers'] = 'Vorschau für Benutzer mit diesen Einstellungen';
@@ -133,7 +134,7 @@ $string['rolemappings'] = 'Rollen-Zuordnungen';
 $string['rolemappings_desc'] = 'Wählen Sie Moodle-Rollen für CAMPUSonline Rollen aus.';
 $string['rolemappings_notconnected'] = 'Keine Verbindung zu CAMPUSonline möglich. Überprüfen Sie Ihre Verbindungseinstellungen und laden Sie diese Seite neu, um Zuordnungen für CAMPUSonline-Rollen hinzuzufügen.';
 $string['rootcoursecategory'] = 'Oberster Kursbereich';
-$string['rootcoursecategory_desc'] = 'Kursbereich, in die Kurse synchronisiert werden. Wenn Sie "TOP" auswählen, benötigen Sie Regeln, um Unterbereiche zu erstellen, andernfalls schlägt die Synchronisation fehl.';
+$string['rootcoursecategory_desc'] = 'Kursbereich, in dem die CAMPUSonline Kurskategorie Hierarchie für Organisationen gebaut wird.';
 $string['restcalls'] = 'Zeige jeden REST Call beim Ausführen der Tasks';
 $string['restcalls_desc'] = 'Zeigt Informationen über jeden REST Call beim Ausführen des Tasks an, schreibt aber nicht ins Logfile. Für Debugging.';
 $string['runtask'] = 'Task ausführen';
@@ -161,6 +162,10 @@ $string['syncthisuser'] = 'Synchronisiere Benutzer mit CAMPUSonline';
 $string['syncinguser'] = 'Synchronisiere Benutzerdaten mit CAMPUSonline...';
 $string['syncusersonlogin'] = 'Benutzerdaten beim Login syncen';
 $string['syncusersonlogin_desc'] = 'Neben dem Sync Task werden Benutzerdaten auch bei jedem Login gesynct.';
+$string['task:org_sync'] = 'CAMPUSonline Organisations Sync';
+$string['task:sync'] = 'CAMPUSonline-Kurse & Einschreibungen FULL Sync';
+$string['task:sync_delta'] = 'CAMPUSonline-Kurse & Einschreibungen MODIFICATIONS Sync';
+$string['task:user_id'] = 'CAMPUSonline Benutzer Identifikation';
 $string['testconnection'] = 'Verbindung testen';
 $string['testsettings'] = 'Diese Einstellungen testen';
 $string['updatecourseurls'] = 'Kurs-URLs aktualisieren';

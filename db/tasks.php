@@ -27,6 +27,16 @@ defined('MOODLE_INTERNAL') || die();
 
 $tasks = array(
     array(
+        'classname' => '\\enrol_campusonline\\task\\org_sync_task',
+        'blocking'  => 0,
+        'minute'    => '*',
+        'hour'      => '0',
+        'day'       => '*',
+        'dayofweek' => '*',
+        'month'     => '*',
+        'disabled'  => true,
+    ),
+    array(
         'classname' => '\\enrol_campusonline\\task\\sync_task',
         'blocking'  => 0,
         'minute'    => '*',

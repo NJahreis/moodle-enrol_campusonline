@@ -27,10 +27,6 @@
 // Basics.
 $string['pluginname'] = 'CAMPUSonline enrolment';
 $string['privacy:metadata'] = 'The CAMPUSonline enrolment plugin does not store any personal data.';
-$string['task:sync'] = 'CAMPUSonline courses & enrolments FULL sync';
-$string['task:sync_delta'] = 'CAMPUSonline courses & enrolments MODIFICATION sync';
-$string['task:user_id'] = 'CAMPUSonline user identification';
-$string['task:user_sync'] = 'CAMPUSonline user data sync';
 
 $string['allevents'] = 'All events';
 $string['allowemailupdate'] = 'User sync can change email address';
@@ -56,9 +52,10 @@ $string['configuretask_delta'] = 'Configure scheduled task for MODIFICATIONS syn
 $string['configuretask_full'] = 'Configure scheduled task for FULL sync';
 $string['connectionerror'] = 'Could not connect to CAMPUSonline. Check your connection settings. Please contact your administrator.';
 $string['connectionsettings'] = 'Connection';
-$string['coursecatsettings'] = 'Course category';
+$string['coursecatsettings'] = 'Subcategories for courses';
 $string['coursecatsettings_desc'] = '<ul>
-    <li>The course category tree can be built using values from CAMPUSonline as <strong>tokens</strong></li>
+    <li>Courses will be created in the course category mapped to their organisation</li>
+    <li>Additionally, you can create subcategories inside the orgs using tokens</li>
     <li>If the resulting course category changes for a course that is actively synced, the course will be <strong>moved</strong></li></ul>';
 $string['coursecount'] = 'Raw data for {$a} courses:';
 $string['coursecount_syncdata'] = 'Fetched {$a->co} courses from CAMPUSonline, previewing synced data for {$a->moodle} resulting courses:';
@@ -70,8 +67,8 @@ $string['coursesyncsettings_desc'] = '<ul>
     <li>These values are <strong>required</strong>, otherwise course creation will fail: course_fullname, course_shortname, course_format</li>
     <li>Choose values for other course fields (including course custom fields) by combining text and <strong>tokens</strong> for CAMPUSonline fields, eg: "CAMPUSonline_COURSE_{title}</li>
     <li>Show raw data from CAMPUSonline to see available fields/tokens</li></ul>';
-$string['createcoursecatetories'] = 'Create course categories';
-$string['createcoursecatetories_desc'] = 'Allows the enrolment sync task to create course categories if they do not exist.';
+$string['createcoursecategories'] = 'Create course categories';
+$string['createcoursecategories_desc'] = 'Allows the course & enrolment sync task to create course categories if they do not exist.';
 $string['deletedcourse'] = 'deleted course (id: {$a})';
 $string['donotsyncrole'] = '- do not sync this role -';
 $string['employees'] = 'Employees';
@@ -123,6 +120,10 @@ $string['modificationtimeframe_desc'] = '<ul>
     <li>At the moment, CAMPUSonline provides a maximum of <strong>7 days</strong> worth of modifications - when running the modification sync task in longer intervals, modifications will get lost, so make sure to <strong>configure the task schedule accordingly</strong></li></ul>';
 $string['orgfilter'] = 'Organisations';
 $string['orgfilter_desc'] = 'Only sync specific organisations. Leave empty to sync all organisations or provide a comma-separated list of organisation UIDs.';
+$string['orgkey'] = 'Key for organisations selected for sync';
+$string['orgkey_desc'] = 'This key is used to mark organisations in CAMPUSonline for syncing to Moodle.';
+$string['orgsyncsettings'] = 'Organizational structure sync';
+$string['orgsyncsettings_desc'] = 'tba';
 $string['phplogging'] = 'Log to PHP log';
 $string['previewcourses'] = 'Preview courses with these settings';
 $string['previewusers'] = 'Preview users with these settings';
@@ -131,7 +132,7 @@ $string['rolemappings'] = 'Role mappings';
 $string['rolemappings_desc'] = 'Select Moodle roles to use for CAMPUSonline students and lectureship roles.';
 $string['rolemappings_notconnected'] = 'Could not connect to CAMPUSonline. Check your connection settings and reload this page, to add mappings for CAMPUSonline roles.';
 $string['rootcoursecategory'] = 'Root course category';
-$string['rootcoursecategory_desc'] = 'Course category to sync courses into. If you select "TOP", then you will need to have rules to create subcategories, otherwise the sync will fail.';
+$string['rootcoursecategory_desc'] = 'Course category to build the CAMPUSonline organisation tree in.';
 $string['restcalls'] = 'Show REST Calls when running tasks';
 $string['restcalls_desc'] = 'Shows information about every individual REST Call when running the task. Does not write to log. For debugging only.';
 $string['runtask'] = 'Run scheduled task';
@@ -159,6 +160,10 @@ $string['syncthisuser'] = 'Sync user with CAMPUSonline';
 $string['syncinguser'] = 'Syncing user data with CAMPUSonline...';
 $string['syncusersonlogin'] = 'Sync user data upon login';
 $string['syncusersonlogin_desc'] = 'Apart from the sync task, user data will also be synced on every user login.';
+$string['task:org_sync'] = 'CAMPUSonline organisation sync';
+$string['task:sync'] = 'CAMPUSonline courses & enrolments FULL sync';
+$string['task:sync_delta'] = 'CAMPUSonline courses & enrolments MODIFICATION sync';
+$string['task:user_id'] = 'CAMPUSonline user identification';
 $string['testconnection'] = 'Test connection';
 $string['testsettings'] = 'Test these settings';
 $string['updatecourseurls'] = 'Update course URLs';

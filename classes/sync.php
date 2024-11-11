@@ -120,7 +120,17 @@ class sync {
 
         global $DB;
 
-        $categoryid = $this->config->rootcoursecategory;
+        // Get category for this course's org.
+        $orgid = $coursedata['org:uid'];
+        if ($orgcategory = $DB->get_record('course_categories', ['idnumber' => $orgid])) {
+            $categoryid = $orgcategory->id;
+        } else {
+            // Log warning.
+            $message = "WARNING: could not find Moodle course category for CAMPUSonline org $orgid, putting course in configured root category.";
+            $categoryid = $this->config->rootcoursecategory;
+        }
+
+        // Get subcategories.
         $subcategories = $this->config->subcategories;
         $subcategories = explode('\\', $subcategories);
 
@@ -134,7 +144,7 @@ class sync {
 
             if (!$category) {
 
-                if ($this->config->createcoursecatetories == 0) {
+                if ($this->config->createcoursecategories == 0) {
 
                     // Log error.
                     $message = "ERROR: could not find Moodle course category $name and not allowed to create new categories. Create the category manually, or configure CAMPUSonline to be able to create new categories.";
@@ -744,7 +754,7 @@ class sync {
                     }
 
                     // Create course and log course creation.
-                    if (create_course($course)) {
+                    if (\core_course::create($course)) {
 
                         $courseid = $course->id;
 
@@ -1030,7 +1040,6 @@ class sync {
             }
         }
 
-
         // Create/update groups.
         foreach ($group_members as $group_uid => $members) {
 
@@ -1089,7 +1098,141 @@ class sync {
                 }
             }
         }
+    }
 
+    /**
+     * Syncs selected organisations from CAMPUSonline.
+     *
+     * @return void
+     */
+    public function syncOrgs() {
+
+        // Get all organisations.
+        $this->getOrgData();
+
+        // Get selected organisations.
+        $orgids = array();
+        $endpoint = 'co-brm-core/org/api/selected-organisation-uids';
+        $key = $this->config->orgkey;
+        $query = ['key' => $key];
+        $result = $this->restCall($endpoint, $query);
+        if (property_exists($result, 'items')) {
+            foreach ($result->items as $item) {
+                if (property_exists($item, 'organisationUids')) {
+                    $orgids = $item->organisationUids;
+                }
+            }
+        }
+
+        // Start output.
+        $number = count($orgids);
+        if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+            $this->trace->output("Syncing $number selected organisations ...");
+        }
+
+        // Sort selected organisations by number of parents that are also selected,
+        // so that sync progresses in the correct order.
+        $sorted_orgids = array();
+        foreach ($orgids as $orgid) {
+            $parents = 0;
+            $org = $this->orgdata[$orgid];
+            while (property_exists($org, 'parentUid')) {
+                $parentid = $org->parentUid;
+                $org = $this->orgdata[$parentid];
+                $parents++;
+            }
+            $sorted_orgids[$parents][] = $orgid;
+        }
+        asort($sorted_orgids);
+
+        // Sync organisations.
+        foreach ($sorted_orgids as $orgids) {
+            foreach ($orgids as $orgid) {
+                $this->syncOrg($orgid);
+            }
+        }
+    }
+
+    /**
+     * Syncs a single organisation and its role assignments.
+     *
+     * @param string $orgid id of org to be synced
+     *
+     * @return void
+     */
+    public function syncOrg($orgid) {
+
+        global $DB;
+
+        // Get org.
+        $org = $this->orgdata[$orgid];
+        $org_uid = $org->uid;
+
+        // Get parent.
+        if (property_exists($org, 'parentUid')) {
+            $parentid = $org->parentUid;
+            if ($parent_cat = $DB->get_record('course_categories', ['idnumber' => $parentid])) {
+                $parent = $parent_cat->id;
+            } else {
+                // Log error.
+                $message = "ERROR: could not create Moodle course category for CAMPUSonline org $org_uid - category for parent org $parentid does not exist.";
+                locallib::writeLog('sync_org', $message, 2, null, $this->trace, 3);
+                return;
+            }
+        } else {
+            $parent = $this->config->rootcoursecategory;
+        }
+
+        // Get course category.
+        if ($category = $DB->get_record('course_categories', ['idnumber' => $org_uid])) {
+
+            // Get category object.
+            $categoryid = $category->id;
+            $cat = \core_course_category::get($categoryid);
+
+            // Check if something needs updating.
+            $actions = array();
+            $name = locallib::normalizeValue($org->name);
+            if ($category->name != $name) {
+                $cat->__set('name', $name);
+                $actions[] = "updated";
+            }
+
+            // Move category.
+            if ($category->parent != $parent) {
+                $cat->change_parent($parent);
+                $actions[] = "moved";
+            }
+
+            if (count($actions) > 0) {
+                $actions = implode('&', $actions);
+                $actions = ucfirst($actions);
+                $message = "$actions Moodle course category $category->id for CAMPUSonline org $org_uid ($category->name).";
+                locallib::writeLog('sync_org', $message, 0, null, $this->trace, 3);
+            } else {
+                $message = "Skipped Moodle course category $category->id for CAMPUSonline org $org_uid ($category->name) - nothing to change.";
+                locallib::writeLog('sync_org', $message, 0, null, $this->trace, 3);
+            }
+
+        } else {
+
+            // Create new course category.
+            $data = new \stdClass();
+            $data->name = locallib::normalizeValue($org->name);
+            $data->parent = $parent;
+            $data->idnumber = $org_uid;
+            $data->description = self::CREATED_BY;
+            $data->timecreated = time();
+            $data->timemodified = time();
+            if ($category = \core_course_category::create($data)) {
+                $message = "Created Moodle course category $category->id for CAMPUSonline org $org_uid ($category->name).";
+                locallib::writeLog('sync_org', $message, 0, null, $this->trace, 3);
+            } else {
+                $message = "ERROR: could not create Moodle course category for CAMPUSonline org $org_uid.";
+                locallib::writeLog('sync_org', $message, 2, null, $this->trace, 3);
+                return;
+            }
+        }
     }
 
     /**
