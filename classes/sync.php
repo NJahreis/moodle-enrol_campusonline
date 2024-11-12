@@ -754,7 +754,7 @@ class sync {
                     }
 
                     // Create course and log course creation.
-                    if (\core_course::create($course)) {
+                    if (create_course($course)) {
 
                         $courseid = $course->id;
 
