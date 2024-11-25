@@ -1589,7 +1589,7 @@ class sync {
 
             // Make the API request.
             $retry = 0; // Track retries.
-            $retries = 1; // Define the maximum number of retries.
+            $retries = 3; // Define the maximum number of retries.
             do {
 
                 // Update the token.
@@ -1652,7 +1652,7 @@ class sync {
                         return $response_object;
                     } else {
                         locallib::writeLog('warning', "Retrying failed request: {$e->getMessage()}", 0, null, $this->trace);
-                        sleep(1);
+                        sleep(3);
                     }
                 }
             } while (true);
