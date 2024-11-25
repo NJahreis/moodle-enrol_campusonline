@@ -1588,8 +1588,8 @@ class sync {
             }
 
             // Make the API request.
-            $retryCount = 0; // Track retries.
-            $maxRetries = 1; // Define the maximum number of retries.
+            $retry = 0; // Track retries.
+            $retries = 1; // Define the maximum number of retries.
             do {
 
                 // Update the token.
@@ -1640,8 +1640,8 @@ class sync {
 
                 // Error handling.
                 } catch (\Throwable $e) {
-                    $retryCount++;
-                    if ($retryCount > $maxRetries) {
+                    $retry++;
+                    if ($retry > $retries) {
                         $error = $e->getMessage();
                         $message = "Request exception: $error.";
                         locallib::writeLog('error', $message, 0, null, $this->trace);
@@ -1652,7 +1652,7 @@ class sync {
                         return $response_object;
                     } else {
                         locallib::writeLog('warning', "Retrying failed request: {$e->getMessage()}", 0, null, $this->trace);
-                        sleep(1000);
+                        sleep(1);
                     }
                 }
             } while (true);
