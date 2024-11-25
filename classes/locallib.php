@@ -205,8 +205,10 @@ class locallib {
                 }
 
             }
+            return $customfields;
+        } else {
+            return array();
         }
-        return $customfields;
     }
 
     /**
@@ -455,7 +457,7 @@ class locallib {
         global $DB;
 
         // Write trace.
-        if ($trace && (PHP_SAPI == 'cli' || $_GET['traceoutput'])) {
+        if ($trace && (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET))) {
             $output = str_repeat(' ', $indent) . "- $message";
             $trace->output($output);
         }

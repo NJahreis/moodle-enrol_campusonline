@@ -106,26 +106,23 @@ if ($ADMIN->fulltree) {
     ));
     // Org roles.
     // Only call this when actually on our settings page, to avoid instanciating the sync class on other admin pages.
-    if (array_key_exists('section', $_GET) && $_GET['section'] == 'enrolsettingscampusonline') {
-        if ($orgroles = locallib::getOrgRoles()) {
-            $rolestring = implode(', ', $orgroles);
-        } else {
-            $rolestring = get_string('none');
-        }
-        $roleurl = new moodle_url('/admin/roles/manage.php');
-        $roleurl = $roleurl->__toString();
-        $rolestring = get_string('configureorgroles', 'enrol_campusonline', ['roleurl' => $roleurl,
-            'rolestring' => $rolestring]);
-        $setting = new admin_setting_configcheckbox(
-            'enrol_campusonline/syncorgroles',
-            get_string('syncorgroles', 'enrol_campusonline'),
-            $rolestring,
-            '1'
-        );
+    if ($orgroles = locallib::getOrgRoles()) {
+        $rolestring = implode(', ', $orgroles);
+    } else {
+        $rolestring = get_string('none');
     }
-
-    // Add the setting to the settings page
+    $roleurl = new moodle_url('/admin/roles/manage.php');
+    $roleurl = $roleurl->__toString();
+    $rolestring = get_string('configureorgroles', 'enrol_campusonline', ['roleurl' => $roleurl,
+        'rolestring' => $rolestring]);
+    $setting = new admin_setting_configcheckbox(
+        'enrol_campusonline/syncorgroles',
+        get_string('syncorgroles', 'enrol_campusonline'),
+        $rolestring,
+        '1'
+    );
     $settings->add($setting);
+
 
     // ----- Course category settings -----
     $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawcoursedata', 'limit' => 20));

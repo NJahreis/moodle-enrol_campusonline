@@ -930,7 +930,11 @@ class sync {
             // Get role.
             if (property_exists($enrolment, 'functionKey')) {
                 $rolekey = 'role_' . $enrolment->functionKey;
-                $roleid = $this->config->$rolekey;
+                if (property_exists($this->config, $rolekey)) {
+                    $roleid = $this->config->$rolekey;
+                } else {
+                    continue;
+                }
             } else {
                 $roleid = $this->config->studentrole;
             }
