@@ -104,6 +104,28 @@ if ($ADMIN->fulltree) {
         0,
         $options,
     ));
+    // Org roles.
+    // Only call this when actually on our settings page, to avoid instanciating the sync class on other admin pages.
+    if (array_key_exists('section', $_GET) && $_GET['section'] == 'enrolsettingscampusonline') {
+        if ($orgroles = locallib::getOrgRoles()) {
+            $rolestring = implode(', ', $orgroles);
+        } else {
+            $rolestring = get_string('none');
+        }
+        $roleurl = new moodle_url('/admin/roles/manage.php');
+        $roleurl = $roleurl->__toString();
+        $rolestring = get_string('configureorgroles', 'enrol_campusonline', ['roleurl' => $roleurl,
+            'rolestring' => $rolestring]);
+        $setting = new admin_setting_configcheckbox(
+            'enrol_campusonline/syncorgroles',
+            get_string('syncorgroles', 'enrol_campusonline'),
+            $rolestring,
+            '1'
+        );
+    }
+
+    // Add the setting to the settings page
+    $settings->add($setting);
 
     // ----- Course category settings -----
     $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'showrawcoursedata', 'limit' => 20));
@@ -316,6 +338,9 @@ if ($ADMIN->fulltree) {
     $rolesraw = role_get_names();
     $roles = ['0' => get_string('donotsyncrole', 'enrol_campusonline')];
     foreach ($rolesraw as $role) {
+        if (!$DB->get_record('role_context_levels', ['roleid' => $role->id, 'contextlevel' => CONTEXT_COURSE])) {
+            continue;
+        }
         $roles[$role->id] = $role->localname;
     }
     $settings->add(new admin_setting_configselect(

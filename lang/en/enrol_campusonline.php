@@ -47,6 +47,11 @@ $string['clientid'] = 'Client ID';
 $string['clientid_desc'] = 'Client ID to access CAMPUSonline';
 $string['clientsecret'] = 'Client secret';
 $string['clientsecret_desc'] = 'Secret key to access CAMPUSonline';
+$string['configureorgroles'] = '<ul><li>In order to sync roles in organisations into Moodle, <a href="{$a->roleurl}">define roles</a> in Moodle that match the roles in CAMPUSonline</li>
+    <li>The <strong>shortname</strong> of the Moodle role must contain "<strong>campusonline</strong>"</li>
+    <li>The <strong>custom full name</strong> of the role must equal the role name in CAMPUSonline (case-sensitive!)</li>
+    <li>The <strong>context types</strong> for the role must include <strong>category</strong> and </strong></li>
+    <li>Currently, you have these roles configured for sync in Moodle: <strong>{$a->rolestring}</strong></li></ul>';
 $string['configuretask'] = 'Configure scheduled task';
 $string['configuretask_delta'] = 'Configure scheduled task for MODIFICATIONS sync';
 $string['configuretask_full'] = 'Configure scheduled task for FULL sync';
@@ -54,8 +59,9 @@ $string['connectionerror'] = 'Could not connect to CAMPUSonline. Check your conn
 $string['connectionsettings'] = 'Connection';
 $string['coursecatsettings'] = 'Subcategories for courses';
 $string['coursecatsettings_desc'] = '<ul>
-    <li>Courses will be created in the course category mapped to their organisation</li>
-    <li>Additionally, you can create subcategories inside the orgs using tokens</li>
+    <li>Courses will be created in the course category mapped to their organisation, if those are created by the organisation sync</li>
+    <li>If no course category for the organisation is found, courses will be put directly into the root course category</li>
+    <li>Additionally, you can create <strong>subcategories</strong> inside the orgs using tokens</li>
     <li>If the resulting course category changes for a course that is actively synced, the course will be <strong>moved</strong></li></ul>';
 $string['coursecount'] = 'Raw data for {$a} courses:';
 $string['coursecount_syncdata'] = 'Fetched {$a->co} courses from CAMPUSonline, previewing synced data for {$a->moodle} resulting courses:';
@@ -123,13 +129,17 @@ $string['orgfilter_desc'] = 'Only sync specific organisations. Leave empty to sy
 $string['orgkey'] = 'Key for organisations selected for sync';
 $string['orgkey_desc'] = 'This key is used to mark organisations in CAMPUSonline for syncing to Moodle.';
 $string['orgsyncsettings'] = 'Organizational structure sync';
-$string['orgsyncsettings_desc'] = 'tba';
+$string['orgsyncsettings_desc'] = '<ul><li>This task syncs <strong>selected organisations</strong> as <strong>course categories</strong> into Moodle</li>
+    <li>Organisations can be selected in CAMPUSonline</li>
+    <li>All organisations that hold Moodle courses should be selected, otherwise their Moodle courses will be put directly into the root course category</li>
+    </ul>';
 $string['phplogging'] = 'Log to PHP log';
 $string['previewcourses'] = 'Preview courses with these settings';
 $string['previewusers'] = 'Preview users with these settings';
 $string['readme'] = 'Please read the readme file for more information on how to correctly setup this plugin in various scenarios.';
 $string['rolemappings'] = 'Role mappings';
-$string['rolemappings_desc'] = 'Select Moodle roles to use for CAMPUSonline students and lectureship roles.';
+$string['rolemappings_desc'] = '<ul><li>Select Moodle roles to use for CAMPUSonline students and lectureship roles</li>
+    <li>Roles must be assignable in <strong>course context</strong></li></ul>';
 $string['rolemappings_notconnected'] = 'Could not connect to CAMPUSonline. Check your connection settings and reload this page, to add mappings for CAMPUSonline roles.';
 $string['rootcoursecategory'] = 'Root course category';
 $string['rootcoursecategory_desc'] = 'Course category to build the CAMPUSonline organisation tree in.';
@@ -156,6 +166,7 @@ $string['subcategories_desc'] = 'Specify how to build the subcategory structure.
 $string['success:connected'] = 'Successfully connected to CAMPUSonline endpoint.';
 $string['syncthiscourse'] = 'Sync course with CAMPUSonline';
 $string['syncingcourse'] = 'Syncing Moodle course with CAMPUSonline...';
+$string['syncorgroles'] = 'Sync role assignments in organisations';
 $string['syncthisuser'] = 'Sync user with CAMPUSonline';
 $string['syncinguser'] = 'Syncing user data with CAMPUSonline...';
 $string['syncusersonlogin'] = 'Sync user data upon login';

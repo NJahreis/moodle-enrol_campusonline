@@ -283,6 +283,29 @@ class locallib {
     }
 
     /**
+     * Gets organisation roles to sync into Moodle.
+     *
+     * @return array
+     */
+    public static function getOrgRoles() {
+
+        global $DB;
+
+        $orgroles = array();
+        $sql = 'SELECT *
+                FROM {role} AS role
+                JOIN {role_context_levels} AS ctx ON ctx.roleid = role.id
+                WHERE shortname LIKE "campusonline%"
+                AND contextlevel = 40';
+        if ($roles = $DB->get_records_sql($sql)) {
+            foreach ($roles as $role) {
+                $orgroles[$role->roleid] = $role->name;
+            }
+        }
+        return $orgroles;
+    }
+
+    /**
      * Gets a person UID for a user.
      *
      * @param int $userid

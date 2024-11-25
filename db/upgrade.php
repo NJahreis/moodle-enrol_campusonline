@@ -37,7 +37,7 @@ function xmldb_enrol_campusonline_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     // Add other_co_course_uids course field for shadow courses.
-    if ($oldversion < 2024110504) {
+    if ($oldversion < 2024111202) {
 
         // Create category.
         if ($category = $DB->get_records('customfield_category',
@@ -72,7 +72,7 @@ function xmldb_enrol_campusonline_upgrade($oldversion) {
             $DB->insert_record('customfield_field', $field);
         }
 
-        upgrade_plugin_savepoint(true, 2024110504, 'enrol', 'campusonline');
+        upgrade_plugin_savepoint(true, 2024111202, 'enrol', 'campusonline');
     }
 
     // Rename our custom user profile field for person_uid.

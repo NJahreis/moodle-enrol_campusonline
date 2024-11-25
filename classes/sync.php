@@ -45,6 +45,7 @@ class sync {
     private $externalsystemkey;
     private $customfieldids;
     private $orgdata;
+    private $orgroles;
     private $semesterdata;
     private $group_to_group;
     private $group_to_course;
@@ -73,6 +74,9 @@ class sync {
         $this->grouptocourse = preg_split('/\s*,\s*/', $this->config->grouptocourse);
         $this->grouptogroup = preg_split('/\s*,\s*/', $this->config->grouptogroup);
         $this->flatcourse = preg_split('/\s*,\s*/', $this->config->flatcourse);
+
+        // Get roles to sync for organisations.
+        $this->orgroles = locallib::getOrgRoles();
 
         // Get custom field ids so we dont have to deal with Moodle custom field API.
         $fields = ['user_info_field:campusonline_person_uid',
@@ -259,6 +263,8 @@ class sync {
      */
     public function getCourseSyncStrategy($coursedata) {
 
+        $course_uid = $coursedata['course:uid'];
+
         // Get eLearningEventTypeKey.
         if (array_key_exists('course:elearningEventTypeKey', $coursedata)) {
             $elearning_type = $coursedata['course:elearningEventTypeKey'];
@@ -266,7 +272,7 @@ class sync {
 
             // Log error.
             $message = "ERROR: no eLearningEventTypeKey for CAMPUSonline course $course_uid, skipping course.";
-            locallib::writeLog('create_course', $message, 2, null, $this->trace, 3);
+            locallib::writeLog('update_course', $message, 2, null, $this->trace, 3);
             return null;
         }
 
@@ -371,7 +377,7 @@ class sync {
         // Log warning.
         if ($log) {
             $message = "WARNING: could not find Moodle user for CAMPUSonline person $uid. Try running the user identification task first.";
-            locallib::writeLog('get_user', $message, 1, null, $this->trace, 3);
+            locallib::writeLog('get_user', $message, 1, null, $this->trace, 5);
         }
 
         return null;
@@ -881,7 +887,6 @@ class sync {
             $DB->update_record('course', $course);
             $message = "Created grouping for CAMPUSonline groups in course $courseid";
             locallib::writeLog('sync_groups', $message, 0, $courseid, $this->trace, 3);
-            return;
         }
 
         // Check if enrolment method is active.
@@ -1210,7 +1215,7 @@ class sync {
                 $message = "$actions Moodle course category $category->id for CAMPUSonline org $org_uid ($category->name).";
                 locallib::writeLog('sync_org', $message, 0, null, $this->trace, 3);
             } else {
-                $message = "Skipped Moodle course category $category->id for CAMPUSonline org $org_uid ($category->name) - nothing to change.";
+                $message = "Moodle course category $category->id for CAMPUSonline org $org_uid ($category->name) already exists.";
                 locallib::writeLog('sync_org', $message, 0, null, $this->trace, 3);
             }
 
@@ -1230,7 +1235,67 @@ class sync {
             } else {
                 $message = "ERROR: could not create Moodle course category for CAMPUSonline org $org_uid.";
                 locallib::writeLog('sync_org', $message, 2, null, $this->trace, 3);
-                return;
+            }
+        }
+
+        // Sync org enrollments.
+        if ($this->config->syncorgroles && $this->orgroles) {
+            $this->syncOrgEnrolments($org_uid, $categoryid);
+        }
+    }
+
+    /**
+     * Syncs role assignments for a single organisation.
+     *
+     * @param string $org_uid
+     * @param string $categoryid
+     *
+     * @return void
+     */
+    public function syncOrgEnrolments($org_uid, $categoryid) {
+
+        global $DB;
+
+        foreach ($this->orgroles as $roleid => $rolename) {
+
+            $userids = array();
+
+            // Convert moodle rolename to CO rolename.
+            $co_role = strtoupper(substr($rolename, 3));
+
+            // Get role assignments from CO.
+            $endpoint = 'co-auth/auth/api/person-uids';
+            $query = [
+                'role_name' => $rolename,
+                'context' => "org-$org_uid"
+            ];
+            if ($result = $this->restCall($endpoint, $query))
+            if (property_exists($result, 'items')) {
+                foreach ($result->items as $uid) {
+                    if ($userid = $this->getMoodleUserId($uid)) {
+                        $userids[] = $userid;
+                    }
+                }
+            }
+
+            // Remove Moodle roles.
+            $context = \context_coursecat::instance($categoryid);
+            $users = get_role_users($roleid, $context);
+            foreach ($users as $user) {
+                if (!in_array($user->id, $userids)) {
+                    role_unassign($roleid, $user->id, $context->id);
+                    $message = "Removed role $roleid from Moodle user $user->id in Moodle course category $org_uid.";
+                    locallib::writeLog('sync_org_roles', $message, 0, null, $this->trace, 5);
+                }
+            }
+
+            // Assign Moodle roles.
+            foreach ($userids as $userid) {
+                if (!user_has_role_assignment($userid, $roleid, $context->id)) {
+                    $success = role_assign($roleid, $userid, $context->id);
+                    $message = "Assigned role $roleid to Moodle user $userid in Moodle course category $org_uid.";
+                    locallib::writeLog('sync_org_roles', $message, 0, null, $this->trace, 5);
+                }
             }
         }
     }
@@ -1492,8 +1557,8 @@ class sync {
         $url = $this->config->endpoint . '/' . $endpoint;
         $client = new Client([
             'base_uri' => $url,
-            'timeout' => 10.0,
-            'connect_timeout' => 2.0,
+            'timeout' => 100.0,
+            'connect_timeout' => 10.0,
         ]);
 
         // Set payload key.
@@ -1503,25 +1568,17 @@ class sync {
             $payload = 'json';
         }
 
+        // Initialize variables.
         $all_items = [];
         $cursor = null;
-
-        // Debug message.
-        if ($this->config->restcalls && PHP_SAPI === 'cli') {
-            if ($query) {
-                $json_query = json_encode($query);
-            } else {
-                $json_query = '';
-            }
-            $this->trace->output("        $method CAMPUSonline endpoint $endpoint data $json_query");
-        }
+        $response_object = new \stdClass();
+        $page = !array_key_exists('limit', $_GET) || $alwayspage;
 
         do {
 
             // Update the query with the cursor, if available.
             if ($cursor !== null) {
                 $query['cursor'] = $cursor;
-                $this->updateToken();
 
                 // Debug message.
                 if ($this->config->restcalls && PHP_SAPI === 'cli') {
@@ -1531,57 +1588,74 @@ class sync {
             }
 
             // Make the API request.
-            try {
-                $response = $client->request($method, $url, [
-                    'headers' => [
-                        'accept' => 'application/json',
-                        'Content-Type' => 'application/json',
-                        'Authorization' => 'Bearer ' . $this->token
-                    ],
-                    $payload => $query
-                ]);
+            $retryCount = 0; // Track retries.
+            $maxRetries = 1; // Define the maximum number of retries.
+            do {
 
-                // Decode the response.
-                $response_body = $response->getBody()->getContents();
-                $response_object = json_decode($response_body, false);
+                // Update the token.
+                $this->updateToken();
 
-                // Merge the current page's items with the collected items.
-                if (property_exists($response_object, 'items')) {
-                    $all_items = array_merge($all_items, $response_object->items);
+                try {
+
+                    // Debug message.
+                    if ($this->config->restcalls && PHP_SAPI === 'cli') {
+                        if ($query) {
+                            $json_query = json_encode($query);
+                        } else {
+                            $json_query = '';
+                        }
+                        $this->trace->output("        $method CAMPUSonline endpoint $endpoint data $json_query");
+                    }
+
+                    $response = $client->request($method, $url, [
+                        'headers' => [
+                            'accept' => 'application/json',
+                            'Content-Type' => 'application/json',
+                            'Authorization' => 'Bearer ' . $this->token
+                        ],
+                        $payload => $query
+                    ]);
+
+                    // Decode the response.
+                    $response_body = $response->getBody()->getContents();
+                    $response_object = json_decode($response_body, false);
+
+                    // Merge the current page's items with the collected items.
+                    if (property_exists($response_object, 'items')) {
+                        $all_items = array_merge($all_items, $response_object->items);
+                    }
+
+                    // Check if there is a next cursor for pagination.
+                    if (property_exists($response_object, 'nextCursor')) {
+                        $cursor = $response_object->nextCursor;
+                    } else {
+                        $cursor = null;
+                    }
+
+                    // Determine if we need to keep paging.
+                    $page = !array_key_exists('limit', $_GET) || $alwayspage;
+
+                    // Exit the loop on success
+                    break;
+
+                // Error handling.
+                } catch (\Throwable $e) {
+                    $retryCount++;
+                    if ($retryCount > $maxRetries) {
+                        $error = $e->getMessage();
+                        $message = "Request exception: $error.";
+                        locallib::writeLog('error', $message, 0, null, $this->trace);
+
+                        // Create object with exception message.
+                        $response_object = new \stdClass();
+                        $response_object->exception = $error;
+                        return $response_object;
+                    } else {
+                        locallib::writeLog('warning', "Retrying failed request: {$e->getMessage()}", 0, null, $this->trace);
+                        sleep(1000);
+                    }
                 }
-
-                // Check if there is a next cursor for pagination.
-                if (property_exists($response_object, 'nextCursor')) {
-                    $cursor = $response_object->nextCursor;
-                } else {
-                    $cursor = null;
-                }
-
-                // Determine if we need to keep paging.
-                $page = !array_key_exists('limit', $_GET) || $alwayspage;
-
-            // Error handling.
-            } catch (RequestException $e) {
-                $error = $e->getMessage();
-                $message = "Requestion exception: $error.";
-                locallib::writeLog('error', $message, 0, null, $this->trace);
-
-                // Create object with exception message.
-                $response_object = new \stdClass();
-                $response_object->exception = $error;
-                return $response_object;
-
-            // Error handling.
-            } catch (ConnectionException $e) {
-                $error = $e->getMessage();
-                $message = "Connection exception: $error.";
-                locallib::writeLog('error', $message, 0, null, $this->trace);
-
-                // Create object with exception message.
-                $response_object = new \stdClass();
-                $response_object->exception = $error;
-                return $response_object;
-            }
+            } while (true);
 
         } while ($page && $cursor !== null);
 
@@ -1680,8 +1754,8 @@ class sync {
         $url = $path . '/public/sec/auth/realms/CAMPUSonline_SP/protocol/openid-connect/token';
         $client = new Client([
             'base_uri' => $url,
-            'timeout' => 10.0,
-            'connect_timeout' => 2.0,
+            'timeout' => 100.0,
+            'connect_timeout' => 10.0,
         ]);
         $response = $client->request('POST', $url, [
             'headers' => [

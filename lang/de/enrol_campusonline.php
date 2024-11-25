@@ -47,6 +47,11 @@ $string['clientid'] = 'Client-ID';
 $string['clientid_desc'] = 'Client-ID für den Zugriff auf CAMPUSonline';
 $string['clientsecret'] = 'Client-Secret';
 $string['clientsecret_desc'] = 'Geheimer Schlüssel für den Zugriff auf CAMPUSonline';
+$string['configureorgroles'] = '<ul><li>Um Rollen in Organisationseinheiten nach Moodle zu syncen, <a href="{$a->roleurl}">definieren Sie Rollen</a> in Moodle die den Rollen in CAMPUSonline entsprechen</li>
+    <li>Die <strong>Kurzbezeichnung</strong> der Moodle Rolle muss "<strong>campusonline<strong>" enthalten</li>
+    <li>Der <strong>angepasste Rollenname</strong> der Moodle Rolle entspricht der Bezeichnung der CAMPUSonline Rolle (Großschreibung beachten!)</li>
+    <li>Die <strong>Kontexttypen</strong> in denen die Rolle zugewiesen werden kann, müssen <strong>Kursbereich</strong> inkludieren</li>
+    <li>Derzeit haben Sie folgende Rollen in Moodle für den Sync konfiguriert: <strong>{$a->rolestring}</strong></li></ul>';
 $string['configuretask'] = 'Task konfigurieren';
 $string['configuretask_delta'] = 'Task für MODIFICATIONS Sync konfigurieren';
 $string['configuretask_full'] = 'Task für FULL Sync konfigurieren';
@@ -54,8 +59,9 @@ $string['connectionerror'] = 'Keine Verbindung zu CAMPUSonline möglich. Überpr
 $string['connectionsettings'] = 'Verbindung';
 $string['coursecatsettings'] = 'Unterbereiche für Kurse';
 $string['coursecatsettings_desc'] = '<ul>
-    <li>Kurse werden prinzipiell in der Kurskategorie, die ihrer Organisation zugeordnet ist, abgelegt</li>
-    <li>Optional können Sie die Kurse unterhalb dieser Kategorie noch weiter strukturieren, indem Sie mittels Token Unterkategorien erstellen lassen</li>
+    <li>Kurse werden prinzipiell im Kursbereich, der ihrer Organisation zugeordnet ist, abgelegt, sofern diese durch den Organisationseinheiten Sync angelegt wurde</li>
+    <li>Wird kein Kursbereich für die Organisation gefunden, landen die Kurse direkt im Kursbereich für die CAMPUSonline Struktur</li>
+    <li>Optional können Sie die Kurse unterhalb dieser Kategorie noch weiter strukturieren, indem Sie mittels Token <strong>Unterkategorien</strong> erstellen lassen</li>
     <li>Wenn sich die resultierende Kursbereiche für einen aktiv synchronisierten Kurs ändert, wird der Kurs <strong>verschoben</strong></li></ul>';
 $string['coursecount'] = 'Rohdaten für {$a} Kurse:';
 $string['coursecount_syncdata'] = '{$a->co} Kurse von CAMPUSonline geholt, Vorschau der Werte für {$a->moodle} zu syncende Moodle Kurse:';
@@ -125,15 +131,19 @@ $string['orgfilter_desc'] = 'Nur bestimmte Organisationen syncen. Komma-separier
 $string['orgkey'] = 'Kennzeichnungs-Key für zu syncende Organisationseinheiten';
 $string['orgkey_desc'] = 'Mit diesem Schlüssel werden Organisationseinheiten in CAMPUSonline identifiziert.';
 $string['orgsyncsettings'] = 'Organisationseinheiten Sync';
-$string['orgsyncsettings_desc'] = 'tba';
+$string['orgsyncsettings_desc'] = '<ul><li>Dieser Task synchronisiert <strong>ausgewählte Organisationseinheiten</strong> als <strong>Kurskategorien</strong> nach Moodle</li>
+    <li>Organisationseinheiten können in CAMPUSonline für den Sync nach Moodle markiert werden</li>
+    <li>Alle Organisationseinheiten, die Moodle Kurse besitzen, sollten ausgewählt werden, ansonsten werden deren Kurse direkt im Kursbereich für die CAMPUSonline Struktur erstellt</li>
+    </ul>';
 $string['phplogging'] = 'Zusätzlich ins PHP error log schreiben';
 $string['previewcourses'] = 'Vorschau für Kurse mit diesen Einstellungen';
 $string['previewusers'] = 'Vorschau für Benutzer mit diesen Einstellungen';
 $string['readme'] = 'Bitte lesen Sie die Dokumentation für mehr Information, wie man das Plugin in verschiedenen Anwendungsszenarien richtig konfiguriert.';
 $string['rolemappings'] = 'Rollen-Zuordnungen';
-$string['rolemappings_desc'] = 'Wählen Sie Moodle-Rollen für CAMPUSonline Rollen aus.';
+$string['rolemappings_desc'] = '<ul><li>Wählen Sie Moodle-Rollen für CAMPUSonline Rollen aus</li>
+    <li>Die Rollen müssen die Zuweisung zum <strong>Kursen</strong> erlauben</li></ul>';
 $string['rolemappings_notconnected'] = 'Keine Verbindung zu CAMPUSonline möglich. Überprüfen Sie Ihre Verbindungseinstellungen und laden Sie diese Seite neu, um Zuordnungen für CAMPUSonline-Rollen hinzuzufügen.';
-$string['rootcoursecategory'] = 'Oberster Kursbereich';
+$string['rootcoursecategory'] = 'Kursbereich für CAMPUSonline Struktur';
 $string['rootcoursecategory_desc'] = 'Kursbereich, in dem die CAMPUSonline Kurskategorie Hierarchie für Organisationen gebaut wird.';
 $string['restcalls'] = 'Zeige jeden REST Call beim Ausführen der Tasks';
 $string['restcalls_desc'] = 'Zeigt Informationen über jeden REST Call beim Ausführen des Tasks an, schreibt aber nicht ins Logfile. Für Debugging.';
@@ -156,6 +166,7 @@ $string['subcategories_desc'] = 'Geben Sie an, wie die Kursbereichs-Struktur auf
     <li>Stellen Sie sicher, dass kein Name für einen Kursbereich leer bleiben kann</li>
     <li>Zeigen Sie Rohdaten aus CAMPUSonline an, um verfügbare Felder/Token zu sehen</li>';
 $string['success:connected'] = 'Erfolgreich mit CAMPUSonline-Endpoint verbunden.';
+$string['syncorgroles'] = 'Rollenzuweisungen in Organisationen syncen';
 $string['syncthiscourse'] = 'Kurs mit CAMPUSonline synchronisieren';
 $string['syncingcourse'] = 'Synchronisiere Moodle-Kurs mit CAMPUSonline...';
 $string['syncthisuser'] = 'Synchronisiere Benutzer mit CAMPUSonline';
