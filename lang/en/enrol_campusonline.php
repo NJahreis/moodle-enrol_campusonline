@@ -57,6 +57,10 @@ $string['configuretask_delta'] = 'Configure scheduled task for MODIFICATIONS syn
 $string['configuretask_full'] = 'Configure scheduled task for FULL sync';
 $string['connectionerror'] = 'Could not connect to CAMPUSonline. Check your connection settings. Please contact your administrator.';
 $string['connectionsettings'] = 'Connection';
+$string['connectionsettings_desc'] = '<ul>
+    <li>Please <strong>save</strong> the connection settings before testing them</li>
+    <li>Please note, that as long as the CAMPUSonline enrolment method is not activated in <a href="{$a}">enrolment plugin settings</a>, no Sync Tasks will run, regardless of any of these settings
+    </ul>';
 $string['coursecatsettings'] = 'Subcategories for courses';
 $string['coursecatsettings_desc'] = '<ul>
     <li>Courses will be created in the course category mapped to their organisation, if those are created by the organisation sync</li>
@@ -92,6 +96,7 @@ $string['enrolsynccreateusers_desc'] = 'Allows the course sync task to create us
 $string['error:cannotconnect'] = 'Cannot connect to CAMPUSonline endpoint. Error: {$a}';
 $string['error:config'] = 'Missing connection configuration!';
 $string['error:endpointmissing'] = 'You have to provide a valid endpoint in settings.';
+$string['error:notenabled'] = 'The CAMPUSonline enrolment method is not enabled in the enrolment plugin settings.';
 $string['error:uidfieldnotfound'] = 'CAMPUSonline custom field is missing: {$a}. Reinstall the plugin or re-create the field manually.';
 $string['error:unknown'] = 'Unknown error.';
 $string['event'] = 'Event';

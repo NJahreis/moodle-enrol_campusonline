@@ -45,7 +45,8 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/connectionsettings',
         get_string('connectionsettings', 'enrol_campusonline'),
-        $button));
+        $button . '<br>' . get_string('connectionsettings_desc', 'enrol_campusonline',
+            new moodle_url('/admin/settings.php', ['section' => 'manageenrols']))));
     // CO endpoint.
     $settings->add(new admin_setting_configtext(
         'enrol_campusonline/endpoint',

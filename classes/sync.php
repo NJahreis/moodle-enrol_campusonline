@@ -63,40 +63,44 @@ class sync {
 
         global $DB;
 
-        // Remove old logs.
-        locallib::cleanupLogs();
+        // Do nothing if our enrolment method is disabled.
+        if (enrol_is_enabled('campusonline')) {
 
-        // Get settings.
-        $this->config = get_config('enrol_campusonline');
-        $this->trace = $trace;
-        $this->externalkey = $this->config->user_externalkey;
-        $this->externalsystemkey = $this->config->user_externalsystemkey;
-        $this->grouptocourse = preg_split('/\s*,\s*/', $this->config->grouptocourse);
-        $this->grouptogroup = preg_split('/\s*,\s*/', $this->config->grouptogroup);
-        $this->flatcourse = preg_split('/\s*,\s*/', $this->config->flatcourse);
+            // Remove old logs.
+            locallib::cleanupLogs();
 
-        // Get roles to sync for organisations.
-        $this->orgroles = locallib::getOrgRoles();
+            // Get settings.
+            $this->config = get_config('enrol_campusonline');
+            $this->trace = $trace;
+            $this->externalkey = $this->config->user_externalkey;
+            $this->externalsystemkey = $this->config->user_externalsystemkey;
+            $this->grouptocourse = preg_split('/\s*,\s*/', $this->config->grouptocourse);
+            $this->grouptogroup = preg_split('/\s*,\s*/', $this->config->grouptogroup);
+            $this->flatcourse = preg_split('/\s*,\s*/', $this->config->flatcourse);
 
-        // Get custom field ids so we dont have to deal with Moodle custom field API.
-        $fields = ['user_info_field:campusonline_person_uid',
-                   'customfield_field:campusonline_other_co_course_uids'
-                  ];
-        foreach ($fields as $field) {
-            list($table, $shortname) = explode(':', $field);
-            if (!$value = $DB->get_field($table, 'id', ['shortname' => $shortname])) {
-                // Show error.
-                $message = get_string('error:uidfieldnotfound', 'enrol_campusonline', "$table: $shortname");
-                \core\notification::add($message,
-                    \core\output\notification::NOTIFY_ERROR);
-                locallib::writeLog('general', $message, 2, null, $this->trace, null);
-            } else {
-                $this->customfieldids[$shortname] = $value;
+            // Get roles to sync for organisations.
+            $this->orgroles = locallib::getOrgRoles();
+
+            // Get custom field ids so we dont have to deal with Moodle custom field API.
+            $fields = ['user_info_field:campusonline_person_uid',
+                    'customfield_field:campusonline_other_co_course_uids'
+                    ];
+            foreach ($fields as $field) {
+                list($table, $shortname) = explode(':', $field);
+                if (!$value = $DB->get_field($table, 'id', ['shortname' => $shortname])) {
+                    // Show error.
+                    $message = get_string('error:uidfieldnotfound', 'enrol_campusonline', "$table: $shortname");
+                    \core\notification::add($message,
+                        \core\output\notification::NOTIFY_ERROR);
+                    locallib::writeLog('general', $message, 2, null, $this->trace, null);
+                } else {
+                    $this->customfieldids[$shortname] = $value;
+                }
             }
-        }
 
-        // Get token.
-        $this->updateToken();
+            // Get token.
+            $this->updateToken();
+        }
     }
 
     /**
@@ -526,12 +530,14 @@ class sync {
             profile_load_custom_fields($user);
 
             // Skip users that have reached the maximum attempts.
-            $attempt = (int) $user->profile['campusonline_id_attempts'];
-            if ($attempt >= $max_attempts) {
-                if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
-                    $this->trace->output("   - Maximum attempts reached for Moodle user $userid. Skipping user.");
+            if (array_key_exists('campusonline_id_attempts', $user->profile)) {
+                $attempt = (int) $user->profile['campusonline_id_attempts'];
+                if ($attempt >= $max_attempts) {
+                    if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+                        $this->trace->output("   - Maximum attempts reached for Moodle user $userid. Skipping user.");
+                    }
+                    continue;
                 }
-                continue;
             }
 
             // Get uid value.

@@ -25,7 +25,7 @@
 
 namespace enrol_campusonline;
 
-use local_table_sql\table_sql;
+use table_sql;
 
 defined('MOODLE_INTERNAL') || die;
 
@@ -33,16 +33,35 @@ require_once("$CFG->libdir/tablelib.php");
 
 class log_table extends table_sql {
 
+    /**
+     * Set up the table.
+     *
+     * @param string $uniqueid Unique id of table.
+     * @param moodle_url $url The base URL.
+     * @param int $userid The user id.
+     */
+    public function __construct($uniqueid, $url, $userid) {
+        parent::__construct($uniqueid);
+        $this->userid = $userid;
+        $this->define_table_columns();
+        $this->define_baseurl($url);
+        $this->define_table_configs();
+    }
+
+    /**
+     * Define table configs.
+     */
     protected function define_table_configs() {
+        $this->collapsible(false);
+        $this->sortable(true);
+        $this->pageable(true);
+        $this->set_default_per_page(50);
+    }
 
-        // Set SQL.
-        $sql = "
-            SELECT *
-            FROM {enrol_campusonline_logs}
-            ORDER BY timestamp DESC
-            ";
-        $this->set_sql_query($sql, array());
-
+    /**
+     * Set up the columns and headers.
+     */
+    protected function define_table_columns() {
         // Define headers and columns.
         $cols = array();
         $cols['timestamp'] = get_string('time');
@@ -51,10 +70,56 @@ class log_table extends table_sql {
         $cols['event'] = get_string('event', 'enrol_campusonline');
         $cols['message'] = get_string('message');
 
-        $this->set_table_columns($cols);
-        $this->sortable(true, 'lastname', SORT_ASC);
-        $this->no_filter('username');
-        $this->is_downloadable(true);
+        $this->define_columns(array_keys($cols));
+        $this->define_headers(array_values($cols));
+        $this->column_class('status', 'text-center');
+    }
+
+    /**
+     * Builds the SQL query.
+     *
+     * @param bool $count When true, return the count SQL.
+     * @return array containing sql to use and an array of params.
+     */
+    protected function get_sql_and_params($count = false) {
+        if ($count) {
+            $select = "COUNT(1)";
+        } else {
+            $select = "*";
+        }
+
+        $sql = "SELECT $select
+                FROM {enrol_campusonline_logs}
+                ";
+
+        $params = [];
+
+        if (!$count) {
+            $sql .= "ORDER BY timestamp DESC";
+        }
+
+        return [$sql, $params];
+    }
+
+    /**
+     * Query the DB.
+     *
+     * @param int $pagesize size of page for paginated displayed table.
+     * @param bool $useinitialsbar do you want to use the initials bar.
+     */
+    public function query_db($pagesize, $useinitialsbar = true) {
+        global $DB;
+
+        list($countsql, $countparams) = $this->get_sql_and_params(true);
+        list($sql, $params) = $this->get_sql_and_params();
+        $total = $DB->count_records_sql($countsql, $countparams);
+        $this->pagesize($pagesize, $total);
+        $this->rawdata = $DB->get_records_sql($sql, $params, $this->get_page_start(), $this->get_page_size());
+
+        // Set initial bars.
+        if ($useinitialsbar) {
+            $this->initialbars($total > $pagesize);
+        }
     }
 
     // Format status.
@@ -82,5 +147,10 @@ class log_table extends table_sql {
         } else {
             return '';
         }
+    }
+
+    // Format timestamp.
+    function col_timestamp($row) {
+        return userdate($row->timestamp);
     }
 }

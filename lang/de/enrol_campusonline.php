@@ -48,7 +48,7 @@ $string['clientid_desc'] = 'Client-ID für den Zugriff auf CAMPUSonline';
 $string['clientsecret'] = 'Client-Secret';
 $string['clientsecret_desc'] = 'Geheimer Schlüssel für den Zugriff auf CAMPUSonline';
 $string['configureorgroles'] = '<ul><li>Um Rollen in Organisationseinheiten nach Moodle zu syncen, <a href="{$a->roleurl}">definieren Sie Rollen</a> in Moodle die den Rollen in CAMPUSonline entsprechen</li>
-    <li>Die <strong>Kurzbezeichnung</strong> der Moodle Rolle muss "<strong>campusonline<strong>" enthalten</li>
+    <li>Die <strong>Kurzbezeichnung</strong> der Moodle Rolle muss "<strong>campusonline</strong>" enthalten</li>
     <li>Der <strong>angepasste Rollenname</strong> der Moodle Rolle entspricht der Bezeichnung der CAMPUSonline Rolle (Großschreibung beachten!)</li>
     <li>Die <strong>Kontexttypen</strong> in denen die Rolle zugewiesen werden kann, müssen <strong>Kursbereich</strong> inkludieren</li>
     <li>Derzeit haben Sie folgende Rollen in Moodle für den Sync konfiguriert: <strong>{$a->rolestring}</strong></li></ul>';
@@ -57,6 +57,10 @@ $string['configuretask_delta'] = 'Task für MODIFICATIONS Sync konfigurieren';
 $string['configuretask_full'] = 'Task für FULL Sync konfigurieren';
 $string['connectionerror'] = 'Keine Verbindung zu CAMPUSonline möglich. Überprüfen Sie Ihre Verbindungseinstellungen. Bitte kontaktieren Sie Ihren Administrator.';
 $string['connectionsettings'] = 'Verbindung';
+$string['connectionsettings_desc'] = '<ul>
+    <li>Bitte <strong>speichern</strong> Sie die Einstellungen, bevor Sie die Verbindung testen</li>
+    <li>Bitte beachten Sie, dass alle Tasks erst aktiv sind, wenn CAMPUSonline enrolment in den <a href="{$a}">Verfügbaren Einschreibeplugins</a> aktiviert ist
+    </ul>';
 $string['coursecatsettings'] = 'Unterbereiche für Kurse';
 $string['coursecatsettings_desc'] = '<ul>
     <li>Kurse werden prinzipiell im Kursbereich, der ihrer Organisation zugeordnet ist, abgelegt, sofern diese durch den Organisationseinheiten Sync angelegt wurde</li>
@@ -93,6 +97,7 @@ $string['enrolsynccreateusers_desc'] = 'Erlaubt dem Kurs Sync Tasks, Benutzer zu
 $string['error:cannotconnect'] = 'Keine Verbindung zum CAMPUSonline-Endpoint möglich. Fehler: {$a}';
 $string['error:config'] = 'Fehlende Verbindungseinstellungen!';
 $string['error:endpointmissing'] = 'Sie müssen in den Einstellungen einen gültigen Endpoint angeben.';
+$string['error:notenabled'] = 'Die CAMPUSonline enrolment Einschreibemethode ist in den Einstellungen für verfügbare Einschreibeplugins nicht aktiviert.';
 $string['error:uidfieldnotfound'] = 'CAMPUSonline-Feld nicht gefunden: {$a}. Installieren Sie das Plugin erneut oder legen Sie das Feld manuell an.';
 $string['error:unknown'] = 'Unbekannter Fehler.';
 $string['event'] = 'Ereignis';

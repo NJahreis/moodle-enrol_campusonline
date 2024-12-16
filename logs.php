@@ -28,9 +28,6 @@ require_login();
 
 global $DB;
 
-// Get orgid.
-$orgid = optional_param('orgid', null, PARAM_INT);
-
 // Check capabilities.
 $context = context_system::instance();
 require_capability('moodle/site:config', $context);
@@ -39,15 +36,27 @@ require_capability('moodle/site:config', $context);
 $PAGE->set_context($context);
 $PAGE->set_url('/enrol/campusonline/logs.php');
 
-// Set page.
-$PAGE->set_title(get_string('pluginname', 'enrol_campusonline'));
-$PAGE->set_heading(get_string('logs', 'enrol_campusonline'));
-
 // Create table.
-$table = new \enrol_campusonline\log_table($orgid);
-$table->is_downloadable(true);
+$download = optional_param('download', '', PARAM_ALPHA);
+$table = new \enrol_campusonline\log_table('enrol_campusonline', $PAGE->url, []);
+$table->is_downloading($download, 'test', 'campusonline_logs');
 
-// Output page.
-echo $OUTPUT->header();
-$table->out();
-echo $OUTPUT->footer();
+if (!$table->is_downloading()) {
+    // Only print headers if not asked to download data.
+    // Print the page header.
+    $PAGE->set_title(get_string('pluginname', 'enrol_campusonline'));
+    $PAGE->set_heading(get_string('logs', 'enrol_campusonline'));
+    echo $OUTPUT->header();
+}
+
+// Work out the sql for the table.
+$table->set_sql('*', "{enrol_campusonline_logs}", '1=1');
+
+$table->define_baseurl("$CFG->wwwroot/enrol/campusonline/logs.php");
+
+$perpage = $table->get_default_per_page();
+$table->out($perpage, true);
+
+if (!$table->is_downloading()) {
+    echo $OUTPUT->footer();
+}

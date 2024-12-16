@@ -49,7 +49,10 @@ $sync = new sync($trace);
 // Test connection.
 if ($function == 'testconnection') {
 
-    if ($sync->isConnected()) {
+    if (!enrol_is_enabled('campusonline')) {
+        \core\notification::add(get_string('error:notenabled', 'enrol_campusonline'),
+            \core\output\notification::NOTIFY_ERROR);
+    } elseif ($sync->isConnected()) {
         \core\notification::add(get_string('success:connected', 'enrol_campusonline'),
             \core\output\notification::NOTIFY_SUCCESS);
     } else {

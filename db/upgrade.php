@@ -162,6 +162,8 @@ function create_custom_profile_field($shortname, $name, $datatype, $categoryid) 
  * Function to create the other_co_course_uids course field for shadow courses.
  */
 function create_other_co_course_uids_field() {
+    global $DB;
+
     // Create category.
     if ($category = $DB->get_records('customfield_category',
         ['name' => 'CAMPUSonline', 'component' => 'core_course', 'area' => 'course'])) {
