@@ -294,12 +294,20 @@ class locallib {
         global $DB;
 
         $orgroles = array();
-        $sql = 'SELECT *
-                FROM {role} AS role
-                JOIN {role_context_levels} AS ctx ON ctx.roleid = role.id
-                WHERE shortname LIKE "campusonline%"
-                AND contextlevel = 40';
-        if ($roles = $DB->get_records_sql($sql)) {
+
+        $sql = "
+            SELECT *
+            FROM {role} AS role
+            JOIN {role_context_levels} AS ctx ON ctx.roleid = role.id
+            WHERE shortname LIKE :shortname
+            AND contextlevel = :contextlevel";
+
+        $params = [
+            'shortname' => 'campusonline%',
+            'contextlevel' => 40,
+        ];
+
+        if ($roles = $DB->get_records_sql($sql, $params)) {
             foreach ($roles as $role) {
                 $orgroles[$role->roleid] = $role->name;
             }

@@ -107,10 +107,11 @@ if ($ADMIN->fulltree) {
     ));
     // Org roles.
     // Only call this when actually on our settings page, to avoid instanciating the sync class on other admin pages.
-    if ($orgroles = locallib::getOrgRoles()) {
-        $rolestring = implode(', ', $orgroles);
-    } else {
-        $rolestring = get_string('none');
+    $rolestring = get_string('none');
+    if (array_key_exists('section', $_GET) && $_GET['section'] == 'enrolsettingscampusonline') {
+        if ($orgroles = locallib::getOrgRoles()) {
+            $rolestring = implode(', ', $orgroles);
+        }
     }
     $roleurl = new moodle_url('/admin/roles/manage.php');
     $roleurl = $roleurl->__toString();
