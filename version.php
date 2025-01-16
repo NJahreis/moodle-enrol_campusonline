@@ -26,11 +26,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 // Basics.
-$plugin->requires = 2025011600;
+$plugin->requires = 2024042200;
 $plugin->component = 'enrol_campusonline';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->dependencies = [];
 
 // Version.
-$plugin->version = 2024112501;
-$plugin->release = '1.2.3';
+$plugin->version = 2025011601;
+$plugin->release = '1.2.4';

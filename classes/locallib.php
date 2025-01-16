@@ -193,6 +193,7 @@ class locallib {
      */
     public static function getCustomCourseFieldData($coursedata) {
 
+        $customfields = array();
         $handler = \core_customfield\handler::get_handler('core_course', 'course');
         if ($custom_fields = $handler->get_fields()) {
             foreach ($custom_fields as $field) {
@@ -203,12 +204,9 @@ class locallib {
                     // For settings.php
                     $customfields[$name] = $field->get('name');
                 }
-
             }
-            return $customfields;
-        } else {
-            return array();
         }
+        return $customfields;
     }
 
     /**
