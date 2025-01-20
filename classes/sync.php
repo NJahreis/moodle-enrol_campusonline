@@ -47,9 +47,9 @@ class sync {
     private $orgdata;
     private $orgroles;
     private $semesterdata;
-    private $group_to_group;
-    private $group_to_course;
-    private $flat_course;
+    private $grouptogroup;
+    private $grouptocourse;
+    private $flatcourse;
 
     const CREATED_BY = "Created by CAMPUSonline";
     const GROUP_TO_COURSE = 'GROUP_TO_COURSE';
