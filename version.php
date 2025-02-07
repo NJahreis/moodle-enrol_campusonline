@@ -34,3 +34,6 @@ $plugin->dependencies = [];
 // Version.
 $plugin->version = 2025012001;
 $plugin->release = '1.2.5';
+
+// Supported versions.
+$plugin->supported = [404, 405];
