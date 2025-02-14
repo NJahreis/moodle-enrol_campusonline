@@ -33,6 +33,8 @@ require_once("$CFG->libdir/tablelib.php");
 
 class log_table extends table_sql {
 
+    public $userid;
+
     /**
      * Set up the table.
      *
