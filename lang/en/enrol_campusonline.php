@@ -63,8 +63,9 @@ $string['connectionsettings_desc'] = '<ul>
     </ul>';
 $string['coursecatsettings'] = 'Subcategories for courses';
 $string['coursecatsettings_desc'] = '<ul>
-    <li>Courses will be created in the course category mapped to their organisation, if those are created by the organisation sync</li>
-    <li>If no course category for the organisation is found, courses will be put directly into the root course category</li>
+    <li>You can <strong>optionally</strong> define a structure for course subcategories, which will be used by the <strong>Course & enrolment sync</strong> that is configured in the next step</li>
+    <li>Courses will be put into the <strong>course category linked to their organisation by the organisation sync</strong>, if this is active and already created this category</li>
+    <li>If no course category for the organisation is found, the courses will be put directly into the <strong>root course category</strong> configured above</li>
     <li>Additionally, you can create <strong>subcategories</strong> inside the orgs using tokens</li>
     <li>If the resulting course category changes for a course that is actively synced, the course will be <strong>moved</strong></li></ul>';
 $string['coursecount'] = 'Raw data for {$a} courses:';
@@ -89,7 +90,6 @@ $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>These sync tasks create and update <strong>courses</strong> and their <strong>enrolments</strong></li>
     <li>There are two sync tasks: one for <strong>full</strong> sync, and one for <strong>modifications</strong> only</li>
     <li>To improve performance, it is recommended to run a <strong>full sync</strong> manually or weekly, and schedule only the <strong>modification sync</strong> task.
-    <li>It is recommended to schedul the full sync task during the night, as it can take quite a long time</li>
     <li>In addition, you can <strong>sync a single course</strong>, using the "Sync course with CAMPUSonline" button on the course participants page (only available for courses created via CAMPUSonline, and requires the permission enrol/CAMPUSonline:synccourse</li></ul>';
 $string['enrolsynccreateusers'] = 'Create users';
 $string['enrolsynccreateusers_desc'] = 'Allows the course sync task to create users that do not exist or cannot be found in Moodle. <strong>Only activate this after making sure that user identification works correctly</strong>, otherwise you might end up with a lot of duplicate users in Moodle!';
@@ -113,7 +113,8 @@ $string['grouptogroup_desc'] = 'Comma-separated list of elearningEventTypeKeys. 
 $string['groupsyncsettings'] = 'Course group mode';
 $string['groupsyncsettings_desc'] = '<ul>
     <li>CAMPUSonline <strong>groups</strong> can either be synced into Moodle course groups, or <strong>separate courses</strong> can be created for each group</li>
-    <li>Configure all eLearningEventTypeKeys you want to sync, or courses will be skipped</li>
+    <li>Configure all eLearningEventTypeKeys you want to sync, courses with other eLearningEventTypes be skipped</li>
+    <li>Special case: if you want to connect more than one course to a single CAMPUSonline course, you can enter the UID of that course into the custom course field <strong>Other CAMPUSonline courses linked to this Moodle course</strong></li>
     </ul>';
 $string['idattempts'] = 'Max attempts';
 $string['idattempts_desc'] = 'A counter for the number of failed attempts to identfy a user will be kept in a custom user profile field created by CAMPUSonline. You can reset this counter to re-try identifying a user.';
@@ -130,7 +131,7 @@ $string['modificationtimeframe_desc'] = '<ul>
     <li>0 = only get today\'s modifications</li>
     <li>At the moment, CAMPUSonline provides a maximum of <strong>7 days</strong> worth of modifications - when running the modification sync task in longer intervals, modifications will get lost, so make sure to <strong>configure the task schedule accordingly</strong></li></ul>';
 $string['orgfilter'] = 'Organisations';
-$string['orgfilter_desc'] = 'Only sync specific organisations. Leave empty to sync all organisations or provide a comma-separated list of organisation UIDs.';
+$string['orgfilter_desc'] = 'Only sync specific organisations. Leave empty to sync all organisations or provide a comma-separated list of organisation UIDs. <strong>This will not affect the organisation sync</strong>. Use this setting, to run the course- and enrolment sync only for specific organisations. Provide a comma-separated list of organisation UIDs.';
 $string['orgkey'] = 'Key for organisations selected for sync';
 $string['orgkey_desc'] = 'This key is used to mark organisations in CAMPUSonline for syncing to Moodle.';
 $string['orgsyncsettings'] = 'Organizational structure sync';
@@ -147,7 +148,7 @@ $string['rolemappings_desc'] = '<ul><li>Select Moodle roles to use for CAMPUSonl
     <li>Roles must be assignable in <strong>course context</strong></li></ul>';
 $string['rolemappings_notconnected'] = 'Could not connect to CAMPUSonline. Check your connection settings and reload this page, to add mappings for CAMPUSonline roles.';
 $string['rootcoursecategory'] = 'Root course category';
-$string['rootcoursecategory_desc'] = 'Course category to build the CAMPUSonline organisation tree in.';
+$string['rootcoursecategory_desc'] = 'Course category to build the CAMPUSonline organisation tree in. <p>Will also be used as root for the <strong>course & enrolment sync</strong> that is configured forther down.</p>';
 $string['restcalls'] = 'Show REST Calls when running tasks';
 $string['restcalls_desc'] = 'Shows information about every individual REST Call when running the task. Does not write to log. For debugging only.';
 $string['runtask'] = 'Run scheduled task';
@@ -164,7 +165,7 @@ $string['sourcefield_desc'] = 'Select the Moodle field that holds the ID value.'
 $string['studentrole'] = 'Students';
 $string['students'] = 'Students';
 $string['subcategories'] = 'Subcategories';
-$string['subcategories_desc'] = 'Specify how to build the subcategory structure.
+$string['subcategories_desc'] = 'Specify how to build the <strong>subcategory structure</strong>.
     <li>Use tokens to build the category names, and backslashes to separate categories, eg: "{org:code}\{course:semesterKey}\{course:courseClassificationKey}"</li>
     <li>Make sure that no subcategory name ends up being empty</li>
     <li>Show raw data from CAMPUSonline to see available fields/tokens</li>';
@@ -199,7 +200,7 @@ $string['usersyncsettings'] = 'User sync & values';
 $string['usersyncsettings_desc'] = '<ul>
     <li>You can sync user data on user login, or sync single users manually by clicking the <strong>sync this user with CAMPUSonline</strong> button on the user profile page</li>
     <li>The mapping settings will also be applied to <strong>user creation</strong> by the course sync</li>
-    <li><strong>usernames need to be unique</strong>, and fields are filled with valid values for their respective field types, or there will be errors creating users!</li>
+    <li><strong>Usernames need to be unique</strong>, and fields are filled with valid values for their respective field types, or there will be errors creating users!</li>
     <li>These values are <strong>required</strong>, otherwise user creation will fail: user_auth, user_password, user_username, user_email</li>
     <li>CAMPUSonline <strong>person UID</strong>, <strong>student UID</strong> and <strong>employee UID</strong> will be automatically synced in the respective user profile fields</li>
     <li>Click on <strong>Show tokens and raw data</strong> to see available fields/tokens</li></ul>';

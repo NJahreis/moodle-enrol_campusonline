@@ -63,8 +63,9 @@ $string['connectionsettings_desc'] = '<ul>
     </ul>';
 $string['coursecatsettings'] = 'Unterbereiche für Kurse';
 $string['coursecatsettings_desc'] = '<ul>
-    <li>Kurse werden prinzipiell im Kursbereich, der ihrer Organisation zugeordnet ist, abgelegt, sofern diese durch den Organisationseinheiten Sync angelegt wurde</li>
-    <li>Wird kein Kursbereich für die Organisation gefunden, landen die Kurse direkt im Kursbereich für die CAMPUSonline Struktur</li>
+    <li>Hier können Sie <strong>optional</strong> die Struktur für die Kursbereiche festlegen, in denen die Kurse vom weiter unten zu konfigurierenden <strong>Kurs & Einschreibungssync</strong> abgelegt werden</li>
+    <li>Kurse werden prinzipiell im <strong>Kursbereich, der ihrer Organisation zugeordnet</strong> ist, abgelegt, sofern <strong>Organisationseinheiten Sync</strong> aktiv ist, und diese bereits angelegt wurden</li>
+    <li>Wird kein Kursbereich für die Organisation gefunden, landen die Kurse direkt im oben konfigurierten <strong>Kursbereich für die CAMPUSonline Struktur</strong></li>
     <li>Optional können Sie die Kurse unterhalb dieser Kategorie noch weiter strukturieren, indem Sie mittels Token <strong>Unterkategorien</strong> erstellen lassen</li>
     <li>Wenn sich die resultierende Kursbereiche für einen aktiv synchronisierten Kurs ändert, wird der Kurs <strong>verschoben</strong></li></ul>';
 $string['coursecount'] = 'Rohdaten für {$a} Kurse:';
@@ -74,7 +75,7 @@ $string['coursesyncsettings'] = 'Kursdaten';
 $string['coursesyncsettings_desc'] = '<ul>
     <li>Die Moodle-Kurs-<strong>Idnumber</strong> wird immer mit der CAMPUSonline-Kurs-<strong>uid</strong> ausgefüllt</li>
     <li>Stellen Sie sicher, dass die <strong>Kurzbezeichnungen</strong> eindeutig sind und Felder mit gültigen Werten für ihre jeweiligen Feldtypen ausgefüllt sind, da sonst Fehler bei der Kurserstellung auftreten können!</li>
-    <li>Diese Felder dürfen <strong>nicht leer</strong> sein, sonst schlägt die Kurserstellung fehl: course_fullname, course_shortname, course_format</li>
+    <li>Folgende Felder dürfen <strong>nicht leer</strong> sein, sonst schlägt die Kurserstellung fehl: course_fullname, course_shortname, course_format</li>
     <li>Wählen Sie Werte für andere Kursfelder (einschließlich benutzerdefinierter Kursfelder) durch Kombination von Text und <strong>Token</strong> für CAMPUSonline-Felder, z.B.: "CAMPUSONLINE_COURSE_{title}</li>
     <li>Zeigen Sie Rohdaten aus CAMPUSonline an, um verfügbare Felder/Token zu sehen</li></ul>';
 $string['createcoursecategories'] = 'Kursbereiche erstellen';
@@ -89,7 +90,6 @@ $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>Dieser Task erstellt und aktualisiert <strong>Kurse</strong> und deren <strong>Einschreibungen</strong></li>
     <li>Es gibt zwei Tasks: einen für <strong>vollständige</strong> Synchronisation und eine nur für <strong>Änderungen</strong></li>
     <li>Bei Performance Problemen wird empfohlen, einen <strong>FULL Sync</strong> manuell oder wöchentlich durchzuführen und nur den <strong>MODIFICATION Sync</strong> automatisch auszuführen</li>
-    <li>Die Tasks sollten nachts laufen, da sie ziemlich lange dauern können</li>
     <li>Zusätzlich kann man einen <strong>einzelnen Kurs synchronisieren</strong>, indem man die Schaltfläche "Kurs mit CAMPUSonline synchronisieren" auf der Kurs-Teilnehmerseite betätigt (nur für Kurse verfügbar, die über CAMPUSonline erstellt wurden, und erfordert die Berechtigung enrol/campusonline:synccourse)</li></ul>';
 $string['enrolsynccreateusers'] = 'Benutzer beim Kurs-  erstellen';
 $string['enrolsynccreateusers_desc'] = 'Erlaubt dem Kurs Sync Tasks, Benutzer zu erstellen. <ul><li>Beachten Sie, dass Benutzer normalerweise durch SSO oder den Benutzerdaten Sync Task angelegt werden!</li>
@@ -115,7 +115,8 @@ $string['grouptogroup_desc'] = 'Komma-separierte Liste von elearningEventTypeKey
 $string['groupsyncsettings'] = 'Modus für LV-Gruppen';
 $string['groupsyncsettings_desc'] = '<ul>
     <li>CAMPUSonline-<strong>Gruppen</strong> können entweder in Moodle-Kursgruppen synchronisiert oder es können <strong>separate Kurse</strong> für jede Gruppe erstellt werden</li>
-    <li>Konfigurieren Sie alle eLearningEventTypeKeys die Sie synchronisieren möchten, Kurse mit nicht konfigurierte eLearningEventTypeKeys werden übersprungen.</li>
+    <li>Konfigurieren Sie alle <strong>eLearningEventTypeKeys</strong> die Sie synchronisieren möchten, Kurse mit nicht konfigurierte eLearningEventTypeKeys werden übersprungen.</li>
+    <li>Ein Sonderfall: falls Sie umgekehrt mehrere Moodle-Kurse mit einer einzigen LV in CAMPUSonline zu verknüpfen möchten, ist das möglich, indem Sie die UID des Kurses in das Kursfeld <strong>Other CAMPUSonline courses linked to this Moodle course</strong> eingeben.</li>
     </ul>';
 $string['idattempts'] = 'Anzahl von Versuchen';
 $string['idattempts_desc'] = 'Ein Zähler für die fehlgeschlagenen Versuche einen Benutzer zu identifizieren wird in einem CAMPUSonline Benutzer Profilfeld geführt. Dieser Zähler kann von Admins zurückgesetzt werden, um erneut zu versuchen, den Benutzer in CAMPUSonline zu finden.';
@@ -132,11 +133,11 @@ $string['modificationtimeframe_desc'] = '<ul>
     <li>0 = nur heutige Änderungen abrufen</li>
     <li>Derzeit stellt CAMPUSonline maximal <strong>7 Tage</strong> Änderungen zur Verfügung - wenn Sie den Modification Sync in längeren Intervallen ausführen, gehen Modifikationen verloren. Stellen Sie daher sicher, dass Sie den Aufgabenplan entsprechend konfigurieren</li></ul>';
 $string['orgfilter'] = 'Organisationen';
-$string['orgfilter_desc'] = 'Nur bestimmte Organisationen syncen. Komma-separierte Liste von Organisations-UIDs.';
+$string['orgfilter_desc'] = 'Nur die <strong>Kurse</strong> bestimmter Organisationen syncen. <strong>Beeinflusst nicht den Organisations Sync</strong>. Nutzen Sie dies, um testweise den Kurs- und Einschreibungssync nur für einzelne Organisationen laufen zu lassen. Geben Sie die Organisations-UID(s) ein, bei mehreren trennen Sie diese mit einem Komma.';
 $string['orgkey'] = 'Kennzeichnungs-Key für zu syncende Organisationseinheiten';
 $string['orgkey_desc'] = 'Mit diesem Schlüssel werden Organisationseinheiten in CAMPUSonline identifiziert.';
 $string['orgsyncsettings'] = 'Organisationseinheiten Sync';
-$string['orgsyncsettings_desc'] = '<ul><li>Dieser Task synchronisiert <strong>ausgewählte Organisationseinheiten</strong> als <strong>Kurskategorien</strong> nach Moodle</li>
+$string['orgsyncsettings_desc'] = '<ul><li>Dieser Task synchronisiert <strong>ausgewählte Organisationseinheiten</strong> als <strong>Kursbereiche</strong> nach Moodle</li>
     <li>Organisationseinheiten können in CAMPUSonline für den Sync nach Moodle markiert werden</li>
     <li>Alle Organisationseinheiten, die Moodle Kurse besitzen, sollten ausgewählt werden, ansonsten werden deren Kurse direkt im Kursbereich für die CAMPUSonline Struktur erstellt</li>
     </ul>';
@@ -149,7 +150,8 @@ $string['rolemappings_desc'] = '<ul><li>Wählen Sie Moodle-Rollen für CAMPUSonl
     <li>Die Rollen müssen die Zuweisung zum <strong>Kursen</strong> erlauben</li></ul>';
 $string['rolemappings_notconnected'] = 'Keine Verbindung zu CAMPUSonline möglich. Überprüfen Sie Ihre Verbindungseinstellungen und laden Sie diese Seite neu, um Zuordnungen für CAMPUSonline-Rollen hinzuzufügen.';
 $string['rootcoursecategory'] = 'Kursbereich für CAMPUSonline Struktur';
-$string['rootcoursecategory_desc'] = 'Kursbereich, in dem die CAMPUSonline Kurskategorie Hierarchie für Organisationen gebaut wird.';
+$string['rootcoursecategory_desc'] = 'Kursbereich, in dem die CAMPUSonline Kursbereichs-Hierarchie für Organisationen gebaut wird. <p>
+Dient auch als Kursbereich für Kurse, die durch den weiter unten konfigurierten <strong>Kurs- und Einschreibungssync</strong> angelegt werden, wenn deren Organisation nicht gefunden wird.</p>';
 $string['restcalls'] = 'Zeige jeden REST Call beim Ausführen der Tasks';
 $string['restcalls_desc'] = 'Zeigt Informationen über jeden REST Call beim Ausführen des Tasks an, schreibt aber nicht ins Logfile. Für Debugging.';
 $string['runtask'] = 'Task ausführen';
@@ -163,11 +165,11 @@ $string['sourceclaim'] = 'CAMPUSonline ID';
 $string['sourceclaim_desc'] = 'Wählen Sie die ID, welche die Moodle Benutzer gesetzt haben.';
 $string['sourcefield'] = 'Moodle Feld';
 $string['sourcefield_desc'] = 'Wählen Sie das Moodle Feld, welches die ID enthält.';
-$string['studentrole'] = 'Studenten';
-$string['students'] = 'Studenten';
+$string['studentrole'] = 'Studierende';
+$string['students'] = 'Studierende';
 $string['subcategories'] = 'Unterbereiche';
-$string['subcategories_desc'] = 'Geben Sie an, wie die Kursbereichs-Struktur aufgebaut werden soll.
-    <li>Verwenden Sie Token, um die Namen für Kursbereiche zu erstellen, und Backslashes, um Kursbereiche zu trennen, z.B.: "{org:code}\{course:semesterKey}\{course:courseClassificationKey}"</li>
+$string['subcategories_desc'] = 'Geben Sie an, wie die <strong>Kursbereichs-Unterstruktur für den Kurs & Einschreibungssync</strong> aufgebaut werden soll.
+    <li>Verwenden Sie <strong>Token</strong>, um die Namen für Kursbereiche zu erstellen, und <strong>Backslashes</strong>, um Kursbereiche zu trennen, z.B.: "{org:code}\{course:semesterKey}\{course:courseClassificationKey}"</li>
     <li>Stellen Sie sicher, dass kein Name für einen Kursbereich leer bleiben kann</li>
     <li>Zeigen Sie Rohdaten aus CAMPUSonline an, um verfügbare Felder/Token zu sehen</li>';
 $string['success:connected'] = 'Erfolgreich mit CAMPUSonline-Endpoint verbunden.';
