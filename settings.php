@@ -173,6 +173,10 @@ if ($ADMIN->fulltree) {
         array('action' => 'edit', 'task' => 'enrol_campusonline\task\sync_delta_task'));
     $buttons .= html_writer::link($url, get_string('runtask_delta', 'enrol_campusonline'),
         array('target' => '_blank', 'class' => 'btn btn-primary m-1'));
+    $buttons .= '<br>';
+    $url = new moodle_url('/enrol/campusonline/test.php', array('function' => 'previewcourses', 'limit' => 20));
+    $buttons .= html_writer::link($url, get_string('previewcourses', 'enrol_campusonline'),
+        array('target' => '_blank', 'class' => 'btn btn-secondary m-1'));
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/enrolmentsyncsettings',
         get_string('enrolmentsyncsettings', 'enrol_campusonline'),
@@ -231,7 +235,7 @@ if ($ADMIN->fulltree) {
         'enrol_campusonline/course_fullname',
         get_string('fullname'),
         '',
-        '{title}',
+        '{course:title}',
         PARAM_TEXT,
         50
     ));
@@ -240,7 +244,7 @@ if ($ADMIN->fulltree) {
         'enrol_campusonline/course_shortname',
         get_string('shortname'),
         '',
-        '{semesterKey} - {courseCode}',
+        '{course:semesterKey} - {course:courseCode}',
         PARAM_TEXT,
         50
     ));
