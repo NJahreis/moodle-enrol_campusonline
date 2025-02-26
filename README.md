@@ -19,6 +19,10 @@ This plugin syncs courses, enrolments and (on demand) users from CAMPUSonline.
 You can find all REST-endpoints and links to the description of the REST-endpoints which are used by the plugin in the 
 [CAMPUSonline LMS-Endpoints](https://gitlab.campusonline.community/community/moodle-enrol_campusonline/-/wikis/home/CAMPUSonline-Endpunkte).
 
+## Video Tutorials
+* Video on the [features of the CAMPUSOnline Moodle plugin](https://cloud.tugraz.at/index.php/s/4RSw9bRccccywJ4)
+* Video on the topic of [CO Moodle user management](https://cloud.tugraz.at/index.php/s/J5SgwmBSC34mApX)
+
 ## Installation in Moodle
 - Install like any other Moodle plugin (put the plugin into /enrol/campusonline in your Moodle installation)
 - Enable CAMPUSonline sync in the 'manage enrol plugin' settings (/admin/settings.php?section=manageenrols)
