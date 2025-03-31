@@ -130,6 +130,7 @@ $string['modificationtimeframe_desc'] = '<ul>
     <li>How many days back modifications should be fetched from CAMPUSonline for the <strong>modification sync</strong></li>
     <li>0 = only get today\'s modifications</li>
     <li>At the moment, CAMPUSonline provides a maximum of <strong>7 days</strong> worth of modifications - when running the modification sync task in longer intervals, modifications will get lost, so make sure to <strong>configure the task schedule accordingly</strong></li></ul>';
+$string['nocoursesfound'] = 'No courses flagged as eLearnings were found for the specified sememster(s) in CAMPUSonline.';
 $string['orgfilter'] = 'Organisations';
 $string['orgfilter_desc'] = 'Only sync specific organisations. Leave empty to sync all organisations or provide a comma-separated list of organisation UIDs. <strong>This will not affect the organisation sync</strong>. Use this setting, to run the course- and enrolment sync only for specific organisations. Provide a comma-separated list of organisation UIDs.';
 $string['orgkey'] = 'Key for organisations selected for sync';

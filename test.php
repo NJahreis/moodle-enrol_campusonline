@@ -134,6 +134,16 @@ if ($function == 'showrawcoursedata') {
     $count = 0;
     $data = array();
     $courses = $sync->getCourses(null, $limit);
+
+    // No courses found.
+    if (!$courses) {
+        echo \html_writer::div(
+            get_string('nocoursesfound', 'enrol_campusonline'),
+            'alert alert-warning',
+            ['role' => 'alert']
+        );
+    }
+
     foreach ($courses as $key => $coursedata) {
 
         $course_uid = $coursedata['course:uid'];
