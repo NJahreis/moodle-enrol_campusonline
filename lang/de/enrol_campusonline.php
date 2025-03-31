@@ -132,7 +132,7 @@ $string['modificationtimeframe_desc'] = '<ul>
     <li>Wie viele Tage zurück sollen Änderungen aus CAMPUSonline für den <strong>Modification Sync</strong> abgerufen werden</li>
     <li>0 = nur heutige Änderungen abrufen</li>
     <li>Derzeit stellt CAMPUSonline maximal <strong>7 Tage</strong> Änderungen zur Verfügung - wenn Sie den Modification Sync in längeren Intervallen ausführen, gehen Modifikationen verloren. Stellen Sie daher sicher, dass Sie den Aufgabenplan entsprechend konfigurieren</li></ul>';
-$string['nocoursesfound'] = 'Für das/die ausgewählte(n) Semester wurden keine als eLearning markierten Lehrveranstlatungen in CAMPUSonline gefunden.';
+$string['nocoursesfound'] = 'Für das/die ausgewählte(n) Semester wurden keine als eLearning markierten Lehrveranstaltungen in CAMPUSonline gefunden.';
 $string['orgfilter'] = 'Organisationen';
 $string['orgfilter_desc'] = 'Nur die <strong>Kurse</strong> bestimmter Organisationen syncen. <strong>Beeinflusst nicht den Organisations Sync</strong>. Nutzen Sie dies, um testweise den Kurs- und Einschreibungssync nur für einzelne Organisationen laufen zu lassen. Geben Sie die Organisations-UID(s) ein, bei mehreren trennen Sie diese mit einem Komma.';
 $string['orgkey'] = 'Kennzeichnungs-Key für zu syncende Organisationseinheiten';
