@@ -287,7 +287,7 @@ class sync {
         } elseif(in_array($elearning_type, $this->flatcourse)) {
             return self::FLAT_COURSE;
         } else {
-            if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+            if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
                 $this->trace->output(" - Skipping CAMPUSonline course $course_uid - eLearningEventTypeKey $elearning_type is not configured for sync.");
             }
             return null;
@@ -512,7 +512,7 @@ class sync {
         }
 
         $number = count($users);
-        if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+        if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
             if ($number > 1) {
                 $this->trace->output("Identifying $number of $total Moodle users ($skipped already have a CAMPUSonline person UID set...)");
             } else {
@@ -524,7 +524,7 @@ class sync {
         foreach ($users as $user) {
 
             $userid = $user->id;
-            if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+            if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
                 $this->trace->output(" - Identifying Moodle user $userid");
             }
             profile_load_custom_fields($user);
@@ -533,7 +533,7 @@ class sync {
             if (array_key_exists('campusonline_id_attempts', $user->profile)) {
                 $attempt = (int) $user->profile['campusonline_id_attempts'];
                 if ($attempt >= $max_attempts) {
-                    if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+                    if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
                         $this->trace->output("   - Maximum attempts reached for Moodle user $userid. Skipping user.");
                     }
                     continue;
@@ -703,7 +703,7 @@ class sync {
 
         // Start output.
         $number = count($courses);
-        if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+        if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
             $this->trace->output("Syncing $number courses ...");
         }
 
@@ -716,7 +716,7 @@ class sync {
             if ($orgfilter = $this->config->orgfilter) {
                 $orgs = explode(',', $orgfilter);
                 if (!in_array($coursedata['org:uid'], $orgs)) {
-                    if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+                    if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
                         $this->trace->output(" - Skipping CAMPUSonline course $course_uid since it does not match the organisation filter");
                     }
                     continue;
@@ -729,7 +729,7 @@ class sync {
             }
 
             // Start sync & log.
-            if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+            if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
                 $this->trace->output(" - Syncing CAMPUSonline course $course_uid with mode $strategy");
             }
 
@@ -1141,7 +1141,7 @@ class sync {
 
         // Start output.
         $number = count($orgids);
-        if (PHP_SAPI == 'cli' || $_GET['traceoutput']) {
+        if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
             $this->trace->output("Syncing $number selected organisations ...");
         }
 
@@ -1399,7 +1399,7 @@ class sync {
         } else {
 
             // Write trace output that no update is necessary.
-            if ($_GET['traceoutput']) {
+            if (array_key_exists('traceoutput', $_GET)) {
                 $this->trace->output(" - No update necessary for Moodle user $user->id with data from CAMPUSonline user $uid.");
             }
         }
