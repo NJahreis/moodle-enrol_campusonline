@@ -18,6 +18,8 @@ This plugin syncs courses, enrolments and (on demand) users from CAMPUSonline.
 - **CAMPUSonline REST API**: CAMPUSonline provides a REST API and a documentation for integration with other systems. 
 You can find all REST-endpoints and links to the description of the REST-endpoints which are used by the plugin in the 
 [CAMPUSonline LMS-Endpoints](https://gitlab.campusonline.community/community/moodle-enrol_campusonline/-/wikis/home/CAMPUSonline-Endpunkte).
+- **Moodle Matrix Chat**: For questions and support, please visit the Moodle Matrix Chat.
+  https://matrix.to/#/#moodle:matrix.campusonline.community
 
 ## Video Tutorials
 * Video on the [features of the CAMPUSOnline Moodle plugin](https://cloud.tugraz.at/index.php/s/J5SgwmBSC34mApX)
