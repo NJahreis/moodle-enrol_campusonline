@@ -1495,7 +1495,7 @@ class sync {
             }
 
             // Attach values from semester endpoint.
-            $semester = $this->semesterdata[$course['semesterKey']];
+            $semester = $this->semesterdata[$course['semesterKey']] ?? null;
             $semester = (array)$semester;
 
             foreach ($semester as $key => $value) {
@@ -1654,14 +1654,14 @@ class sync {
                     if ($retry > $retries) {
                         $error = $e->getMessage();
                         $message = "Request exception: $error.";
-                        locallib::writeLog('error', $message, 0, null, $this->trace);
+                        locallib::writeLog('error', $message, 2, null, $this->trace);
 
                         // Create object with exception message.
                         $response_object = new \stdClass();
                         $response_object->exception = $error;
                         return $response_object;
                     } else {
-                        locallib::writeLog('warning', "Retrying failed request: {$e->getMessage()}", 0, null, $this->trace);
+                        locallib::writeLog('warning', "Retrying failed request: {$e->getMessage()}", 1, null, $this->trace);
                         sleep(3);
                     }
                 }
@@ -1767,29 +1767,41 @@ class sync {
             'timeout' => 100.0,
             'connect_timeout' => 10.0,
         ]);
-        $response = $client->request('POST', $url, [
-            'headers' => [
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ],
-            'form_params' => [
-                'grant_type' => 'client_credentials',
-                'client_id' => $clientid,
-                'client_secret' => $secret
-            ]
-        ]);
 
-        // Analyze response.
-        $response_body = $response->getBody()->getContents();
-        $response_object = json_decode($response_body, false);
-        $response_array = (array)$response_object;
+        try {
 
-        // Analyze response.
-        if (array_key_exists('error', $response_array)) {
-            $this->error = $response_array['error'] . ': ' . $response_array['error_description'];
-        } elseif (array_key_exists('access_token', $response_array)) {
-            $this->token = $response_array['access_token'];
-        } else {
-            $this->error = $response_array['error'] . ': ' . get_string('error:unknown', 'enrol_campusonline');
+            $response = $client->request('POST', $url, [
+                'headers' => [
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
+                'form_params' => [
+                    'grant_type' => 'client_credentials',
+                    'client_id' => $clientid,
+                    'client_secret' => $secret
+                ]
+            ]);
+
+            // Analyze response.
+            $response_body = $response->getBody()->getContents();
+            $response_object = json_decode($response_body, false);
+            $response_array = (array)$response_object;
+
+            // Analyze response.
+            if (array_key_exists('error', $response_array)) {
+                $this->error = $response_array['error'] . ': ' . $response_array['error_description'];
+            } elseif (array_key_exists('access_token', $response_array)) {
+                $this->token = $response_array['access_token'];
+            } else {
+                $this->error = $response_array['error'] . ': ' . get_string('error:unknown', 'enrol_campusonline');
+            }
+
+        // Error handling.
+        } catch (\Throwable $e) {
+
+            $error = $e->getMessage();
+            $this->error = $error;
+            $message = "Request exception: $error.";
+            locallib::writeLog('update_token', $message, 2, null, $this->trace);
         }
     }
 }

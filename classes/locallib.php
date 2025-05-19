@@ -348,12 +348,16 @@ class locallib {
 
         // Convert dates into timestamps.
         // Create a new DateTime object from the date string.
-        $date = DateTime::createFromFormat('Y-m-d\TH:i:sP', $value);
+        if (!$date = DateTime::createFromFormat('Y-m-d\TH:i:sP', $value)) {
+            return $value;
+        }
 
         // Check if the DateTime object was created successfully.
-        if ($date !== false && $date->getLastErrors()['warning_count'] == 0 && $date->getLastErrors()['error_count'] == 0) {
+        $errors = $date->getLastErrors();
+        if (($errors['warning_count'] ?? 0) == 0 &&
+            ($errors['error_count'] ?? 0) == 0
+        ) {
             return (string)$date->getTimestamp();
-
         } else {
             return $value;
         }
