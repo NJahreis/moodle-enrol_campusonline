@@ -53,17 +53,17 @@ class sync_delta_task extends \core\task\scheduled_task {
         $trace = new \text_progress_trace();
         $sync = new sync($trace);
 
-        if ($sync->isConnected()) {
+        if ($sync->is_connected()) {
 
             // Sync courses and enrollments delta.
-            $sync->syncCourseDelta();
+            $sync->sync_course_delta();
 
         } else {
 
             // Log error.
             $message = 'ERROR: could not connect to CAMPUSonline. Check your connection settings.';
             $trace->output($message);
-            locallib::writeLog('connect', $message, 2);
+            locallib::write_log('connect', $message, 2);
         }
     }
 }

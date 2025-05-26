@@ -92,7 +92,7 @@ class locallib {
      *
      * @return void
      */
-    public static function addEnrolmentMethod($course) {
+    public static function add_enrolment_method($course) {
 
         global $DB;
 
@@ -125,12 +125,12 @@ class locallib {
      *
      * @return array $course
      */
-    public static function buildCourse($coursedata, $group_name = null, $group_uid = null){
+    public static function build_course($coursedata, $group_name = null, $group_uid = null){
         $course = array();
         $course['coursecategory'] = null;
         $course['idnumber'] = $coursedata['course:uid'];
-        $course['shortname'] = self::getFieldValue('course_shortname', $coursedata);
-        $course['fullname'] = self::getFieldValue('course_fullname', $coursedata);
+        $course['shortname'] = self::get_field_value('course_shortname', $coursedata);
+        $course['fullname'] = self::get_field_value('course_fullname', $coursedata);
 
         // Include group information.
         if ($group_name && $group_uid) {
@@ -141,7 +141,7 @@ class locallib {
 
         // Map additional fields.
         foreach(self::COURSE_FIELDS as $field => $default) {
-            $course[$field] = self::getFieldValue('course_' . $field, $coursedata);
+            $course[$field] = self::get_field_value('course_' . $field, $coursedata);
         }
 
         return $course;
@@ -154,20 +154,20 @@ class locallib {
      *
      * @return array $user
      */
-    public static function buildUser($userdata){
+    public static function build_user($userdata){
 
         $user = array();
-        $user['auth'] = self::getFieldValue('user_auth', $userdata);
-        $user['password'] = self::getFieldValue('user_password', $userdata);
+        $user['auth'] = self::get_field_value('user_auth', $userdata);
+        $user['password'] = self::get_field_value('user_password', $userdata);
 
         // Set random password.
         if (!$user['password']) {
-            $user['password'] = self::generatePassword();
+            $user['password'] = self::generate_password();
         }
 
         // Map additional fields.
         foreach(self::USER_FIELDS as $field => $default) {
-            $user[$field] = self::getFieldValue('user_' . $field, $userdata);
+            $user[$field] = self::get_field_value('user_' . $field, $userdata);
         }
 
         return $user;
@@ -176,7 +176,7 @@ class locallib {
     /**
      * Removes old logs.
      */
-    public static function cleanupLogs() {
+    public static function cleanup_logs() {
         global $DB;
 
         $duration = get_config('enrol_campusonline', 'logduration');
@@ -191,7 +191,7 @@ class locallib {
      *
      * @return array $customfields
      */
-    public static function getCustomCourseFieldData($coursedata) {
+    public static function get_custom_course_field_data($coursedata) {
 
         $customfields = array();
         $handler = \core_customfield\handler::get_handler('core_course', 'course');
@@ -199,7 +199,7 @@ class locallib {
             foreach ($custom_fields as $field) {
                 $name = $field->get('shortname');
                 if ($coursedata) {
-                    $customfields[$name] = self::getFieldValue('course_customfield_' . $name, $coursedata);
+                    $customfields[$name] = self::get_field_value('course_customfield_' . $name, $coursedata);
                 } else {
                     // For settings.php
                     $customfields[$name] = $field->get('name');
@@ -216,7 +216,7 @@ class locallib {
      *
      * @return array $customfields
      */
-    public static function getCustomUserFieldData($userdata) {
+    public static function get_custom_user_field_data($userdata) {
 
         global $DB;
 
@@ -225,7 +225,7 @@ class locallib {
         foreach ($records as $record) {
             $name = $record->shortname;
             if ($userdata) {
-                $customfields[$record->id] = self::getFieldValue('user_profile_field_' . $name, $userdata);
+                $customfields[$record->id] = self::get_field_value('user_profile_field_' . $name, $userdata);
             } else {
                 // For settings.php
                 $customfields[$record->shortname] = $record->name;
@@ -243,7 +243,7 @@ class locallib {
      *
      * @return string $value
      */
-    public static function getFieldValue($field, $data) {
+    public static function get_field_value($field, $data) {
 
         // Get hardcoded defaults.
         if (array_key_exists($field, self::CO_USER_FIELDS)) {
@@ -287,7 +287,7 @@ class locallib {
      *
      * @return array
      */
-    public static function getOrgRoles() {
+    public static function get_org_roles() {
 
         global $DB;
 
@@ -320,7 +320,7 @@ class locallib {
      *
      * @return string $person_uid
      */
-    public static function getPersonUid($userid) {
+    public static function get_person_uid($userid) {
 
         global $DB;
 
@@ -337,9 +337,9 @@ class locallib {
      *
      * @return string $value
      */
-    public static function normalizeValue($value) {
+    public static function normalize_value($value) {
         if (is_object($value)) {
-            $value = locallib::getObjectValue($value);
+            $value = locallib::get_object_value($value);
         } elseif (is_array($value)) {
             $value = implode(' ', $value);
         } else {
@@ -371,14 +371,14 @@ class locallib {
      *
      * @return void
      */
-    public static function setCustomCourseFields($courseid, $coursedata) {
+    public static function set_custom_course_fields($courseid, $coursedata) {
 
         global $DB;
 
         $updated = false;
         $course = get_course($courseid);
         $context = context_course::instance($courseid);
-        $customfields = self::getCustomCourseFieldData($coursedata);
+        $customfields = self::get_custom_course_field_data($coursedata);
 
         // We update customfields directly via the DB,
         // because dealing with the customfield API is ridiculously complicated.
@@ -418,7 +418,7 @@ class locallib {
      *
      * @return boolean $updated
      */
-    public static function setCustomUserFields($user, $person, $onlyuid = false) {
+    public static function set_custom_user_fields($user, $person, $onlyuid = false) {
 
         global $CFG;
         require_once($CFG->dirroot . '/user/profile/lib.php');
@@ -428,7 +428,7 @@ class locallib {
         if ($onlyuid) {
             $profilefields = self::CO_USER_FIELDS;
         } else {
-            $profilefields = locallib::getCustomUserFieldData(null);
+            $profilefields = locallib::get_custom_user_field_data(null);
         }
 
         // Update profile fields.
@@ -436,7 +436,7 @@ class locallib {
 
             $fieldname = "profile_field_$profilefield";
 
-            if ($value = self::getFieldValue("user_profile_field_$profilefield", $person)) {
+            if ($value = self::get_field_value("user_profile_field_$profilefield", $person)) {
                 if (!property_exists($user, $fieldname) || $user->$fieldname != $value) {
                     $user->$fieldname = $value;
                     $updated = true;
@@ -462,7 +462,7 @@ class locallib {
      * @param int $indent
      *
      */
-    public static function writeLog($event, $message, $status, $courseid = null, $trace = null, $indent = 0) {
+    public static function write_log($event, $message, $status, $courseid = null, $trace = null, $indent = 0) {
 
         global $DB;
 
@@ -501,7 +501,7 @@ class locallib {
      *
      * @return string $password
      */
-    private static function generatePassword() {
+    private static function generate_password() {
 
         global $CFG;
 
@@ -532,7 +532,7 @@ class locallib {
      *
      * @return string $value
      */
-    private static function getObjectValue($value) {
+    private static function get_object_value($value) {
 
         if (property_exists($value, 'name')) {
             $value = $value->name;

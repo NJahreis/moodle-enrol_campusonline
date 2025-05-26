@@ -51,11 +51,11 @@ echo $OUTPUT->header();
 echo html_writer::tag('h3', get_string('syncingcourse', 'enrol_campusonline'));
 echo "<pre>";
 
-if ($sync->isConnected()) {
+if ($sync->is_connected()) {
 
     // Sync course.
     $course_uid = explode(':', $course->idnumber)[0];
-    $sync->syncCourses([$course_uid]);
+    $sync->sync_courses([$course_uid]);
 
 } else {
 

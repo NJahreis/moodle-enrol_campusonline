@@ -67,7 +67,7 @@ class sync {
         if (enrol_is_enabled('campusonline')) {
 
             // Remove old logs.
-            locallib::cleanupLogs();
+            locallib::cleanup_logs();
 
             // Get settings.
             $this->config = get_config('enrol_campusonline');
@@ -79,7 +79,7 @@ class sync {
             $this->flatcourse = preg_split('/\s*,\s*/', $this->config->flatcourse);
 
             // Get roles to sync for organisations.
-            $this->orgroles = locallib::getOrgRoles();
+            $this->orgroles = locallib::get_org_roles();
 
             // Get custom field ids so we dont have to deal with Moodle custom field API.
             $fields = ['user_info_field:campusonline_person_uid',
@@ -92,28 +92,28 @@ class sync {
                     $message = get_string('error:uidfieldnotfound', 'enrol_campusonline', "$table: $shortname");
                     \core\notification::add($message,
                         \core\output\notification::NOTIFY_ERROR);
-                    locallib::writeLog('general', $message, 2, null, $this->trace, null);
+                    locallib::write_log('general', $message, 2, null, $this->trace, null);
                 } else {
                     $this->customfieldids[$shortname] = $value;
                 }
             }
 
             // Get token.
-            $this->updateToken();
+            $this->update_token();
         }
     }
 
     /**
      * Checks if connection was successful.
      */
-    public function isConnected() {
+    public function is_connected() {
         return !empty($this->token);
     }
 
     /**
      * Returns the error message.
      */
-    public function getError() {
+    public function get_error() {
         return $this->error;
     }
 
@@ -124,7 +124,7 @@ class sync {
      *
      * @return string $categoryid
      */
-    public function getCourseCategory($coursedata) {
+    public function get_course_category($coursedata) {
 
         global $DB;
 
@@ -156,7 +156,7 @@ class sync {
 
                     // Log error.
                     $message = "ERROR: could not find Moodle course category $name and not allowed to create new categories. Create the category manually, or configure CAMPUSonline to be able to create new categories.";
-                    locallib::writeLog('create_category', $message, 2, null, $this->trace, 3);
+                    locallib::write_log('create_category', $message, 2, null, $this->trace, 3);
 
                     return false;
 
@@ -164,7 +164,7 @@ class sync {
 
                     // Log creation.
                     $message = "Created new Moodle course category $name.";
-                    locallib::writeLog('create_category', $message, 0, null, $this->trace, 3);
+                    locallib::write_log('create_category', $message, 0, null, $this->trace, 3);
 
                     // Create new category.
                     $categorydata = new \stdClass();
@@ -190,10 +190,10 @@ class sync {
      * @param string $course_uid
      * @return array groups
      */
-    public function getCourseGroups($course_uid) {
+    public function get_course_groups($course_uid) {
 
         $endpoint = "co-tm-core/course/api/courses/$course_uid/groups";
-        $result = $this->restCall($endpoint, null);
+        $result = $this->rest_call($endpoint, null);
 
         // Analyze response.
         $groups = array();
@@ -212,7 +212,7 @@ class sync {
      * @param string $course_uids if provided, only fetches these courses.
      * @return array
      */
-    public function getCourses($course_uids = null, $limit = null) {
+    public function get_courses($course_uids = null, $limit = null) {
 
         $allcourses = array();
 
@@ -238,12 +238,12 @@ class sync {
                 ];
             }
 
-            $result = $this->restCall($endpoint, $query);
+            $result = $this->rest_call($endpoint, $query);
 
             // Analyze response.
             if (property_exists($result, 'items')) {
                 $courses = $result->items;
-                $courses = $this->enrichCourses($courses);
+                $courses = $this->enrich_courses($courses);
             } else {
                 $courses = array();
             }
@@ -265,7 +265,7 @@ class sync {
      * @param array $coursedata
      * @return string $strategy
      */
-    public function getCourseSyncStrategy($coursedata) {
+    public function get_course_sync_strategy($coursedata) {
 
         $course_uid = $coursedata['course:uid'];
 
@@ -276,7 +276,7 @@ class sync {
 
             // Log error.
             $message = "ERROR: no eLearningEventTypeKey for CAMPUSonline course $course_uid, skipping course.";
-            locallib::writeLog('update_course', $message, 2, null, $this->trace, 3);
+            locallib::write_log('update_course', $message, 2, null, $this->trace, 3);
             return null;
         }
 
@@ -301,7 +301,7 @@ class sync {
      *
      * @return array $enrolments
      */
-    public function getEnrolments($course) {
+    public function get_enrolments($course) {
 
         $uids = explode(':', $course->idnumber);
         $course_uid = $uids[0];
@@ -314,7 +314,7 @@ class sync {
         $query = [
             'course_uid' => $course_uid,
         ];
-        $result = $this->restCall($endpoint, $query);
+        $result = $this->rest_call($endpoint, $query);
 
         // Analyze response.
         if (property_exists($result, 'items')) {
@@ -328,7 +328,7 @@ class sync {
         $query = [
             'course_uid' => $course_uid,
         ];
-        $result = $this->restCall($endpoint, $query);
+        $result = $this->rest_call($endpoint, $query);
 
         // Analyze response.
         if (property_exists($result, 'items')) {
@@ -340,10 +340,12 @@ class sync {
 
     /**
      * Gets lectureship functions from CAMPUSonline.
+     *
+     * @return array $lectureship_functions
      */
-    public function getLectureshipFunctions() {
+    public function get_lectureship_functions() {
         $endpoint = 'co-tm-core/course/api/lectureship-functions';
-        $result = $this->restCall($endpoint);
+        $result = $this->rest_call($endpoint);
 
         // Analyze response.
         $lectureship_functions = array();
@@ -362,9 +364,9 @@ class sync {
      * @param string $uid
      * @param bool $log
      *
-     * @return int $userid
+     * @return mixed $userid
      */
-    public function getMoodleUserId($uid, $log = true) {
+    public function get_moodle_user_id($uid, $log = true) {
 
         global $DB;
         $userid = null;
@@ -381,7 +383,7 @@ class sync {
         // Log warning.
         if ($log) {
             $message = "WARNING: could not find Moodle user for CAMPUSonline person $uid. Try running the user identification task first.";
-            locallib::writeLog('get_user', $message, 1, null, $this->trace, 5);
+            locallib::write_log('get_user', $message, 1, null, $this->trace, 5);
         }
 
         return null;
@@ -395,7 +397,7 @@ class sync {
      *
      * @return array $persondata
      */
-    public function getPersonData($uid, $log = true) {
+    public function get_person_data($uid, $log = true) {
 
         $endpoint = "co-brm-core/pers/api/person-claims";
         $query = [
@@ -403,13 +405,13 @@ class sync {
             'person_uid' => $uid,
         ];
 
-        $result = $this->restCall($endpoint, $query);
+        $result = $this->rest_call($endpoint, $query);
 
         // Log error.
         if (!property_exists($result, 'items') || empty($result->items)) {
             if ($log) {
                 $message = "WARNING: could not get full person data for CAMPUSonline user $uid.";
-                locallib::writeLog('get_user_data', $message, 1, null, $this->trace, 3);
+                locallib::write_log('get_user_data', $message, 1, null, $this->trace, 3);
             }
             return array();
         } else {
@@ -424,7 +426,7 @@ class sync {
      *
      * @return array
      */
-    public function getPersonExternalKey($uid) {
+    public function get_person_external_key($uid) {
 
         $endpoint = "co-brm-core/pers/api/person-identifiers/mappings";
         $query = [
@@ -435,7 +437,7 @@ class sync {
             'external_system_key' => $this->externalsystemkey,
         ];
 
-        $result = $this->restCall($endpoint, $query);
+        $result = $this->rest_call($endpoint, $query);
 
         if (property_exists($result, 'mappings')) {
             return (array)$result->mappings;
@@ -449,7 +451,7 @@ class sync {
      *
      * @return array $persons
      */
-    public function getPersons($person_uids = null, $limit = null) {
+    public function get_persons($person_uids = null, $limit = null) {
 
         // Get employees.
         $endpoint = "co-brm-core/pers/api/person-claims";
@@ -462,7 +464,7 @@ class sync {
             $query['person_uid'] = implode(',', $person_uids);
         }
 
-        $result = $this->restCall($endpoint, $query);
+        $result = $this->rest_call($endpoint, $query);
 
         // Analyze response.
         if (property_exists($result, 'items')) {
@@ -484,7 +486,7 @@ class sync {
      * @param array $users
      *
      */
-    public function identifyMoodleUsers($users) {
+    public function identify_moodle_users($users) {
 
         global $CFG, $DB;
 
@@ -505,7 +507,7 @@ class sync {
         foreach ($users as $key => $user) {
 
             // Skip users that already have a Person UID.
-            if (locallib::getPersonUid($user->id)) {
+            if (locallib::get_person_uid($user->id)) {
                 unset($users[$key]);
                 $skipped++;
             }
@@ -561,20 +563,20 @@ class sync {
 
                 // Log.
                 $message = "Could not find value for field $sourcefield in Moodle user $userid on attempt $attempt.";
-                locallib::writeLog('identify_user', $message, 0, null, $this->trace, 3);
+                locallib::write_log('identify_user', $message, 0, null, $this->trace, 3);
                 continue;
             }
 
             // Skip users that have a uid that is already set to another Moodle user.
-            if ($moodle_user_id = $this->getMoodleUserId($uid, false)) {
+            if ($moodle_user_id = $this->get_moodle_user_id($uid, false)) {
                 $message = "WARNING: CAMPUSonline person $uid is already mapped to Moodle user $moodle_user_id. Skipping user $userid.";
-                locallib::writeLog('identify_user', $message, 1, null, $this->trace, 3);
+                locallib::write_log('identify_user', $message, 1, null, $this->trace, 3);
                 continue;
             }
 
             // If source claim equals target claim, that means we already have the Person UID, and can try fetching the person to see if it is valid.
             if ($this->config->sourceclaim == 'CO_CLAIM_PERSON_UID') {
-                if($this->getPersonData($uid, false)) {
+                if($this->get_person_data($uid, false)) {
 
                     // Save Person UID to user profile.
                     $user->profile_field_campusonline_person_uid = $uid;
@@ -582,7 +584,7 @@ class sync {
 
                     // Log success.
                     $message = "Moodle user $userid successfully mapped to CAMPUSonline person $uid.";
-                    locallib::writeLog('identify_user', $message, 0, null, $this->trace, 3);
+                    locallib::write_log('identify_user', $message, 0, null, $this->trace, 3);
                     continue;
                 }
 
@@ -599,7 +601,7 @@ class sync {
                     $query['external_key'] = $this->config->externalkey;
                     $query['external_system_key'] = $this->config->externalsystemkey;
                 }
-                $result = $this->restCall($endpoint, $query);
+                $result = $this->rest_call($endpoint, $query);
 
                 // Analyze response.
                 if (property_exists($result, 'mappings')) {
@@ -614,7 +616,7 @@ class sync {
 
                         // Log success.
                         $message = "Moodle user $userid successfully mapped to CAMPUSonline person $person_uid via $sourceclaim = $uid.";
-                        locallib::writeLog('identify_user', $message, 0, null, $this->trace, 3);
+                        locallib::write_log('identify_user', $message, 0, null, $this->trace, 3);
                         continue;
                     }
                 }
@@ -626,7 +628,7 @@ class sync {
 
             // Log.
             $message = "Could not find CAMPUSonline person $uid for Moodle user $userid on attempt $attempt.";
-            locallib::writeLog('identify_user', $message, 0, null, $this->trace, 3);
+            locallib::write_log('identify_user', $message, 0, null, $this->trace, 3);
             continue;
 
         }
@@ -637,7 +639,7 @@ class sync {
      *
      * @return void
      */
-    public function syncCourseDelta() {
+    public function sync_course_delta() {
 
         // Set timeframe.
         $timeframe = $this->config->modificationtimeframe;
@@ -662,7 +664,7 @@ class sync {
                     'since' => $date,
                     'semestery_key' => $semester
                 ];
-                $result = $this->restCall($endpoint, $query);
+                $result = $this->rest_call($endpoint, $query);
                 if (property_exists($result, 'items')) {
                     foreach ($result->items as $item) {
                         $course_uids[$item->courseUid] = 'modified';
@@ -674,7 +676,7 @@ class sync {
         // Sync modified courses.
         $course_uids = array_keys($course_uids);
         foreach ($course_uids as $course_uid) {
-            $this->syncCourses([$course_uid]);
+            $this->sync_courses([$course_uid]);
         }
     }
 
@@ -684,7 +686,7 @@ class sync {
      * @param string $course_uids if provided, only syncs these courses.
      * @return void
      */
-    public function syncCourses($course_uids = null) {
+    public function sync_courses($course_uids = null) {
 
         global $CFG, $DB;
 
@@ -692,9 +694,9 @@ class sync {
 
         // Get course(s).
         if ($course_uids) {
-            $courses = $this->getCourses($course_uids);
+            $courses = $this->get_courses($course_uids);
         } else {
-            $courses = $this->getCourses();
+            $courses = $this->get_courses();
         }
 
         // Get config.
@@ -724,7 +726,7 @@ class sync {
             }
 
             // Determine course sync strategy.
-            if (!$strategy = self::getCourseSyncStrategy($coursedata)) {
+            if (!$strategy = self::get_course_sync_strategy($coursedata)) {
                 continue;
             }
 
@@ -735,7 +737,7 @@ class sync {
 
             // Get groups if necessary.
             if ($strategy !== self::FLAT_COURSE) {
-                $groups = $this->getCourseGroups($course_uid);
+                $groups = $this->get_course_groups($course_uid);
             } else {
                 $groups = [0 => 'dummy'];
             }
@@ -745,14 +747,14 @@ class sync {
                 // Prepare new course data.
                 if ($strategy == self::GROUP_TO_COURSE) {
                     $idnumber = "$course_uid:$group_uid";
-                    $newcourse = locallib::buildCourse($coursedata, $group_name, $group_uid);
+                    $newcourse = locallib::build_course($coursedata, $group_name, $group_uid);
                 } else {
                     $idnumber = $course_uid;
-                    $newcourse = locallib::buildCourse($coursedata);
+                    $newcourse = locallib::build_course($coursedata);
                 }
 
                 // Get category (only for first loop).
-                if (!$newcourse['category'] = $this->getCourseCategory($coursedata)) {
+                if (!$newcourse['category'] = $this->get_course_category($coursedata)) {
                     continue;
                 }
 
@@ -771,17 +773,17 @@ class sync {
                         $courseid = $course->id;
 
                         // Add custom fields.
-                        locallib::setCustomCourseFields($courseid, $coursedata);
+                        locallib::set_custom_course_fields($courseid, $coursedata);
 
                         // Log success.
                         if ($strategy == self::GROUP_TO_COURSE) {
-                            $this->setMoodleCourseUrl($course, $group_uid);
+                            $this->set_moodle_course_url($course, $group_uid);
                             $message = "Created Moodle course $courseid for CAMPUSonline course $course_uid group $group_uid.";
                         } else {
-                            $this->setMoodleCourseUrl($course);
+                            $this->set_moodle_course_url($course);
                             $message = "Created Moodle course $courseid for CAMPUSonline course $course_uid.";
                         }
-                        locallib::writeLog('create_course', $message, 0, $courseid, $this->trace, 3);
+                        locallib::write_log('create_course', $message, 0, $courseid, $this->trace, 3);
 
                     } else {
 
@@ -791,11 +793,11 @@ class sync {
                         } else {
                             $message = "ERROR: could not create Moodle course for CAMPUSonline course $course_uid.";
                         }
-                        locallib::writeLog('create_course', $message, 2, null, $this->trace, 3);
+                        locallib::write_log('create_course', $message, 2, null, $this->trace, 3);
                     }
 
                     // Add our enrolment method.
-                    locallib::addEnrolmentMethod($course);
+                    locallib::add_enrolment_method($course);
 
                 } else {
 
@@ -805,9 +807,9 @@ class sync {
                     // Update course URL in CAMPUSonline.
                     if ($updatecourseurls == 1) {
                         if ($strategy == self::GROUP_TO_COURSE) {
-                            $this->setMoodleCourseUrl($course, $group_uid);
+                            $this->set_moodle_course_url($course, $group_uid);
                         } else {
-                            $this->setMoodleCourseUrl($course);
+                            $this->set_moodle_course_url($course);
                         }
                     }
 
@@ -830,7 +832,7 @@ class sync {
                         $DB->update_record('course', $course);
 
                         // Update course custom fields.
-                        locallib::setCustomCourseFields($courseid, $coursedata);
+                        locallib::set_custom_course_fields($courseid, $coursedata);
 
                         // Log success.
                         if ($strategy == self::GROUP_TO_COURSE) {
@@ -838,15 +840,15 @@ class sync {
                         } else {
                             $message = "Updated Moodle course settings for $courseid with data from CAMPUSonline course $course_uid.";
                         }
-                        locallib::writeLog('update_course', $message, 0, $courseid, $this->trace, 3);
+                        locallib::write_log('update_course', $message, 0, $courseid, $this->trace, 3);
                     }
                 }
 
                 // Sync enrolments.
                 if ($strategy == self::GROUP_TO_GROUP) {
-                    $this->syncEnrolments($course, $groups);
+                    $this->sync_enrolments($course, $groups);
                 } else {
-                    $this->syncEnrolments($course);
+                    $this->sync_enrolments($course);
                 }
 
                 // Break foreach loop in case of no separate groups.
@@ -865,7 +867,7 @@ class sync {
      *
      * @return void
      */
-    public function syncEnrolments($course, $groups = null) {
+    public function sync_enrolments($course, $groups = null) {
 
         global $CFG, $DB;
         require_once("$CFG->dirroot/user/lib.php");
@@ -892,13 +894,13 @@ class sync {
             $course->defaultgroupingid = $grouping_id;
             $DB->update_record('course', $course);
             $message = "Created grouping for CAMPUSonline groups in course $courseid";
-            locallib::writeLog('sync_groups', $message, 0, $courseid, $this->trace, 3);
+            locallib::write_log('sync_groups', $message, 0, $courseid, $this->trace, 3);
         }
 
         // Check if enrolment method is active.
         if (!$enrol = $DB->get_record('enrol', ['courseid' => $courseid, 'enrol' => 'campusonline', 'status' => 0])) {
             $message = "WARNING: skipping enrolments for Moodle course $courseid - enrolment method has been deactivated.";
-            locallib::writeLog('enrol_user', $message, 1, $courseid, $this->trace, 3);
+            locallib::write_log('enrol_user', $message, 1, $courseid, $this->trace, 3);
             return;
         }
 
@@ -912,7 +914,7 @@ class sync {
 
         // Get enrolments from CAMPUSonline.
         $assigned_roles = array();
-        $enrolments = $this->getEnrolments($course);
+        $enrolments = $this->get_enrolments($course);
 
         // Check if this is a course for a single groups.
         $uids = explode(':', $course->idnumber);
@@ -952,13 +954,13 @@ class sync {
 
             // Get Moodle user.
             $uid = $enrolment->personUid;
-            $userid = $this->getMoodleUserId($uid);
+            $userid = $this->get_moodle_user_id($uid);
 
             // Create new user if needed & allowed.
             if (!$userid) {
                 if ($this->config->enrolsynccreateusers) {
 
-                    if (!$userid = $this->createMoodleUser($uid)) {
+                    if (!$userid = $this->create_moodle_user($uid)) {
                         continue;
                     }
 
@@ -966,7 +968,7 @@ class sync {
 
                     // Log warning.
                     $message = "WARNING: skipping enrolment for CAMPUSonline user $uid - user does not exist in Moodle.";
-                    locallib::writeLog('enrol_user', $message, 1, $courseid, $this->trace, 3);
+                    locallib::write_log('enrol_user', $message, 1, $courseid, $this->trace, 3);
                     continue;
                 }
             }
@@ -989,7 +991,7 @@ class sync {
 
                 // Log success.
                 $message = "Enrolled Moodle user $userid in Moodle course $courseid.";
-                locallib::writeLog('enrol_user', $message, 0, $courseid, $this->trace, 3);
+                locallib::write_log('enrol_user', $message, 0, $courseid, $this->trace, 3);
 
             // Activate enrolment if needed.
             } else {
@@ -1001,7 +1003,7 @@ class sync {
 
                     // Log success.
                     $message = "Activated enrolment for Moodle user $userid in Moodle course $courseid.";
-                    locallib::writeLog('enrol_user', $message, 0, $courseid, $this->trace, 3);
+                    locallib::write_log('enrol_user', $message, 0, $courseid, $this->trace, 3);
                 }
             }
 
@@ -1009,7 +1011,7 @@ class sync {
             if (!user_has_role_assignment($userid, $roleid, $context->id)) {
                 $success = role_assign($roleid, $userid, $context->id);
                 $message = "Assigned role $roleid to Moodle user $userid in Moodle course $courseid.";
-                locallib::writeLog('enrol_user', $message, 0, $courseid, $this->trace, 3);
+                locallib::write_log('enrol_user', $message, 0, $courseid, $this->trace, 3);
             }
 
             // Add to assigned roles for later cleanup.
@@ -1040,7 +1042,7 @@ class sync {
                 if (!array_key_exists($userid, $assigned_roles) || !in_array($role->roleid, $assigned_roles[$userid])) {
                     $success = role_unassign($role->roleid, $userid, $context->id);
                     $message = "Removed role $role->roleid from Moodle user $userid in Moodle course $courseid.";
-                    locallib::writeLog('enrol_user', $message, 0, $courseid, $this->trace, 3);
+                    locallib::write_log('enrol_user', $message, 0, $courseid, $this->trace, 3);
                 }
             }
 
@@ -1051,7 +1053,7 @@ class sync {
                 $enrolment->status = 1;
                 $DB->update_record('user_enrolments', $enrolment);
                 $message = "Suspended enrolment for Moodle user $userid in Moodle course $courseid.";
-                locallib::writeLog('enrol_user', $message, 0, $courseid, $this->trace, 3);
+                locallib::write_log('enrol_user', $message, 0, $courseid, $this->trace, 3);
             }
         }
 
@@ -1083,7 +1085,7 @@ class sync {
                 }
 
                 $message = "Created Moodle group $group->name for CAMPUSonline group $group_uid.";
-                locallib::writeLog('sync_groups', $message, 0, $courseid, $this->trace, 3);
+                locallib::write_log('sync_groups', $message, 0, $courseid, $this->trace, 3);
             }
 
             // Add to array with moodle group ids for later cleanup.
@@ -1094,7 +1096,7 @@ class sync {
                 if (!groups_is_member($groupid, $userid)) {
                     groups_add_member($groupid, $userid);
                     $message = "Added user $userid to Moodle group $group->name.";
-                    locallib::writeLog('sync_groups', $message, 0, $courseid, $this->trace, 3);
+                    locallib::write_log('sync_groups', $message, 0, $courseid, $this->trace, 3);
                 }
             }
         }
@@ -1109,7 +1111,7 @@ class sync {
                 if (!array_key_exists($groupid, $group_members_moodle) || !in_array($member->id, $group_members_moodle[$groupid])) {
                     groups_remove_member($groupid, $member->id);
                     $message = "Removed user $member->id from Moodle group $group->name.";
-                    locallib::writeLog('sync_groups', $message, 0, $courseid, $this->trace, 3);
+                    locallib::write_log('sync_groups', $message, 0, $courseid, $this->trace, 3);
                 }
             }
         }
@@ -1120,17 +1122,17 @@ class sync {
      *
      * @return void
      */
-    public function syncOrgs() {
+    public function sync_orgs() {
 
         // Get all organisations.
-        $this->getOrgData();
+        $this->get_org_data();
 
         // Get selected organisations.
         $orgids = array();
         $endpoint = 'co-brm-core/org/api/selected-organisation-uids';
         $key = $this->config->orgkey;
         $query = ['key' => $key];
-        $result = $this->restCall($endpoint, $query);
+        $result = $this->rest_call($endpoint, $query);
         if (property_exists($result, 'items')) {
             foreach ($result->items as $item) {
                 if (property_exists($item, 'organisationUids')) {
@@ -1163,7 +1165,7 @@ class sync {
         // Sync organisations.
         foreach ($sorted_orgids as $orgids) {
             foreach ($orgids as $orgid) {
-                $this->syncOrg($orgid);
+                $this->sync_org($orgid);
             }
         }
     }
@@ -1175,7 +1177,7 @@ class sync {
      *
      * @return void
      */
-    public function syncOrg($orgid) {
+    public function sync_org($orgid) {
 
         global $DB;
 
@@ -1191,7 +1193,7 @@ class sync {
             } else {
                 // Log error.
                 $message = "ERROR: could not create Moodle course category for CAMPUSonline org $org_uid - category for parent org $parentid does not exist.";
-                locallib::writeLog('sync_org', $message, 2, null, $this->trace, 3);
+                locallib::write_log('sync_org', $message, 2, null, $this->trace, 3);
                 return;
             }
         } else {
@@ -1207,7 +1209,7 @@ class sync {
 
             // Check if something needs updating.
             $actions = array();
-            $name = locallib::normalizeValue($org->name);
+            $name = locallib::normalize_value($org->name);
             if ($category->name != $name) {
                 $cat->__set('name', $name);
                 $actions[] = "updated";
@@ -1223,17 +1225,17 @@ class sync {
                 $actions = implode('&', $actions);
                 $actions = ucfirst($actions);
                 $message = "$actions Moodle course category $category->id for CAMPUSonline org $org_uid ($category->name).";
-                locallib::writeLog('sync_org', $message, 0, null, $this->trace, 3);
+                locallib::write_log('sync_org', $message, 0, null, $this->trace, 3);
             } else {
                 $message = "Moodle course category $category->id for CAMPUSonline org $org_uid ($category->name) already exists.";
-                locallib::writeLog('sync_org', $message, 0, null, $this->trace, 3);
+                locallib::write_log('sync_org', $message, 0, null, $this->trace, 3);
             }
 
         } else {
 
             // Create new course category.
             $data = new \stdClass();
-            $data->name = locallib::normalizeValue($org->name);
+            $data->name = locallib::normalize_value($org->name);
             $data->parent = $parent;
             $data->idnumber = $org_uid;
             $data->description = self::CREATED_BY;
@@ -1241,16 +1243,16 @@ class sync {
             $data->timemodified = time();
             if ($category = \core_course_category::create($data)) {
                 $message = "Created Moodle course category $category->id for CAMPUSonline org $org_uid ($category->name).";
-                locallib::writeLog('sync_org', $message, 0, null, $this->trace, 3);
+                locallib::write_log('sync_org', $message, 0, null, $this->trace, 3);
             } else {
                 $message = "ERROR: could not create Moodle course category for CAMPUSonline org $org_uid.";
-                locallib::writeLog('sync_org', $message, 2, null, $this->trace, 3);
+                locallib::write_log('sync_org', $message, 2, null, $this->trace, 3);
             }
         }
 
         // Sync org enrollments.
-        if ($this->config->syncorgroles && $this->orgroles) {
-            $this->syncOrgEnrolments($org_uid, $category->id);
+        if ($this->config->sync_orgroles && $this->orgroles) {
+            $this->sync_org_enrolments($org_uid, $category->id);
         }
     }
 
@@ -1262,7 +1264,7 @@ class sync {
      *
      * @return void
      */
-    public function syncOrgEnrolments($org_uid, $categoryid) {
+    public function sync_org_enrolments($org_uid, $categoryid) {
 
         global $DB;
 
@@ -1279,10 +1281,10 @@ class sync {
                 'role_name' => $rolename,
                 'context' => "org-$org_uid"
             ];
-            if ($result = $this->restCall($endpoint, $query))
+            if ($result = $this->rest_call($endpoint, $query))
             if (property_exists($result, 'items')) {
                 foreach ($result->items as $uid) {
-                    if ($userid = $this->getMoodleUserId($uid)) {
+                    if ($userid = $this->get_moodle_user_id($uid)) {
                         $userids[] = $userid;
                     }
                 }
@@ -1295,7 +1297,7 @@ class sync {
                 if (!in_array($user->id, $userids)) {
                     role_unassign($roleid, $user->id, $context->id);
                     $message = "Removed role $roleid from Moodle user $user->id in Moodle course category $org_uid.";
-                    locallib::writeLog('sync_org_roles', $message, 0, null, $this->trace, 5);
+                    locallib::write_log('sync_org_roles', $message, 0, null, $this->trace, 5);
                 }
             }
 
@@ -1304,7 +1306,7 @@ class sync {
                 if (!user_has_role_assignment($userid, $roleid, $context->id)) {
                     $success = role_assign($roleid, $userid, $context->id);
                     $message = "Assigned role $roleid to Moodle user $userid in Moodle course category $org_uid.";
-                    locallib::writeLog('sync_org_roles', $message, 0, null, $this->trace, 5);
+                    locallib::write_log('sync_org_roles', $message, 0, null, $this->trace, 5);
                 }
             }
         }
@@ -1315,21 +1317,21 @@ class sync {
      *
      * @return void
      */
-    public function syncUsers() {
+    public function sync_users() {
 
-        $persons = $this->getPersons();
+        $persons = $this->get_persons();
 
         foreach ($persons as $person) {
 
             // Get Moodle user.
             $uid = $person['uid'];
-            $userid = $this->getMoodleUserId($uid);
+            $userid = $this->get_moodle_user_id($uid);
 
             // Create new user if needed & allowed.
             if (!$userid) {
                 if ($this->config->enrolsynccreateusers) {
 
-                    if (!$userid = $this->createMoodleUser($uid)) {
+                    if (!$userid = $this->create_moodle_user($uid)) {
                         continue;
                     }
 
@@ -1337,14 +1339,14 @@ class sync {
 
                     // Log warning.
                     $message = "WARNING: skipped syncing user data for CAMPUSonline user $uid - user does not exist in Moodle.";
-                    locallib::writeLog('sync_user', $message, 1, $courseid, $this->trace, 3);
+                    locallib::write_log('sync_user', $message, 1, $courseid, $this->trace, 3);
                     continue;
                 }
             }
 
             // Load Moodle User.
             $user = \core_user::get_user($userid);
-            $this->updateMoodleUser($user, $person);
+            $this->update_moodle_user($user, $person);
         }
     }
 
@@ -1356,7 +1358,7 @@ class sync {
      *
      * @return void
      */
-    public function updateMoodleUser($user, $person) {
+    public function update_moodle_user($user, $person) {
 
         $uid = $person['uid'];
         $needsupdate = false;
@@ -1372,7 +1374,7 @@ class sync {
                 continue;
             }
 
-            $value = locallib::getFieldValue("user_$field", $person);
+            $value = locallib::get_field_value("user_$field", $person);
 
             // Sanitize usernames.
             if ($field == 'username') {
@@ -1390,12 +1392,12 @@ class sync {
         }
 
         // Load profile data into user object.
-        $needsupdatep = locallib::setCustomUserFields($user, $person);
+        $needsupdatep = locallib::set_custom_user_fields($user, $person);
 
         // Log update.
         if ($needsupdate || $needsupdatep) {
             $message = "Updated Moodle user $user->id with data from CAMPUSonline user $uid.";
-            locallib::writeLog('sync_user', $message, 0, null, $this->trace, 3);
+            locallib::write_log('sync_user', $message, 0, null, $this->trace, 3);
         } else {
 
             // Write trace output that no update is necessary.
@@ -1412,17 +1414,17 @@ class sync {
      *
      * @return int $userid
      */
-    private function createMoodleUser($uid) {
+    private function create_moodle_user($uid) {
 
         global $CFG;
 
         // Get full person data from CAMPUSonline.
-        $userdata = $this->getPersonData($uid);
+        $userdata = $this->get_person_data($uid);
 
         // Build user.
         $user = new \stdClass();
         foreach (locallib::USER_FIELDS as $field => $default) {
-            $value = locallib::getFieldValue('user_' . $field, $userdata);
+            $value = locallib::get_field_value('user_' . $field, $userdata);
 
             // Sanitize usernames.
             if ($field == 'username') {
@@ -1431,15 +1433,15 @@ class sync {
 
             $user->$field = $value;
         }
-        $user->auth = locallib::getFieldValue('user_auth', $userdata);
-        $user->password = locallib::getFieldValue('user_password', $userdata);
+        $user->auth = locallib::get_field_value('user_auth', $userdata);
+        $user->password = locallib::get_field_value('user_password', $userdata);
         $user->mnethostid = $CFG->mnet_localhost_id;
         $user->confirmed = 1;
 
         foreach (locallib::USER_FIELDS_NOEMPTY as $check) {
             if ($user->$check == '') {
                 $message = "ERROR: could not create Moodle user for CAMPUSonline user $uid - required field $check is empty.";
-                locallib::writeLog('create_user', $message, 2, null, $this->trace, 3);
+                locallib::write_log('create_user', $message, 2, null, $this->trace, 3);
                 return null;
             }
         }
@@ -1456,8 +1458,8 @@ class sync {
 
         // Update custom fields.
         $user = \core_user::get_user($userid);
-        locallib::setCustomUserFields($user, $userdata);
-        locallib::writeLog('create_user', $message, $status, null, $this->trace, 3);
+        locallib::set_custom_user_fields($user, $userdata);
+        locallib::write_log('create_user', $message, $status, null, $this->trace, 3);
         return $userid;
     }
 
@@ -1468,10 +1470,10 @@ class sync {
      *
      * @return array $courses
      */
-    private function enrichCourses($courses) {
+    private function enrich_courses($courses) {
 
-        $this->getOrgData();
-        $this->getSemesterData();
+        $this->get_org_data();
+        $this->get_semester_data();
 
         $enriched_courses = array();
         foreach ($courses as $course) {
@@ -1481,7 +1483,7 @@ class sync {
 
             // Values from course endpoint.
             foreach ($course as $key => $value) {
-                $value = locallib::normalizeValue($value);
+                $value = locallib::normalize_value($value);
                 $sanitized_course["course:$key"] = $value;
             }
 
@@ -1490,7 +1492,7 @@ class sync {
             $org = (array)$org;
 
             foreach ($org as $key => $value) {
-                $value = locallib::normalizeValue($value);
+                $value = locallib::normalize_value($value);
                 $sanitized_course["org:$key"] = $value;
             }
 
@@ -1499,7 +1501,7 @@ class sync {
             $semester = (array)$semester;
 
             foreach ($semester as $key => $value) {
-                $value = locallib::normalizeValue($value);
+                $value = locallib::normalize_value($value);
                 $sanitized_course["semester:$key"] = $value;
             }
 
@@ -1512,14 +1514,14 @@ class sync {
     /**
      * Gets org data from CAMPUSonline.
      */
-    private function getOrgData() {
+    private function get_org_data() {
 
         if ($this->orgdata) {
             return;
         }
 
         $endpoint = 'co-brm-core/org/api/organisations';
-        $result = $this->restCall($endpoint, null, 'GET', true);
+        $result = $this->rest_call($endpoint, null, 'GET', true);
 
         // Add to class property.
         $this->orgdata = array();
@@ -1533,14 +1535,14 @@ class sync {
     /**
      * Gets semester data from CAMPUSonline.
      */
-    private function getSemesterData() {
+    private function get_semester_data() {
 
         if ($this->semesterdata) {
             return;
         }
 
         $endpoint = 'co-sm-core/semester/api/semesters';
-        $result = $this->restCall($endpoint, null, 'GET', true);
+        $result = $this->rest_call($endpoint, null, 'GET', true);
 
         // Add to class property.
         $this->semesterdata = array();
@@ -1561,7 +1563,7 @@ class sync {
      *
      * @return object All collected items from paginated API responses.
      */
-    private function restCall($endpoint, $query = null, $method = 'GET', $alwayspage = false) {
+    private function rest_call($endpoint, $query = null, $method = 'GET', $alwayspage = false) {
 
         // Set base URL and initialize the HTTP client.
         $url = $this->config->endpoint . '/' . $endpoint;
@@ -1591,7 +1593,7 @@ class sync {
                 $query['cursor'] = $cursor;
 
                 // Debug message.
-                if ($this->config->restcalls && PHP_SAPI === 'cli') {
+                if ($this->config->rest_calls && PHP_SAPI === 'cli') {
                     $count = count($all_items);
                     $this->trace->output("            paging to cursor $cursor, collected $count items so far");
                 }
@@ -1603,12 +1605,12 @@ class sync {
             do {
 
                 // Update the token.
-                $this->updateToken();
+                $this->update_token();
 
                 try {
 
                     // Debug message.
-                    if ($this->config->restcalls && PHP_SAPI === 'cli') {
+                    if ($this->config->rest_calls && PHP_SAPI === 'cli') {
                         if ($query) {
                             $json_query = json_encode($query);
                         } else {
@@ -1654,14 +1656,14 @@ class sync {
                     if ($retry > $retries) {
                         $error = $e->getMessage();
                         $message = "Request exception: $error.";
-                        locallib::writeLog('error', $message, 2, null, $this->trace);
+                        locallib::write_log('error', $message, 2, null, $this->trace);
 
                         // Create object with exception message.
                         $response_object = new \stdClass();
                         $response_object->exception = $error;
                         return $response_object;
                     } else {
-                        locallib::writeLog('warning', "Retrying failed request: {$e->getMessage()}", 1, null, $this->trace);
+                        locallib::write_log('warning', "Retrying failed request: {$e->getMessage()}", 1, null, $this->trace);
                         sleep(3);
                     }
                 }
@@ -1686,7 +1688,7 @@ class sync {
      *
      * @return void
      */
-    private function setMoodleCourseUrl($course, $group_uid = null) {
+    private function set_moodle_course_url($course, $group_uid = null) {
 
         global $DB;
 
@@ -1729,17 +1731,17 @@ class sync {
             $query['courseUid'] = $course_uid;
 
             // Log success.
-            if ($result = $this->restCall($endpoint, $query, 'POST')) {
+            if ($result = $this->rest_call($endpoint, $query, 'POST')) {
                 if (property_exists($result, 'externalUrl')) {
                     $url = $result->externalUrl;
                     $message = "Updated CAMPUSonline course $course_uid with Moodle course URL $url.";
-                    locallib::writeLog('update_course', $message, 0, $course->id, $this->trace, 3);
+                    locallib::write_log('update_course', $message, 0, $course->id, $this->trace, 3);
                     continue;
                 }
 
                 // Error.
                 $message = "ERROR: could not update CAMPUSonline course $course_uid with Moodle course URL $url.";
-                locallib::writeLog('update_course', $message, 2, $course->id, $this->trace, 3);
+                locallib::write_log('update_course', $message, 2, $course->id, $this->trace, 3);
             }
         }
     }
@@ -1749,7 +1751,7 @@ class sync {
      *
      * @return string $token
      */
-    private function updateToken() {
+    private function update_token() {
 
         $path = $this->config->endpoint;
         $clientid = $this->config->clientid;
@@ -1801,7 +1803,7 @@ class sync {
             $error = $e->getMessage();
             $this->error = $error;
             $message = "Request exception: $error.";
-            locallib::writeLog('update_token', $message, 2, null, $this->trace);
+            locallib::write_log('update_token', $message, 2, null, $this->trace);
         }
     }
 }

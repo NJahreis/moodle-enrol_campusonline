@@ -61,12 +61,12 @@ class enrol_campusonline_plugin extends enrol_plugin {
         $trace = new \text_progress_trace();
         $sync = new sync($trace);
 
-        if ($sync->isConnected()) {
+        if ($sync->is_connected()) {
             echo '<div class="alert alert-success">';
             echo get_string('success:connected', 'enrol_campusonline');
             echo '</div>';
         } else {
-            $error = $sync->getError();
+            $error = $sync->get_error();
             echo get_string('error:cannotconnect', 'enrol_campusonline', $error);
         }
     }

@@ -52,11 +52,11 @@ if ($function == 'testconnection') {
     if (!enrol_is_enabled('campusonline')) {
         \core\notification::add(get_string('error:notenabled', 'enrol_campusonline'),
             \core\output\notification::NOTIFY_ERROR);
-    } elseif ($sync->isConnected()) {
+    } elseif ($sync->is_connected()) {
         \core\notification::add(get_string('success:connected', 'enrol_campusonline'),
             \core\output\notification::NOTIFY_SUCCESS);
     } else {
-        $error = $sync->getError();
+        $error = $sync->get_error();
         \core\notification::add(get_string('error:cannotconnect', 'enrol_campusonline', $error),
             \core\output\notification::NOTIFY_ERROR);
     }
@@ -78,7 +78,7 @@ $orgs = explode(',', $orgfilter);
 if ($function == 'showrawcoursedata') {
 
     // Count and get tokens.
-    $courses = $sync->getCourses(null, $limit);
+    $courses = $sync->get_courses(null, $limit);
     $count = 0;
     $tokens = array();
 
@@ -127,13 +127,13 @@ if ($function == 'showrawcoursedata') {
     $table = new html_table();
     $table->head = ['CO course_uid', 'mode', 'coursecategory', 'idnumber', 'shortname', 'fullname'];
     $table->head = array_merge($table->head, array_keys(locallib::COURSE_FIELDS));
-    $customfields = locallib::getCustomCourseFieldData(null);
+    $customfields = locallib::get_custom_course_field_data(null);
     $table->head = array_merge($table->head, $customfields);
 
     // Table data.
     $count = 0;
     $data = array();
-    $courses = $sync->getCourses(null, $limit);
+    $courses = $sync->get_courses(null, $limit);
 
     // No courses found.
     if (!$courses) {
@@ -157,7 +157,7 @@ if ($function == 'showrawcoursedata') {
         }
 
         // Get course sync strategy.
-        if (!$strategy = $sync->getCourseSyncStrategy($coursedata)) {
+        if (!$strategy = $sync->get_course_sync_strategy($coursedata)) {
             $mode = 'SKIP';
         } else {
             $mode = $strategy;
@@ -165,7 +165,7 @@ if ($function == 'showrawcoursedata') {
         $co = [$course_uid, $mode];
 
         if ($strategy == $sync::GROUP_TO_COURSE) {
-            $groups = $sync->getCourseGroups($course_uid);
+            $groups = $sync->get_course_groups($course_uid);
         } else {
             $groups = [0 => 'dummy'];
         }
@@ -175,14 +175,14 @@ if ($function == 'showrawcoursedata') {
 
             // Prepare new course data.
             if ($strategy == $sync::GROUP_TO_COURSE) {
-                $course = locallib::buildCourse($coursedata, $group_name, $group_uid);
+                $course = locallib::build_course($coursedata, $group_name, $group_uid);
             } else {
-                $course = locallib::buildCourse($coursedata);
+                $course = locallib::build_course($coursedata);
             }
-            $categoryid = $sync->getCourseCategory($coursedata);
+            $categoryid = $sync->get_course_category($coursedata);
 
             // Add custom fields.
-            $customfields = locallib::getCustomCourseFieldData($coursedata);
+            $customfields = locallib::get_custom_course_field_data($coursedata);
             foreach ($customfields as $key => $value) {
                 $course['customfield_' . $key] = $value;
             }
@@ -215,7 +215,7 @@ if ($function == 'showrawcoursedata') {
 } elseif ($function == 'showrawuserdata') {
 
     // Count and get tokens.
-    $persons = $sync->getPersons(null, $limit);
+    $persons = $sync->get_persons(null, $limit);
     $tokens = array();
     foreach ($persons as $person) {
         $person = (array) $person;
@@ -254,17 +254,17 @@ if ($function == 'showrawcoursedata') {
     $table = new html_table();
     $table->head = ['auth', 'password'];
     $table->head = array_merge($table->head, array_keys(locallib::USER_FIELDS));
-    $customfields = locallib::getCustomUserFieldData(null);
+    $customfields = locallib::get_custom_user_field_data(null);
     $table->head = array_merge($table->head, $customfields);
 
     // Table data.
     $data = array();
-    $persons = $sync->getPersons(null, $limit);
+    $persons = $sync->get_persons(null, $limit);
 
     foreach ($persons as $persondata) {
 
         // Get person data.
-        $user = locallib::buildUser($persondata);
+        $user = locallib::build_user($persondata);
 
         // Add custom fields.
         foreach ($customfields as $key => $value) {

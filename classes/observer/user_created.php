@@ -53,16 +53,16 @@ class user_created {
         $trace = new \text_progress_trace();
         $sync = new sync($trace);
 
-        if ($sync->isConnected()) {
+        if ($sync->is_connected()) {
 
             // Identify user.
-            $sync->identifyMoodleUsers($users);
+            $sync->identify_moodle_users($users);
 
         } else {
 
             // Log error.
             $message = 'ERROR: could not connect to CAMPUSonline. Check your connection settings.';
-            locallib::writeLog('connect', $message, 2);
+            locallib::write_log('connect', $message, 2);
         }
     }
 }

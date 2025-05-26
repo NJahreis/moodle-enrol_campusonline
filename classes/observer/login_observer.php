@@ -49,7 +49,7 @@ class login_observer {
         $user = \core_user::get_user($userid);
 
         // Get person UID.
-        if (!$person_uid = locallib::getPersonUid($userid)) {
+        if (!$person_uid = locallib::get_person_uid($userid)) {
             return;
         }
         $person_uids = [$person_uid];
@@ -58,18 +58,18 @@ class login_observer {
         $trace = new \text_progress_trace();
         $sync = new sync($trace);
 
-        if ($sync->isConnected()) {
+        if ($sync->is_connected()) {
 
             // Sync user.
-            $persons = $sync->getPersons($person_uids);
+            $persons = $sync->get_persons($person_uids);
             $person = reset($persons);
-            $sync->updateMoodleUser($user, $person);
+            $sync->update_moodle_user($user, $person);
 
         } else {
 
             // Log error.
             $message = 'ERROR: could not connect to CAMPUSonline. Check your connection settings.';
-            locallib::writeLog('connect', $message, 2);
+            locallib::write_log('connect', $message, 2);
         }
 
     }

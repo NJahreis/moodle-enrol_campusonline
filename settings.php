@@ -109,7 +109,7 @@ if ($ADMIN->fulltree) {
     // Only call this when actually on our settings page, to avoid instanciating the sync class on other admin pages.
     $rolestring = get_string('none');
     if (array_key_exists('section', $_GET) && $_GET['section'] == 'enrolsettingscampusonline') {
-        if ($orgroles = locallib::getOrgRoles()) {
+        if ($orgroles = locallib::get_org_roles()) {
             $rolestring = implode(', ', $orgroles);
         }
     }
@@ -285,7 +285,7 @@ if ($ADMIN->fulltree) {
         ));
     }
     // Custom fields.
-    $customfields = locallib::getCustomCourseFieldData(null);
+    $customfields = locallib::get_custom_course_field_data(null);
     foreach ($customfields as $shortname => $fullname) {
         if (in_array($shortname, locallib::IGNORE_FIELDS)) {
             continue;
@@ -357,8 +357,8 @@ if ($ADMIN->fulltree) {
     // Only call this when actually on our settings page, to avoid instanciating the sync class on other admin pages.
     if (array_key_exists('section', $_GET) && $_GET['section'] == 'enrolsettingscampusonline') {
         $sync = new sync(new \text_progress_trace());
-        if ($sync->isConnected()) {
-            $functions = $sync->getLectureshipFunctions();
+        if ($sync->is_connected()) {
+            $functions = $sync->get_lectureship_functions();
             $default = 0;
             foreach ($functions as $function) {
                 $settings->add(new admin_setting_configselect(

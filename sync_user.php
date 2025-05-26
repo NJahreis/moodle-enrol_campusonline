@@ -51,25 +51,25 @@ echo $OUTPUT->header();
 echo html_writer::tag('h3', get_string('syncinguser', 'enrol_campusonline'));
 echo "<pre>";
 
-if ($sync->isConnected()) {
+if ($sync->is_connected()) {
 
     // Get person UID.
     $userid = required_param('userid', PARAM_INT);
     $user = \core_user::get_user($userid);
 
     // Identify user first.
-    if (!$person_uid = locallib::getPersonUid($userid)) {
+    if (!$person_uid = locallib::get_person_uid($userid)) {
         $users = [$user];
-        $sync->identifyMoodleUsers($users);
+        $sync->identify_moodle_users($users);
     }
 
-    if ($person_uid = locallib::getPersonUid($userid)) {
+    if ($person_uid = locallib::get_person_uid($userid)) {
 
         // Sync user.
         $person_uids = [$person_uid];
-        $persons = $sync->getPersons($person_uids);
+        $persons = $sync->get_persons($person_uids);
         $person = reset($persons);
-        $sync->updateMoodleUser($user, $person);
+        $sync->update_moodle_user($user, $person);
     }
 
 } else {
