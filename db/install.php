@@ -31,10 +31,10 @@ defined('MOODLE_INTERNAL') || die();
  * @return bool
  */
 function xmldb_enrol_campusonline_install() {
-    $categoryid = create_custom_profile_field_category('enrol_campusonline', 'CAMPUSonline');
-    create_custom_profile_field('campusonline_id_attempts', 'Failed attempts to find this user in CAMPUSonline', 'text', $categoryid);
-    create_custom_profile_field('campusonline_person_uid', 'campusonline_person_uid', 'text', $categoryid);
-    create_other_co_course_uids_field();
+    $categoryid = enrol_campusonline_create_custom_profile_field_category('enrol_campusonline', 'CAMPUSonline');
+    enrol_campusonline_create_custom_profile_field('campusonline_id_attempts', 'Failed attempts to find this user in CAMPUSonline', 'text', $categoryid);
+    enrol_campusonline_create_custom_profile_field('campusonline_person_uid', 'campusonline_person_uid', 'text', $categoryid);
+    enrol_campusonline_create_other_co_course_uids_field();
 }
 
 /**
@@ -44,7 +44,7 @@ function xmldb_enrol_campusonline_install() {
  * @param string $name The name of the custom profile field category.
  * @return int The ID of the newly created category.
  */
-function create_custom_profile_field_category($shortname, $name) {
+function enrol_campusonline_create_custom_profile_field_category($shortname, $name) {
     global $DB;
 
     // Check if the profile field category already exists.
@@ -69,7 +69,7 @@ function create_custom_profile_field_category($shortname, $name) {
  * @param string $datatype The data type of the custom profile field.
  * @param int $categoryid The ID of the custom profile field category.
  */
-function create_custom_profile_field($shortname, $name, $datatype, $categoryid) {
+function enrol_campusonline_create_custom_profile_field($shortname, $name, $datatype, $categoryid) {
     global $DB;
 
     // Check if the profile field already exists.
@@ -106,7 +106,7 @@ function create_custom_profile_field($shortname, $name, $datatype, $categoryid) 
 /**
  * Function to create the other_co_course_uids course field for shadow courses.
  */
-function create_other_co_course_uids_field() {
+function enrol_campusonline_create_other_co_course_uids_field() {
 
     global $DB;
 

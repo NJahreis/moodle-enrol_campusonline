@@ -31,10 +31,10 @@ defined('MOODLE_INTERNAL') || die();
  * @return bool
  */
 function xmldb_enrol_campusonline_install() {
-    $categoryid = create_custom_profile_field_category('enrol_campusonline', 'CAMPUSonline');
-    create_custom_profile_field('campusonline_id_attempts', 'Failed attempts to find this user in CAMPUSonline', 'text', $categoryid);
-    create_custom_profile_field('campusonline_person_uid', 'campusonline_person_uid', 'text', $categoryid);
-    create_other_co_course_uids_field();
+    $categoryid = enrol_campusonline_create_custom_profile_field_category('enrol_campusonline', 'CAMPUSonline');
+    enrol_campusonline_create_custom_profile_field('campusonline_id_attempts', 'Failed attempts to find this user in CAMPUSonline', 'text', $categoryid);
+    enrol_campusonline_create_custom_profile_field('campusonline_person_uid', 'campusonline_person_uid', 'text', $categoryid);
+    enrol_campusonline_create_other_co_course_uids_field();
 }
 
 /**
@@ -50,7 +50,7 @@ function xmldb_enrol_campusonline_upgrade($oldversion) {
 
     // Add other_co_course_uids course field for shadow courses.
     if ($oldversion < 2024111202) {
-        create_other_co_course_uids_field();
+        enrol_campusonline_create_other_co_course_uids_field();
         upgrade_plugin_savepoint(true, 2024111202, 'enrol', 'campusonline');
     }
 
@@ -66,8 +66,8 @@ function xmldb_enrol_campusonline_upgrade($oldversion) {
 
     // Create custom user profile field for identification retries.
     if ($oldversion < 2024101601) {
-        $categoryid = create_custom_profile_field_category('enrol_campusonline', 'CAMPUSonline');
-        create_custom_profile_field('campusonline_id_attempts', 'Failed attempts to find this user in CAMPUSonline', 'text', $categoryid);
+        $categoryid = enrol_campusonline_create_custom_profile_field_category('enrol_campusonline', 'CAMPUSonline');
+        enrol_campusonline_create_custom_profile_field('campusonline_id_attempts', 'Failed attempts to find this user in CAMPUSonline', 'text', $categoryid);
         upgrade_plugin_savepoint(true, 2024101601, 'enrol', 'campusonline');
     }
 
@@ -84,8 +84,8 @@ function xmldb_enrol_campusonline_upgrade($oldversion) {
 
     // Create new personUID custom user profile field.
     if ($oldversion < 2024091701) {
-        $categoryid = create_custom_profile_field_category('enrol_campusonline', 'CAMPUSonline');
-        create_custom_profile_field('campusonline_person_uid', 'Person UID', 'text', $categoryid);
+        $categoryid = enrol_campusonline_create_custom_profile_field_category('enrol_campusonline', 'CAMPUSonline');
+        enrol_campusonline_create_custom_profile_field('campusonline_person_uid', 'Person UID', 'text', $categoryid);
         upgrade_plugin_savepoint(true, 2024091701, 'enrol', 'campusonline');
     }
 
@@ -99,7 +99,7 @@ function xmldb_enrol_campusonline_upgrade($oldversion) {
  * @param string $name The name of the custom profile field category.
  * @return int The ID of the newly created category.
  */
-function create_custom_profile_field_category($shortname, $name) {
+function enrol_campusonline_create_custom_profile_field_category($shortname, $name) {
     global $DB;
 
     // Check if the profile field category already exists.
@@ -124,7 +124,7 @@ function create_custom_profile_field_category($shortname, $name) {
  * @param string $datatype The data type of the custom profile field.
  * @param int $categoryid The ID of the custom profile field category.
  */
-function create_custom_profile_field($shortname, $name, $datatype, $categoryid) {
+function enrol_campusonline_create_custom_profile_field($shortname, $name, $datatype, $categoryid) {
     global $DB;
 
     // Check if the profile field already exists.
@@ -161,7 +161,7 @@ function create_custom_profile_field($shortname, $name, $datatype, $categoryid) 
 /**
  * Function to create the other_co_course_uids course field for shadow courses.
  */
-function create_other_co_course_uids_field() {
+function enrol_campusonline_create_other_co_course_uids_field() {
     global $DB;
 
     // Create category.
