@@ -87,11 +87,12 @@ class log_table extends table_sql {
         if ($count) {
             $select = "COUNT(1)";
         } else {
-            $select = "*";
+            $select = "l.*, c.fullname";
         }
 
         $sql = "SELECT $select
-                FROM {enrol_campusonline_logs}
+                FROM {enrol_campusonline_logs} AS l
+                LEFT JOIN {course} AS c ON l.courseid = c.id
                 ";
 
         $params = [];
@@ -137,12 +138,11 @@ class log_table extends table_sql {
 
     // Format course.
     function col_courseid($row) {
-        global $DB;
 
         if ($courseid = $row->courseid) {
-            if ($course = $DB->get_record('course', array('id' => $courseid))) {
+            if ($row->fullname) {
                 $link = new \moodle_url('/course/view.php', ['id' => $courseid]);
-                return '<a href="' . $link . '">' . $course->fullname . '</a>';
+                return '<a href="' . $link . '">' . $row->fullname . '</a>';
             } else {
                 return get_string('deletedcourse', 'enrol_campusonline', $courseid);
             }
