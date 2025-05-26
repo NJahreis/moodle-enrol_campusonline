@@ -138,6 +138,8 @@ $string['orgkey_desc'] = 'This key is used to mark organisations in CAMPUSonline
 $string['orgsyncsettings'] = 'Organizational structure sync';
 $string['orgsyncsettings_desc'] = '<ul><li>This task syncs <strong>selected organisations</strong> as <strong>course categories</strong> into Moodle</li>
     <li>Organisations can be selected in CAMPUSonline</li>
+    <li>This is completely <strong>optional</strong>, and should only be used if it is necessary to sync the structure and its role assignments</li>
+    <li>Alternatively, you can also build your own structure in Moodle, using the settings in <strong>Subcategories for courses</strong></li>
     <li>All organisations that hold Moodle courses should be selected, otherwise their Moodle courses will be put directly into the root course category</li>
     </ul>';
 $string['phplogging'] = 'Log to PHP log';

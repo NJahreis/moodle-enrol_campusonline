@@ -139,6 +139,8 @@ $string['orgkey'] = 'Kennzeichnungs-Key für zu syncende Organisationseinheiten'
 $string['orgkey_desc'] = 'Mit diesem Schlüssel werden Organisationseinheiten in CAMPUSonline identifiziert.';
 $string['orgsyncsettings'] = 'Organisationseinheiten Sync';
 $string['orgsyncsettings_desc'] = '<ul><li>Dieser Task synchronisiert <strong>ausgewählte Organisationseinheiten</strong> als <strong>Kursbereiche</strong> nach Moodle</li>
+    <li>Er ist <strong>optional</strong>, und sollte nur verwendet werden, wenn er wirklich benötigt wird, weil die Rollenzuweisungen für die Kategorien gesynct werden müssen</li>
+    <li>Alternativ kann eine eigene Struktur in Moodle erstellt werden, indem im nächsten Punkt die <strong>Unterkategorien für Kurse</strong> konfiguriert werden</li>
     <li>Organisationseinheiten können in CAMPUSonline für den Sync nach Moodle markiert werden</li>
     <li>Alle Organisationseinheiten, die Moodle Kurse besitzen, sollten ausgewählt werden, ansonsten werden deren Kurse direkt im Kursbereich für die CAMPUSonline Struktur erstellt</li>
     </ul>';
