@@ -1593,7 +1593,7 @@ class sync {
                 $query['cursor'] = $cursor;
 
                 // Debug message.
-                if ($this->config->rest_calls && PHP_SAPI === 'cli') {
+                if ($this->config->restcalls && PHP_SAPI === 'cli') {
                     $count = count($all_items);
                     $this->trace->output(get_string('info:pagingcursor', 'enrol_campusonline', ['cursor' => $cursor, 'count' => $count]));
                 }
@@ -1610,7 +1610,7 @@ class sync {
                 try {
 
                     // Debug message.
-                    if ($this->config->rest_calls && PHP_SAPI === 'cli') {
+                    if ($this->config->restcalls && PHP_SAPI === 'cli') {
                         if ($query) {
                             $json_query = json_encode($query);
                         } else {
