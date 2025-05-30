@@ -1251,7 +1251,7 @@ class sync {
         }
 
         // Sync org enrollments.
-        if ($this->config->sync_orgroles && $this->orgroles) {
+        if ($this->config->syncorgroles && $this->orgroles) {
             $this->sync_org_enrolments($org_uid, $category->id);
         }
     }

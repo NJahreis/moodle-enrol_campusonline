@@ -153,6 +153,7 @@ if ($function == 'showrawcoursedata') {
     $count = 0;
     $data = array();
     $courses = $sync->get_courses(null, $limit);
+    $skipped = 0;
 
     // No courses found.
     if (!$courses) {
@@ -171,6 +172,7 @@ if ($function == 'showrawcoursedata') {
         if ($orgfilter) {
             if (!in_array($coursedata['org:uid'], $orgs)) {
                 unset($coursedata[$key]);
+                $skipped++;
                 continue;
             }
         }
@@ -222,6 +224,14 @@ if ($function == 'showrawcoursedata') {
             $data[] = array_merge($co, $course);
             $count++;
         }
+    }
+
+    if ($skipped > 0) {
+        echo \html_writer::div(
+            get_string('skippedcourses', 'enrol_campusonline', $skipped),
+            'alert alert-info',
+            ['role' => 'alert']
+        );
     }
 
     $table->data = $data;
