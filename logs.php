@@ -49,6 +49,10 @@ if (!$table->is_downloading()) {
     echo $OUTPUT->header();
 }
 
+// Back to menu settings link.
+$url = new moodle_url('/admin/settings.php?section=enrolsettingscampusonline');
+echo html_writer::link($url, get_string('backtosettings', 'enrol_campusonline'), array('class' => 'btn btn-secondary m-1'));
+
 // Work out the sql for the table.
 $table->set_sql('*', "{enrol_campusonline_logs}", '1=1');
 

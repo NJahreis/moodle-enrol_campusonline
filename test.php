@@ -81,22 +81,41 @@ if ($function == 'showrawcoursedata') {
     $courses = $sync->get_courses(null, $limit);
     $count = 0;
     $tokens = array();
+    $skipped = 0;
 
-    foreach ($courses as $key => $course) {
+    if (!$courses) {
+        echo \html_writer::div(
+            get_string('nocoursesfound', 'enrol_campusonline'),
+            'alert alert-warning',
+            ['role' => 'alert']
+        );
+        return;
+    } else {
+        foreach ($courses as $key => $course) {
 
-        // Skip courses that are not in the configured orgs.
-        if ($orgfilter) {
-            if (!in_array($course['org:uid'], $orgs)) {
-                unset($courses[$key]);
-                continue;
+            // Skip courses that are not in the configured orgs.
+            if ($orgfilter) {
+                $skipped++;
+                if (!in_array($course['org:uid'], $orgs)) {
+                    unset($courses[$key]);
+                    continue;
+                }
+            }
+
+            foreach ($course as $key => $value) {
+                if (is_scalar($value)) {
+                    $tokens[$key] = $key;
+                }
             }
         }
+    }
 
-        foreach ($course as $key => $value) {
-            if (is_scalar($value)) {
-                $tokens[$key] = $key;
-            }
-        }
+    if ($skipped > 0) {
+        echo \html_writer::div(
+            get_string('skippedcourses', 'enrol_campusonline', $skipped),
+            'alert alert-info',
+            ['role' => 'alert']
+        );
     }
 
     // List tokens.
@@ -158,7 +177,7 @@ if ($function == 'showrawcoursedata') {
 
         // Get course sync strategy.
         if (!$strategy = $sync->get_course_sync_strategy($coursedata)) {
-            $mode = 'SKIP';
+            $mode = get_string('skip', 'enrol_campusonline', $coursedata['course:elearningEventTypeKey']);
         } else {
             $mode = $strategy;
         }

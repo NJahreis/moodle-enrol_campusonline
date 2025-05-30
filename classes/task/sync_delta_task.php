@@ -61,7 +61,7 @@ class sync_delta_task extends \core\task\scheduled_task {
         } else {
 
             // Log error.
-            $message = 'ERROR: could not connect to CAMPUSonline. Check your connection settings.';
+            $message = get_string('connectionerror', 'enrol_campusonline');
             $trace->output($message);
             locallib::write_log('connect', $message, 2);
         }

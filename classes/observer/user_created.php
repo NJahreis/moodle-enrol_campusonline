@@ -61,7 +61,7 @@ class user_created {
         } else {
 
             // Log error.
-            $message = 'ERROR: could not connect to CAMPUSonline. Check your connection settings.';
+            $message = get_string('connectionerror', 'enrol_campusonline');
             locallib::write_log('connect', $message, 2);
         }
     }
