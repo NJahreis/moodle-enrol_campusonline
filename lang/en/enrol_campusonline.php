@@ -264,6 +264,7 @@ $string['warning:skippedsyncinguserdata'] = 'WARNING: skipped syncing user data 
 $string['info:updatedmoodleuser'] = 'Updated Moodle user {$a->userid} with data from CAMPUSonline user {$a->uid}.';
 $string['info:noupdatenecessary'] = 'No update necessary for Moodle user {$a->userid} with data from CAMPUSonline user {$a->uid}.';
 $string['error:couldnotcreateuser'] = 'ERROR: could not create Moodle user for CAMPUSonline user {$a->uid} - required field {$a->check} is empty.';
+$string['error:couldnotcreateuserunique'] = 'ERROR: could not create Moodle user for CAMPUSonline user {$a->uid} - a user with the {$a->check} "{$a->value}" already exists in Moodle with User ID {$a->duplicate}.';
 $string['info:createdmoodleuser'] = 'Created Moodle user {$a->userid} for CAMPUSonline user {$a->uid}.';
 $string['info:pagingcursor'] = 'paging to cursor {$a->cursor}, collected {$a->count} items so far';
 $string['info:apirequest'] = '{$a->method} CAMPUSonline endpoint {$a->endpoint} data {$a->query}';

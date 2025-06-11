@@ -227,7 +227,7 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/coursesyncsettings',
         get_string('coursesyncsettings', 'enrol_campusonline'),
-        get_string('coursesyncsettings_desc', 'enrol_campusonline') . $buttons,
+        get_string('coursesyncsettings_desc', 'enrol_campusonline'),
     ));
     // Course fullname.
     $settings->add(new admin_setting_configtext(

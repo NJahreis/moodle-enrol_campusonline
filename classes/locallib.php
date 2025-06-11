@@ -60,9 +60,14 @@ class locallib {
                                 'department' => '',
     ];
 
-    // User fields that cannot be empty
+    // User fields that cannot be empty.
     public const USER_FIELDS_NOEMPTY = ['username',
                                         'email'
+    ];
+
+    // User fields that need to be unique.
+    public const USER_FIELDS_UNIQUE = ['username',
+                                       'email'
     ];
 
     // CAMPUSonline internal custom user fields.
@@ -167,7 +172,14 @@ class locallib {
 
         // Map additional fields.
         foreach(self::USER_FIELDS as $field => $default) {
-            $user[$field] = self::get_field_value('user_' . $field, $userdata);
+            $value = self::get_field_value('user_' . $field, $userdata);
+
+            // Sanitize usernames.
+            if ($field == 'username') {
+                $value = strtolower($value);
+            }
+
+            $user[$field] = $value;
         }
 
         return $user;
@@ -514,10 +526,11 @@ class locallib {
         // Ensure at least one character from each type.
         $password = '';
         $length = (int)$CFG->minpasswordlength;
-        $length = $length / 3;
+        $length = $length / 4;
         for ($i = 0; $i < $length; $i++) {
             $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
             $password .= $uppercase[random_int(0, strlen($uppercase) - 1)];
+            $password .= $numbers[random_int(0, strlen($numbers) - 1)];
             $password .= $special_chars[random_int(0, strlen($special_chars) - 1)];
         }
 

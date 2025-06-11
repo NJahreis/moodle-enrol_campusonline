@@ -46,6 +46,7 @@ if ($language == 'de') {
 $markdownContent = file_get_contents($markdownFile);
 
 // Convert Markdown to HTML using basic replacements.
+
 // Convert headers (###, ##, #).
 $markdownContent = preg_replace('/### (.+)/', '<h3>$1</h3>', $markdownContent);
 $markdownContent = preg_replace('/## (.+)/', '<h2>$1</h2>', $markdownContent);
@@ -61,6 +62,9 @@ $markdownContent = preg_replace('/_(.+)_/', '<em>$1</em>', $markdownContent);
 
 // Convert links [text](url).
 $markdownContent = preg_replace('/\[(.+)\]\((.+)\)/', '<a href="$2">$1</a>', $markdownContent);
+
+// Convert newlines.
+$markdownContent = preg_replace('/\R/', '<br>', $markdownContent);
 
 // Output the HTML in the browser.
 echo $markdownContent;

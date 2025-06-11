@@ -1416,31 +1416,38 @@ class sync {
      */
     private function create_moodle_user($uid) {
 
-        global $CFG;
+        global $CFG, $DB;
 
         // Get full person data from CAMPUSonline.
         $userdata = $this->get_person_data($uid);
 
         // Build user.
-        $user = new \stdClass();
-        foreach (locallib::USER_FIELDS as $field => $default) {
-            $value = locallib::get_field_value('user_' . $field, $userdata);
+        $user = locallib::build_user($userdata);
 
-            // Sanitize usernames.
-            if ($field == 'username') {
-                $value = strtolower($value);
-            }
+        // Convert from array to object.
+        $user = (object)$user;
 
-            $user->$field = $value;
-        }
-        $user->auth = locallib::get_field_value('user_auth', $userdata);
-        $user->password = locallib::get_field_value('user_password', $userdata);
+        // Set required fields.
         $user->mnethostid = $CFG->mnet_localhost_id;
         $user->confirmed = 1;
 
+        // Check if all required fields are set.
         foreach (locallib::USER_FIELDS_NOEMPTY as $check) {
             if ($user->$check == '') {
-                $message = get_string('error:couldnotcreateuser', 'enrol_campusonline', ['uid' => $uid, 'check' => $check]);
+                $message = get_string('error:couldnotcreateuser', 'enrol_campusonline',
+                    ['uid' => $uid, 'check' => $check]);
+                locallib::write_log('create_user', $message, 2, null, $this->trace, 3);
+                return null;
+            }
+        }
+
+        // Check if all unique fields are indeed unique.
+        foreach (locallib::USER_FIELDS_UNIQUE as $check) {
+            $value = $user->$check;
+            if ($duplicate = $DB->get_record('user', [$check => $value])) {
+                // Log error and return null.
+                $message = get_string('error:couldnotcreateuserunique', 'enrol_campusonline',
+                    ['uid' => $uid, 'check' => $check, 'value' => $value, 'duplicate' => $duplicate->id]);
                 locallib::write_log('create_user', $message, 2, null, $this->trace, 3);
                 return null;
             }
@@ -1455,11 +1462,11 @@ class sync {
             $message = get_string('error:couldnotcreateuser', 'enrol_campusonline', $uid);
             $status = 2;
         }
+        locallib::write_log('create_user', $message, $status, null, $this->trace, 3);
 
         // Update custom fields.
         $user = \core_user::get_user($userid);
         locallib::set_custom_user_fields($user, $userdata);
-        locallib::write_log('create_user', $message, $status, null, $this->trace, 3);
         return $userid;
     }
 
