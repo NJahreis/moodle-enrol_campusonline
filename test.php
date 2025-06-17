@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Moodle page for menually testing the CAMPUSonline sync.
+ *
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
  * @author     think-modular (stefan.weber@think-modular.com)
@@ -40,8 +42,8 @@ $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/enrol/campusonline/test.php');
 $PAGE->set_title(get_string('pluginname', 'enrol_campusonline'));
-$PAGE->set_heading(get_string($function, 'enrol_campusonline'));
-
+// phpcs:ignore MDLCode(cannot-parse-string)
+$PAGE->set_heading(get_string($function, 'enrol_campusonline')); // phpcs:ignore MDLCode(cannot-parse-string)
 // Init sync.
 $trace = new \text_progress_trace();
 $sync = new sync($trace);
@@ -52,7 +54,7 @@ if ($function == 'testconnection') {
     if (!enrol_is_enabled('campusonline')) {
         \core\notification::add(get_string('error:notenabled', 'enrol_campusonline'),
             \core\output\notification::NOTIFY_ERROR);
-    } elseif ($sync->is_connected()) {
+    } else if ($sync->is_connected()) {
         \core\notification::add(get_string('success:connected', 'enrol_campusonline'),
             \core\output\notification::NOTIFY_SUCCESS);
     } else {
@@ -61,14 +63,14 @@ if ($function == 'testconnection') {
             \core\output\notification::NOTIFY_ERROR);
     }
 
-    redirect(new moodle_url('/admin/settings.php', array('section' => 'enrolsettingscampusonline')));
+    redirect(new moodle_url('/admin/settings.php', ['section' => 'enrolsettingscampusonline']));
 }
 
 // Begin output.
 echo $OUTPUT->header();
 
 $url = new moodle_url('/admin/settings.php?section=enrolsettingscampusonline');
-echo html_writer::link($url, get_string('backtosettings', 'enrol_campusonline'), array('class' => 'btn btn-secondary m-1'));
+echo html_writer::link($url, get_string('backtosettings', 'enrol_campusonline'), ['class' => 'btn btn-secondary m-1']);
 
 // Get config.
 $orgfilter = get_config('enrol_campusonline', 'orgfilter');
@@ -80,7 +82,7 @@ if ($function == 'showrawcoursedata') {
     // Count and get tokens.
     $courses = $sync->get_courses(null, $limit);
     $count = 0;
-    $tokens = array();
+    $tokens = [];
     $skipped = 0;
 
     if (!$courses) {
@@ -139,19 +141,19 @@ if ($function == 'showrawcoursedata') {
     }
     echo '</pre>';
 
-// Preview course sync.
-} elseif ($function == 'previewcourses') {
+    // Preview course sync.
+} else if ($function == 'previewcourses') {
 
     // Table header.
     $table = new html_table();
     $table->head = ['CO course_uid', 'mode', 'coursecategory', 'idnumber', 'shortname', 'fullname'];
     $table->head = array_merge($table->head, array_keys(locallib::COURSE_FIELDS));
-    $customfields = locallib::get_custom_course_field_data(null);
+    $customfields = locallib::get_custom_course_field_data();
     $table->head = array_merge($table->head, $customfields);
 
     // Table data.
     $count = 0;
-    $data = array();
+    $data = [];
     $courses = $sync->get_courses(null, $limit);
     $skipped = 0;
 
@@ -166,7 +168,7 @@ if ($function == 'showrawcoursedata') {
 
     foreach ($courses as $key => $coursedata) {
 
-        $course_uid = $coursedata['course:uid'];
+        $courseuid = $coursedata['course:uid'];
 
         // Skip courses that are not in the configured orgs.
         if ($orgfilter) {
@@ -183,20 +185,20 @@ if ($function == 'showrawcoursedata') {
         } else {
             $mode = $strategy;
         }
-        $co = [$course_uid, $mode];
+        $co = [$courseuid, $mode];
 
         if ($strategy == $sync::GROUP_TO_COURSE) {
-            $groups = $sync->get_course_groups($course_uid);
+            $groups = $sync->get_course_groups($courseuid);
         } else {
             $groups = [0 => 'dummy'];
         }
 
         // Loop through groups.
-        foreach ($groups as $group_uid => $group_name) {
+        foreach ($groups as $groupuid => $groupname) {
 
             // Prepare new course data.
             if ($strategy == $sync::GROUP_TO_COURSE) {
-                $course = locallib::build_course($coursedata, $group_name, $group_uid);
+                $course = locallib::build_course($coursedata, $groupname, $groupuid);
             } else {
                 $course = locallib::build_course($coursedata);
             }
@@ -217,7 +219,7 @@ if ($function == 'showrawcoursedata') {
                 $categoryid = $category->parent;
             }
             $categoryname = trim($categoryname, ' / ');
-            $url = new moodle_url('/course/index.php', array('categoryid' => $categoryidforlink));
+            $url = new moodle_url('/course/index.php', ['categoryid' => $categoryidforlink]);
             $course['coursecategory'] = html_writer::link($url, $categoryname);
 
             // Add to table.
@@ -237,15 +239,15 @@ if ($function == 'showrawcoursedata') {
     $table->data = $data;
 
     echo html_writer::tag('h3', get_string('coursecount_syncdata', 'enrol_campusonline',
-        array('co' => count($courses), 'moodle' => $count)));
+        ['co' => count($courses), 'moodle' => $count]));
     echo html_writer::table($table);
 
-// Show raw user data.
-} elseif ($function == 'showrawuserdata') {
+    // Show raw user data.
+} else if ($function == 'showrawuserdata') {
 
     // Count and get tokens.
     $persons = $sync->get_persons(null, $limit);
-    $tokens = array();
+    $tokens = [];
     foreach ($persons as $person) {
         $person = (array) $person;
         foreach ($person as $key => $value) {
@@ -276,8 +278,8 @@ if ($function == 'showrawcoursedata') {
         echo '<br>';
     }
 
-// Preview user sync.
-} elseif ($function == 'previewusers') {
+    // Preview user sync.
+} else if ($function == 'previewusers') {
 
     // Table header.
     $table = new html_table();
@@ -287,7 +289,7 @@ if ($function == 'showrawcoursedata') {
     $table->head = array_merge($table->head, $customfields);
 
     // Table data.
-    $data = array();
+    $data = [];
     $persons = $sync->get_persons(null, $limit);
 
     foreach ($persons as $persondata) {

@@ -33,5 +33,5 @@ $observers = [
     [
         'eventname' => '\core\event\user_created',
         'callback' => 'enrol_campusonline\observer\user_created::event',
-    ]
+    ],
 ];

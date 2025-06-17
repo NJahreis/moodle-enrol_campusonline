@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Moodle page for syncing users from CAMPUSonline to Moodle.
+ *
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
  * @author     think-modular (stefan.weber@think-modular.com)
@@ -38,7 +40,7 @@ require_capability('enrol/campusonline:syncuser', $context);
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('incourse');
 $PAGE->set_url('/enrol/campusonline/sync_user.php',
-    array('userid' => $userid, 'limit' => 1));
+    ['userid' => $userid, 'limit' => 1]);
 $PAGE->set_title(get_string('syncthisuser', 'enrol_campusonline'));
 $PAGE->set_heading(get_string('syncthisuser', 'enrol_campusonline'));
 
@@ -58,16 +60,16 @@ if ($sync->is_connected()) {
     $user = \core_user::get_user($userid);
 
     // Identify user first.
-    if (!$person_uid = locallib::get_person_uid($userid)) {
+    if (!$personuid = locallib::get_person_uid($userid)) {
         $users = [$user];
         $sync->identify_moodle_users($users);
     }
 
-    if ($person_uid = locallib::get_person_uid($userid)) {
+    if ($personuid = locallib::get_person_uid($userid)) {
 
         // Sync user.
-        $person_uids = [$person_uid];
-        $persons = $sync->get_persons($person_uids);
+        $personuids = [$personuid];
+        $persons = $sync->get_persons($personuids);
         $person = reset($persons);
         $sync->update_moodle_user($user, $person);
     }
@@ -82,8 +84,8 @@ if ($sync->is_connected()) {
 echo "</pre>";
 
 // Back to user button.
-$url = new moodle_url('/user/profile.php', array('id' => $userid));
-echo html_writer::link($url, get_string('back'), array('class' => 'btn btn-secondary m-1'));
+$url = new moodle_url('/user/profile.php', ['id' => $userid]);
+echo html_writer::link($url, get_string('back'), ['class' => 'btn btn-secondary m-1']);
 echo $OUTPUT->footer();
 
 

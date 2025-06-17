@@ -14,37 +14,32 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * CAMPUSonline enrolment plugin.
- *
- * @package    enrol_campusonline
- * @copyright  2024, TU Graz
- * @author     think-modular (stefan.weber@think-modular.com)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace enrol_campusonline;
 
+use moodle_url;
 use table_sql;
 
 defined('MOODLE_INTERNAL') || die;
 
 require_once("$CFG->libdir/tablelib.php");
 
+/**
+ * Class defining a table that shows the logs of the CAMPUSonline enrolment plugin.
+ *
+ * @package    enrol_campusonline
+ * @copyright  2024, TU Graz
+ * @author     think-modular (stefan.weber@think-modular.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class log_table extends table_sql {
-
-    public $userid;
-
     /**
      * Set up the table.
      *
      * @param string $uniqueid Unique id of table.
      * @param moodle_url $url The base URL.
-     * @param int $userid The user id.
      */
-    public function __construct($uniqueid, $url, $userid) {
+    public function __construct($uniqueid, $url) {
         parent::__construct($uniqueid);
-        $this->userid = $userid;
         $this->define_table_columns();
         $this->define_baseurl($url);
         $this->define_table_configs();
@@ -65,7 +60,7 @@ class log_table extends table_sql {
      */
     protected function define_table_columns() {
         // Define headers and columns.
-        $cols = array();
+        $cols = [];
         $cols['timestamp'] = get_string('time');
         $cols['courseid'] = get_string('course');
         $cols['status'] = get_string('status');
@@ -125,19 +120,32 @@ class log_table extends table_sql {
         }
     }
 
-    // Format status.
-    function col_status($row) {
-        if ($row->status == 0) {
-            return '<div class="badge badge-success p-2">' . get_string('success') . '</div>';
-        } elseif ($row->status == 1) {
-            return '<div class="badge badge-warning p-2">' . get_string('warning') . '</div>';
-        } elseif ($row->status == 2) {
-            return '<div class="badge badge-danger p-2">' . get_string('error') . '</div>';
+    /**
+     * Format the status column.
+     *
+     * @param mixed $row
+     * @return string
+     */
+    public function col_status($row) {
+        switch ($row->status) {
+            case 0:
+                return '<div class="badge badge-success p-2">' . get_string('success') . '</div>';
+            case 1:
+                return '<div class="badge badge-warning p-2">' . get_string('warning') . '</div>';
+            case 2:
+                return '<div class="badge badge-danger p-2">' . get_string('error') . '</div>';
+            default:
+                return '';
         }
     }
 
-    // Format course.
-    function col_courseid($row) {
+    /**
+     * Format course column.
+     *
+     * @param mixed $row
+     * @return string
+     */
+    public function col_courseid($row) {
 
         if ($courseid = $row->courseid) {
             if ($row->fullname) {
@@ -151,8 +159,13 @@ class log_table extends table_sql {
         }
     }
 
-    // Format timestamp.
-    function col_timestamp($row) {
+    /**
+     * Format timestamp.
+     *
+     * @param mixed $row
+     * @return string
+     */
+    public function col_timestamp($row) {
         return userdate($row->timestamp);
     }
 }

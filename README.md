@@ -14,7 +14,7 @@ This plugin syncs courses, enrolments and (on demand) users from CAMPUSonline.
 - **Moodle Matrix Chat**: For questions and support, please visit the Moodle Matrix Chat. https://matrix.to/#/#moodle:matrix.campusonline.community
 
 ## Video Tutorials
-- Video on the [features of the CAMPUSOnline Moodle plugin](https://cloud.tugraz.at/index.php/s/J5SgwmBSC34mApX)
+- Video on the [features of the CAMPUSonline Moodle plugin](https://cloud.tugraz.at/index.php/s/J5SgwmBSC34mApX)
 - Video on the topic of [CO Moodle user management](https://cloud.tugraz.at/index.php/s/4RSw9bRccccywJ4)
 
 ## Installation in Moodle

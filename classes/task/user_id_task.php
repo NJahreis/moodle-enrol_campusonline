@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Class user_sync_task
+ * Class file for user synchronization task.
  *
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
@@ -25,11 +25,17 @@
 
 namespace enrol_campusonline\task;
 
-defined('MOODLE_INTERNAL') || die;
-
 use enrol_campusonline\sync;
 use enrol_campusonline\locallib;
 
+/**
+ * Scheduled task class for user synchronization task.
+ *
+ * @package    enrol_campusonline
+ * @copyright  2024, TU Graz
+ * @author     think-modular (stefan.weber@think-modular.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class user_id_task extends \core\task\scheduled_task {
 
     /**

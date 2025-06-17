@@ -29,6 +29,8 @@ use html_writer;
 
 require_once(__DIR__ . '/../../config.php');
 
+require_admin();
+
 echo html_writer::tag('h1', 'Plugin version');
 
 print get_config('enrol_campusonline')->version;

@@ -25,8 +25,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$tasks = array(
-    array(
+$tasks = [
+    [
         'classname' => '\\enrol_campusonline\\task\\org_sync_task',
         'blocking'  => 0,
         'minute'    => '*',
@@ -35,8 +35,8 @@ $tasks = array(
         'dayofweek' => '*',
         'month'     => '*',
         'disabled'  => true,
-    ),
-    array(
+    ],
+    [
         'classname' => '\\enrol_campusonline\\task\\sync_task',
         'blocking'  => 0,
         'minute'    => '*',
@@ -45,8 +45,8 @@ $tasks = array(
         'dayofweek' => '*',
         'month'     => '*',
         'disabled'  => true,
-    ),
-    array(
+    ],
+    [
         'classname' => '\\enrol_campusonline\\task\\sync_delta_task',
         'blocking'  => 0,
         'minute'    => '*',
@@ -55,8 +55,8 @@ $tasks = array(
         'dayofweek' => '*',
         'month'     => '*',
         'disabled'  => true,
-    ),
-    array(
+    ],
+    [
         'classname' => '\\enrol_campusonline\\task\\user_id_task',
         'blocking'  => 0,
         'minute'    => '*',
@@ -65,5 +65,5 @@ $tasks = array(
         'dayofweek' => '*',
         'month'     => '*',
         'disabled'  => true,
-    )
-);
+    ],
+];

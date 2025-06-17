@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Moodle page to show the plugins README file.
+ *
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
  * @author     think-modular (stefan.weber@think-modular.com)
@@ -36,37 +38,33 @@ echo $OUTPUT->header();
 
 // Get language of logged in user.
 $language = current_language();
-if ($language == 'de') {
-    $markdownFile = 'README_de.md';
-} else {
-    $markdownFile = 'README.md';
-}
+$markdownfile = $language == 'de' ? 'README_de.md' : 'README.md';
 
 // Read the Markdown file content.
-$markdownContent = file_get_contents($markdownFile);
+$markdowncontent = file_get_contents($markdownfile);
 
 // Convert Markdown to HTML using basic replacements.
 
 // Convert headers (###, ##, #).
-$markdownContent = preg_replace('/### (.+)/', '<h3>$1</h3>', $markdownContent);
-$markdownContent = preg_replace('/## (.+)/', '<h2>$1</h2>', $markdownContent);
-$markdownContent = preg_replace('/# (.+)/', '<h1>$1</h1>', $markdownContent);
+$markdowncontent = preg_replace('/### (.+)/', '<h3>$1</h3>', $markdowncontent);
+$markdowncontent = preg_replace('/## (.+)/', '<h2>$1</h2>', $markdowncontent);
+$markdowncontent = preg_replace('/# (.+)/', '<h1>$1</h1>', $markdowncontent);
 
 // Convert bold text (**text** or __text__).
-$markdownContent = preg_replace('/\*\*(.+)\*\*/', '<strong>$1</strong>', $markdownContent);
-$markdownContent = preg_replace('/__(.+)__/', '<strong>$1</strong>', $markdownContent);
+$markdowncontent = preg_replace('/\*\*(.+)\*\*/', '<strong>$1</strong>', $markdowncontent);
+$markdowncontent = preg_replace('/__(.+)__/', '<strong>$1</strong>', $markdowncontent);
 
 // Convert italic text (*text* or _text_).
-$markdownContent = preg_replace('/\*(.+)\*/', '<em>$1</em>', $markdownContent);
-$markdownContent = preg_replace('/_(.+)_/', '<em>$1</em>', $markdownContent);
+$markdowncontent = preg_replace('/\*(.+)\*/', '<em>$1</em>', $markdowncontent);
+$markdowncontent = preg_replace('/_(.+)_/', '<em>$1</em>', $markdowncontent);
 
 // Convert links [text](url).
-$markdownContent = preg_replace('/\[(.+)\]\((.+)\)/', '<a href="$2">$1</a>', $markdownContent);
+$markdowncontent = preg_replace('/\[(.+)\]\((.+)\)/', '<a href="$2">$1</a>', $markdowncontent);
 
 // Convert newlines.
-$markdownContent = preg_replace('/\R/', '<br>', $markdownContent);
+$markdowncontent = preg_replace('/\R/', '<br>', $markdowncontent);
 
 // Output the HTML in the browser.
-echo $markdownContent;
+echo $markdowncontent;
 
 echo $OUTPUT->footer();

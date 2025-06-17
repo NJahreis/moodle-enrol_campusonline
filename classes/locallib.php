@@ -14,6 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace enrol_campusonline;
+
+use DateTime;
+use core\context\course as context_course;
+
 /**
  * Class locallib
  *
@@ -22,73 +27,86 @@
  * @author     think-modular (stefan.weber@think-modular.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-namespace enrol_campusonline;
-
-use DateTime;
-use context_course;
-
-defined('MOODLE_INTERNAL') || die;
-
 class locallib {
 
-    // Course fields available for mapping and their default value.
-    public const COURSE_FIELDS = ['summary' => '',
-                                  'startdate' => '{semester:validFrom}',
-                                  'enddate' => '{semester:validUntil}',
-                                  'visible' => '1',
-                                  'lang' => '{course:mainLanguageOfInstruction}',
-                                  'groupmode' => '1',
-                                  'groupmodeforce' => '0',
+    /**
+     * Course fields available for mapping and their default value.
+     * @var array
+     */
+    public const COURSE_FIELDS = [
+        'summary' => '',
+        'startdate' => '{semester:validFrom}',
+        'enddate' => '{semester:validUntil}',
+        'visible' => '1',
+        'lang' => '{course:mainLanguageOfInstruction}',
+        'groupmode' => '1',
+        'groupmodeforce' => '0',
     ];
 
-    // User fields not available for identification.
-    public const USER_ID_FIELDS_IGNORE = ['id',
-                                          'username',
-                                          'idnumber',
-                                          'email',
+    /**
+     * User fields not available for identification.
+     * @var array
+     */
+    public const USER_ID_FIELDS_IGNORE = [
+        'id',
+        'username',
+        'idnumber',
+        'email',
     ];
 
-    // User fields available for mapping and their default value.
-    public const USER_FIELDS = ['username' => 'co_{uid}',
-                                'email' => '{email}',
-                                'idnumber' => '{uid}',
-                                'firstname' => '{givenName}',
-                                'lastname' => '{surname}',
-                                'phone1' => '',
-                                'institution' => '',
-                                'department' => '',
+    /**
+     * User fields available for mapping and their default value.
+     * @var array
+     */
+    public const USER_FIELDS = [
+        'username' => 'co_{uid}',
+        'email' => '{email}',
+        'idnumber' => '{uid}',
+        'firstname' => '{givenName}',
+        'lastname' => '{surname}',
+        'phone1' => '',
+        'institution' => '',
+        'department' => '',
     ];
 
-    // User fields that cannot be empty.
-    public const USER_FIELDS_NOEMPTY = ['username',
-                                        'email'
-    ];
+    /**
+     * User fields that cannot be empty.
+     * @var array
+     */
+    public const USER_FIELDS_NOEMPTY = ['username', 'email'];
 
-    // User fields that need to be unique.
-    public const USER_FIELDS_UNIQUE = ['username',
-                                       'email'
-    ];
+    /**
+     * User fields that need to be unique.
+     * @var array
+     */
+    public const USER_FIELDS_UNIQUE = ['username', 'email'];
 
-    // CAMPUSonline internal custom user fields.
+    /**
+     * CAMPUSonline internal custom user fields.
+     * @var array
+     */
     public const CO_USER_FIELDS = ['user_profile_field_campusonline_person_uid' => '{uid}',
     ];
 
-    // Fields that use PARAM_BOOL instead of PARAM_TEXT.
-    public const BOOL_FIELDS = ['visible',
-                                'groupmode',
-                                'groupmodeforce',
+    /**
+     * Fields that use PARAM_BOOL instead of PARAM_TEXT.
+     * @var array
+     */
+    public const BOOL_FIELDS = [
+        'visible',
+        'groupmode',
+        'groupmodeforce',
     ];
 
-    // Our own custom fields that should be ignored in mapping.
-    public const IGNORE_FIELDS = ['campusonline_person_uid',
-                                  'campusonline_id_attempts',
-                                  'campusonline_other_co_course_uids',
+    /**
+     * Our own custom fields that should be ignored in mapping.
+     * @var array
+     */
+    public const IGNORE_FIELDS = [
+        'campusonline_person_uid',
+        'campusonline_id_attempts',
+        'campusonline_other_co_course_uids',
     ];
-
-
-
-
 
     /**
      * Add our enrolment method to a course.
@@ -97,7 +115,7 @@ class locallib {
      *
      * @return void
      */
-    public static function add_enrolment_method($course) {
+    public static function add_enrolment_method($course): void {
 
         global $DB;
 
@@ -112,7 +130,7 @@ class locallib {
             $enrol->timemodified = time();
             $enrol->id = $DB->insert_record('enrol', $enrol);
 
-        } elseif ($enrol->status == 1) {
+        } else if ($enrol->status == 1) {
 
             // Set to active.
             $enrol->status = 0;
@@ -125,27 +143,27 @@ class locallib {
      * Builds a course from CAMPUSonline data.
      *
      * @param object $coursedata
-     * @param string $group_name
-     * @param string $group_uid
+     * @param string $groupname
+     * @param string $groupuid
      *
      * @return array $course
      */
-    public static function build_course($coursedata, $group_name = null, $group_uid = null){
-        $course = array();
+    public static function build_course($coursedata, $groupname = null, $groupuid = null): array {
+        $course = [];
         $course['coursecategory'] = null;
         $course['idnumber'] = $coursedata['course:uid'];
         $course['shortname'] = self::get_field_value('course_shortname', $coursedata);
         $course['fullname'] = self::get_field_value('course_fullname', $coursedata);
 
         // Include group information.
-        if ($group_name && $group_uid) {
-            $course['idnumber'] .= ":$group_uid";
-            $course['shortname'] .= ":$group_uid";
-            $course['fullname'] .= ":$group_name";
+        if ($groupname && $groupuid) {
+            $course['idnumber'] .= ":$groupuid";
+            $course['shortname'] .= ":$groupuid";
+            $course['fullname'] .= ":$groupname";
         }
 
         // Map additional fields.
-        foreach(self::COURSE_FIELDS as $field => $default) {
+        foreach (self::COURSE_FIELDS as $field => $default) {
             $course[$field] = self::get_field_value('course_' . $field, $coursedata);
         }
 
@@ -155,13 +173,13 @@ class locallib {
     /**
      * Builds a user from CAMPUSonline data.
      *
-     * @param object $userdata
+     * @param object|array $userdata
      *
      * @return array $user
      */
-    public static function build_user($userdata){
+    public static function build_user($userdata): array {
 
-        $user = array();
+        $user = [];
         $user['auth'] = self::get_field_value('user_auth', $userdata);
         $user['password'] = self::get_field_value('user_password', $userdata);
 
@@ -171,7 +189,7 @@ class locallib {
         }
 
         // Map additional fields.
-        foreach(self::USER_FIELDS as $field => $default) {
+        foreach (self::USER_FIELDS as $field => $default) {
             $value = self::get_field_value('user_' . $field, $userdata);
 
             // Sanitize usernames.
@@ -199,21 +217,21 @@ class locallib {
     /**
      * Gets custom fields.
      *
-     * @param object $coursedata
+     * @param array $coursedata
      *
      * @return array $customfields
      */
-    public static function get_custom_course_field_data($coursedata) {
+    public static function get_custom_course_field_data($coursedata = []) {
 
-        $customfields = array();
+        $customfields = [];
         $handler = \core_customfield\handler::get_handler('core_course', 'course');
-        if ($custom_fields = $handler->get_fields()) {
-            foreach ($custom_fields as $field) {
+        if ($customfields = $handler->get_fields()) {
+            foreach ($customfields as $field) {
                 $name = $field->get('shortname');
-                if ($coursedata) {
+                if (!empty($coursedata)) {
                     $customfields[$name] = self::get_field_value('course_customfield_' . $name, $coursedata);
                 } else {
-                    // For settings.php
+                    // For settings.php.
                     $customfields[$name] = $field->get('name');
                 }
             }
@@ -224,7 +242,7 @@ class locallib {
     /**
      * Get user profile fields.
      *
-     * @param object $coursedata
+     * @param object $userdata
      *
      * @return array $customfields
      */
@@ -232,14 +250,14 @@ class locallib {
 
         global $DB;
 
-        $customfields = array();
+        $customfields = [];
         $records = $DB->get_records('user_info_field');
         foreach ($records as $record) {
             $name = $record->shortname;
             if ($userdata) {
                 $customfields[$record->id] = self::get_field_value('user_profile_field_' . $name, $userdata);
             } else {
-                // For settings.php
+                // For settings.php.
                 $customfields[$record->shortname] = $record->name;
             }
 
@@ -251,7 +269,7 @@ class locallib {
      * Gets a value for a field in Moodle, replacing tokens in configured values.
      *
      * @param string $field
-     * @param array $data
+     * @param array|object $data
      *
      * @return string $value
      */
@@ -303,14 +321,14 @@ class locallib {
 
         global $DB;
 
-        $orgroles = array();
+        $orgroles = [];
 
         $sql = "
             SELECT *
-            FROM {role} AS role
-            JOIN {role_context_levels} AS ctx ON ctx.roleid = role.id
-            WHERE shortname LIKE :shortname
-            AND contextlevel = :contextlevel";
+            FROM {role} role
+            JOIN {role_context_levels} ctx ON ctx.roleid = role.id
+            WHERE role.shortname LIKE :shortname
+            AND ctx.contextlevel = :contextlevel";
 
         $params = [
             'shortname' => 'campusonline%',
@@ -351,8 +369,8 @@ class locallib {
      */
     public static function normalize_value($value) {
         if (is_object($value)) {
-            $value = locallib::get_object_value($value);
-        } elseif (is_array($value)) {
+            $value = self::get_object_value($value);
+        } else if (is_array($value)) {
             $value = implode(' ', $value);
         } else {
             $value = (string) $value;
@@ -440,7 +458,7 @@ class locallib {
         if ($onlyuid) {
             $profilefields = self::CO_USER_FIELDS;
         } else {
-            $profilefields = locallib::get_custom_user_field_data(null);
+            $profilefields = self::get_custom_user_field_data(null);
         }
 
         // Update profile fields.
@@ -470,9 +488,8 @@ class locallib {
      * @param string $message
      * @param int $status
      * @param string $courseid
-     * @param progress_trace $trace
+     * @param \progress_trace $trace
      * @param int $indent
-     *
      */
     public static function write_log($event, $message, $status, $courseid = null, $trace = null, $indent = 0) {
 
@@ -491,7 +508,7 @@ class locallib {
 
         // Write PHP log.
         if (get_config('enrol_campusonline', 'phplogging')) {
-            error_log("enrol_campusonline: $event: $message");
+            debugging("enrol_campusonline: $event: $message");
         }
 
         // Truncate message to 255 chars.
@@ -521,7 +538,7 @@ class locallib {
         $lowercase = 'abcdefghijklmnopqrstuvwxyz';
         $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $numbers = '0123456789';
-        $special_chars = '!@#$%^&*()-_=+{}[]<>?';
+        $specialchars = '!@#$%^&*()-_=+{}[]<>?';
 
         // Ensure at least one character from each type.
         $password = '';
@@ -531,7 +548,7 @@ class locallib {
             $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
             $password .= $uppercase[random_int(0, strlen($uppercase) - 1)];
             $password .= $numbers[random_int(0, strlen($numbers) - 1)];
-            $password .= $special_chars[random_int(0, strlen($special_chars) - 1)];
+            $password .= $specialchars[random_int(0, strlen($specialchars) - 1)];
         }
 
         // Shuffle because why not.
@@ -552,7 +569,7 @@ class locallib {
         }
 
         if (property_exists($value, 'value')) {
-            $lang = 'de'; //TODO: make configurable?
+            $lang = 'de'; // TODO: make configurable?
             if (property_exists($value->value, $lang)) {
                 return $value->value->$lang;
             }

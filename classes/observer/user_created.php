@@ -14,22 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace enrol_campusonline\observer;
+
+use enrol_campusonline\sync;
+use enrol_campusonline\locallib;
+
 /**
- * CAMPUSonline enrolment plugin.
+ * Class that holds the actions that will be called when a new user is created.
  *
  * @package    enrol_campusonline
  * @author     think-modular (stefan.weber@think-modular.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @copyright  2024, Michael Lorenzoni
  */
-
-namespace enrol_campusonline\observer;
-
-defined('MOODLE_INTERNAL') || die();
-
-use enrol_campusonline\sync;
-use enrol_campusonline\locallib;
-
 class user_created {
 
     /**
@@ -38,8 +35,6 @@ class user_created {
      * @param object $event
      */
     public static function event($event) {
-        global $DB;
-
         if (get_config('enrol_campusonline', 'autoidnewusers') == 0) {
             return;
         }
