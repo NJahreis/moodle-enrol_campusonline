@@ -34,6 +34,8 @@ to <support@campusonline.community>.
 
 Before you ask a question, it is best to search for existing [Issues](https://gitlab.campusonline.community/community/moodle-enrol_campusonline/issues) that might help you. In case you have found a suitable issue and still need clarification, you can write your question in this issue. It is also advisable to search the internet for answers first.
 
+Furthermore everyone is welcome to ask questions in the this projects matrix chat room: `#moodle:matrix.campusonline.community`.
+
 If you then still feel the need to ask a question and need clarification, we recommend the following:
 
 - Open an [Issue](https://gitlab.campusonline.community/community/moodle-enrol_campusonline/issues/new).
@@ -46,6 +48,8 @@ We will then take care of the issue as soon as possible.
 
 > ### Legal Notice <!-- omit in toc -->
 > When contributing to this project, you must agree that you have authored 100% of the content, that you have the necessary rights to the content and that the content you contribute may be provided under the project licence.
+
+In order to contribute you need an account at the [CAMPUSonline community GitLab](https://gitlab.campusonline.community). If **none** of the sign-up methods work for you, please write an e-mail to [mailto://support@campusonline.community[(support@campusonline.community).
 
 ### Reporting Bugs
 
@@ -83,7 +87,6 @@ Once it's filed:
 
 <!-- You might want to create an issue template for bugs and errors that can be used as a guide and that defines the structure of the information to be included. If you do so, reference it here in the description. -->
 
-
 ### Suggesting Enhancements
 
 This section guides you through submitting an enhancement suggestion for CAMPUSonline Moodle Plugin, **including completely new features and minor improvements to existing functionality**. Following these guidelines will help maintainers and the community to understand your suggestion and find related suggestions.
@@ -110,26 +113,29 @@ Enhancement suggestions are tracked as [GitHub issues](https://gitlab.campusonli
 <!-- You might want to create an issue template for enhancement suggestions that can be used as a guide and that defines the structure of the information to be included. If you do so, reference it here in the description. -->
 
 ### Your First Code Contribution
-<!-- TODO
-include Setup of env, IDE and typical getting started instructions?
 
--->
+#### Getting started
+
+If you are unfamiliar with Moodle we recommend getting started with https://mooodledev.io. Especially refer to the [Coding Style](https://moodledev.io/general/development/policies/codingstyle) and [Enrolment plugins](https://moodledev.io/docs/5.0/apis/plugintypes/enrol) sections.
+
+#### Setting up development environment
+
+If you use a VSCode/Codium based IDE we recommend following [the tutorial from the MDLcode extension](https://mdlcode.dev/tutorials/setup?id=3).
 
 ### Improving The Documentation
-<!-- TODO
-Updating, improving and correcting the documentation
 
--->
+Improving the documentation is just as valuable as providing code itself. Apart from adding documentation directly in the Wiki, which you can only do, when you have the rights, please don't hesitate to file issues, about missing or non-detailed enough parts in the documentation.
 
 ## Styleguides
-### Commit Messages
-<!-- TODO
 
--->
+### Commit Messages
+
+We try do follow the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) principe. Pull Requests will be squash merged.
 
 ## Join The Project Team
-<!-- TODO -->
 
-<!-- omit in toc -->
+The CAMPUSonline Moodle plugin is a community project, project governance is handled by the CAMPUSonline community association. If you are intereseted in taking over a maintainer role, join our matrix chat `#moodle:matrix.campusonline.community` to make sure you don't miss our next community meetup.
+
 ## Attribution
+
 This guide is based on the [contributing.md](https://contributing.md/generator)!
