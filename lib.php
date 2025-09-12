@@ -25,8 +25,14 @@
 
 use enrol_campusonline\sync;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * CAMPUSonline enrolment plugin.
+ *
+ * @package    enrol_campusonline
+ * @copyright  2024, TU Graz
+ * @author     think-modular (stefan.weber@think-modular.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class enrol_campusonline_plugin extends enrol_plugin {
 
     /**
@@ -55,8 +61,6 @@ class enrol_campusonline_plugin extends enrol_plugin {
      * Test plugin settings, print info to output.
      */
     public function test_settings() {
-        global $CFG, $OUTPUT;
-
         // Initialize sync.
         $trace = new \text_progress_trace();
         $sync = new sync($trace);
@@ -96,7 +100,7 @@ class enrol_campusonline_plugin extends enrol_plugin {
         $context = context_course::instance($instance->courseid);
         if (has_capability('enrol/campusonline:synccourse', $context)) {
             $synclink = new moodle_url('/enrol/campusonline/sync_course.php',
-                array('courseid' => $instance->courseid, 'traceoutput' => 1));
+                ['courseid' => $instance->courseid, 'traceoutput' => 1]);
             $button = new enrol_user_button($synclink, get_string('syncthiscourse', 'enrol_campusonline'), 'get');
             return $button;
         } else {
@@ -123,7 +127,7 @@ function enrol_campusonline_myprofile_navigation(core_user\output\myprofile\tree
     }
 
     $url = new moodle_url('/enrol/campusonline/sync_user.php',
-        array('userid' => $user->id, 'limit' => 1, 'traceoutput' => 1));
+        ['userid' => $user->id, 'limit' => 1, 'traceoutput' => 1]);
     $string = get_string('usersyncsingle', 'enrol_campusonline');
     $node = new core_user\output\myprofile\node('administration', 'syncwithcampusonline', $string, null, $url);
     $tree->add_node($node);

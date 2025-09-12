@@ -35,8 +35,6 @@ build:snapshot:
   cache:
     paths:
       - .cache
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
   before_script:
     # replacing version number in version.php
     - export VERSION=$(echo $(git show -s --format=%cd --date=short $CI_COMMIT_SHA | sed 's/-//g')00)
@@ -50,13 +48,21 @@ build:snapshot:
     - . ~/.bashrc
     - nvm install --default --latest-npm lts/gallium
     - 'curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer'
-    - composer create-project -n --no-dev --no-progress --no-ansi moodlehq/moodle-plugin-ci /opt/mci ^3
+    - composer create-project -n --no-dev --no-progress --no-ansi moodlehq/moodle-plugin-ci /opt/mci ^4
     - export PATH="/opt/mci/bin:/opt/mci/vendor/bin:$PATH"
     - moodle-plugin-ci install --db-host db
     - '{ php -S 0.0.0.0:8000 -t "$CI_PROJECT_DIR/moodle" >/dev/null 2>&1 & }'
   script:
     - moodle-plugin-ci phplint
-    - moodle-plugin-ci phpunit
+    - moodle-plugin-ci phpcpd
+    - moodle-plugin-ci phpmd
+    - moodle-plugin-ci phpcs --max-warnings 0
+    - moodle-plugin-ci phpdoc --max-warnings 0
+    - moodle-plugin-ci validate
+    - moodle-plugin-ci savepoints
+    - moodle-plugin-ci mustache
+    - moodle-plugin-ci grunt --max-lint-warnings 0
+    - moodle-plugin-ci phpunit --fail-on-warning
     - moodle-plugin-ci behat --auto-rerun 0 --profile chrome
     - mkdir -pv "$CI_PROJECT_DIR"/target
     - cp -r "$CI_BUILD_DIR/"* "$CI_PROJECT_DIR/"target/
@@ -67,7 +73,7 @@ build:snapshot:
 package:snapshot:
   image:
     name: alpine:latest
-    entrypoint: [ "" ]
+    entrypoint: [""]
   stage: package
   rules:
     - if: $CI_COMMIT_BRANCH == "main"

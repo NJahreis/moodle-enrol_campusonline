@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Class sync_task
+ * Moodle page for syncing organisations from CAMPUSonline to Moodle.
  *
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
@@ -25,11 +25,17 @@
 
 namespace enrol_campusonline\task;
 
-defined('MOODLE_INTERNAL') || die;
-
 use enrol_campusonline\sync;
 use enrol_campusonline\locallib;
 
+/**
+ * Scheduled task for syncing organizations from CAMPUSonline to Moodle.
+ *
+ * @package    enrol_campusonline
+ * @copyright  2024, TU Graz
+ * @author     think-modular (stefan.weber@think-modular.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class org_sync_task extends \core\task\scheduled_task {
 
     /**
@@ -43,8 +49,6 @@ class org_sync_task extends \core\task\scheduled_task {
      * Executes the task.
      */
     public function execute() {
-        global $DB;
-
         // We may need a lot of memory here.
         \core_php_time_limit::raise();
         raise_memory_limit(MEMORY_HUGE);

@@ -25,39 +25,135 @@
 
 namespace enrol_campusonline;
 
-use moodle_exception;
 use moodle_url;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\ConnectException;
-
-require_once($CFG->dirroot . '/user/lib.php');
 
 defined('MOODLE_INTERNAL') || die;
 
+require_once($CFG->dirroot . '/user/lib.php');
+
+/**
+ * Class sync
+ *
+ * @package    enrol_campusonline
+ * @copyright  2024, TU Graz
+ * @author     think-modular (stefan.weber@think-modular.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class sync {
+    /**
+     * String used for description who created courses/categories etc.
+     * @var string
+     */
+    public const CREATED_BY = "Created by CAMPUSonline";
+
+    /**
+     * Mapping constants for course types.
+     */
+    public const GROUP_TO_COURSE = 'GROUP_TO_COURSE';
+
+    /**
+     * Mapping constant for group types.
+     */
+    public const GROUP_TO_GROUP = 'GROUP_TO_GROUP';
+
+    /**
+     * Mapping constant for flat course types.
+     */
+    public const FLAT_COURSE = 'FLAT_COURSE';
+
+    /**
+     * The Moodle config of the CAMPUSonline plugin.
+     * @var object
+     */
 
     private $config;
+    /**
+     * Stores the error message if there has been an error.
+     * @var string
+     */
     private $error;
-    private $token;
-    private $trace;
-    private $externalkey;
-    private $externalsystemkey;
-    private $customfieldids;
-    private $orgdata;
-    private $orgroles;
-    private $semesterdata;
-    private $grouptogroup;
-    private $grouptocourse;
-    private $flatcourse;
 
-    const CREATED_BY = "Created by CAMPUSonline";
-    const GROUP_TO_COURSE = 'GROUP_TO_COURSE';
-    const GROUP_TO_GROUP = 'GROUP_TO_GROUP';
-    const FLAT_COURSE = 'FLAT_COURSE';
+    /**
+     * The current CAMPUSonline access token
+     * @var string
+     */
+    private $token;
+
+    /**
+     * The Moodle progress trace, outputs to plain text.
+     * @var \text_progress_trace
+     */
+    private $trace;
+
+    /**
+     * External key (TODO: what is it?)
+     * @var string
+     */
+    private $externalkey;
+
+    /**
+     * External system key (TODO: what is it?)
+     * @var string
+     */
+    private $externalsystemkey;
+
+    /**
+     * Summary of customfieldids (TODO: custom field id's within Moodle or CAMPUSonline?)
+     * @var array
+     */
+    private $customfieldids;
+
+    /**
+     * Organizations data
+     * @var array
+     */
+    private $orgdata;
+
+    /**
+     * Organization roles data (keys: roleid, values: name).
+     * @var array
+     */
+    private $orgroles;
+
+    /**
+     * Semester data from CAMPUSonline (key: CAMPUSonline-Semester-Key, value: Semester-Object).
+     * @var array
+     */
+    private $semesterdata;
+
+    /**
+     * Array of group-to-group mappings from the CAMPUSonline plugin configuration.
+     *
+     * Will be false, if plugin configuration is malicious.
+     *
+     * @var string[]|false
+     */
+    private $grouptogroup;
+
+    /**
+     * Array of group-to-course mappings from the CAMPUSonline plugin configuration.
+     *
+     * Will be false, if plugin configuration is malicious.
+     *
+     * @var string[]|false
+     */
+    private $grouptocourse;
+
+    /**
+     * Array of flatcourse mappings from the CAMPUSonline plugin configuration.
+     *
+     * List of e-learning Event types for which Moodle courses will be created, but groups will be ignored.
+     * Will be false, if plugin configuration is malicious.
+     *
+     * @var string[]|false
+     */
+    private $flatcourse;
 
     /**
      * Constructor.
+     *
+     * @param \text_progress_trace $trace
      */
     public function __construct($trace) {
 
@@ -83,7 +179,7 @@ class sync {
 
             // Get custom field ids so we dont have to deal with Moodle custom field API.
             $fields = ['user_info_field:campusonline_person_uid',
-                    'customfield_field:campusonline_other_co_course_uids'
+                    'customfield_field:campusonline_other_co_course_uids',
                     ];
             foreach ($fields as $field) {
                 list($table, $shortname) = explode(':', $field);
@@ -187,16 +283,16 @@ class sync {
     /**
      * Gets groups for a course.
      *
-     * @param string $course_uid
+     * @param string $courseuid
      * @return array groups
      */
-    public function get_course_groups($course_uid) {
+    public function get_course_groups($courseuid) {
 
-        $endpoint = "co-tm-core/course/api/courses/$course_uid/groups";
+        $endpoint = "co-tm-core/course/api/courses/$courseuid/groups";
         $result = $this->rest_call($endpoint, null);
 
         // Analyze response.
-        $groups = array();
+        $groups = [];
         if (property_exists($result, 'items')) {
             foreach ($result->items as $item) {
                 $groups[$item->uid] = $item->name->value->de;
@@ -209,12 +305,13 @@ class sync {
     /**
      * Gets courses for preview or sync.
      *
-     * @param string $course_uids if provided, only fetches these courses.
+     * @param string $courseuids If provided, only fetches these courses.
+     * @param int $limit
      * @return array
      */
-    public function get_courses($course_uids = null, $limit = null) {
+    public function get_courses($courseuids = null, $limit = null) {
 
-        $allcourses = array();
+        $allcourses = [];
 
         // Get semester(s).
         $semesters = $this->config->semester;
@@ -226,9 +323,9 @@ class sync {
 
             // Get courses.
             $endpoint = 'co-tm-core/course/api/courses';
-            if ($course_uids) {
+            if ($courseuids) {
                 // Only request specific courses.
-                $query['course_uids'] = implode(', ', $course_uids);
+                $query['course_uids'] = implode(', ', $courseuids);
             } else {
                 // Request all courses for configured semester(s).
                 $query = [
@@ -245,13 +342,13 @@ class sync {
                 $courses = $result->items;
                 $courses = $this->enrich_courses($courses);
             } else {
-                $courses = array();
+                $courses = [];
             }
 
             $allcourses = array_merge($allcourses, $courses);
 
             // Stop if we specified course_uids, since semester filter will be ignored anyways.
-            if ($course_uids) {
+            if ($courseuids) {
                 break;
             }
         }
@@ -262,33 +359,42 @@ class sync {
     /**
      * Gets course sync strategy for a course.
      *
-     * @param array $coursedata
-     * @return string $strategy
+     * @param array $coursedata The course data array containing course information.
+     * @return string|null Returns the course type constant or null if not found.
      */
     public function get_course_sync_strategy($coursedata) {
 
-        $course_uid = $coursedata['course:uid'];
+        $courseuid = $coursedata['course:uid'];
 
         // Get eLearningEventTypeKey.
         if (array_key_exists('course:elearningEventTypeKey', $coursedata)) {
-            $elearning_type = $coursedata['course:elearningEventTypeKey'];
+            $elearningtype = $coursedata['course:elearningEventTypeKey'];
         } else {
 
             // Log error.
-            $message = get_string('error:noelearningeventtypekey', 'enrol_campusonline', $course_uid);
+            $message = get_string('error:noelearningeventtypekey', 'enrol_campusonline', $courseuid);
             locallib::write_log('update_course', $message, 2, null, $this->trace, 3);
             return null;
         }
 
-        if (in_array($elearning_type, $this->grouptocourse)) {
+        if (in_array($elearningtype, $this->grouptocourse)) {
             return self::GROUP_TO_COURSE;
-        } elseif(in_array($elearning_type, $this->grouptogroup)) {
+        } else if (in_array($elearningtype, $this->grouptogroup)) {
             return self::GROUP_TO_GROUP;
-        } elseif(in_array($elearning_type, $this->flatcourse)) {
+        } else if (in_array($elearningtype, $this->flatcourse)) {
             return self::FLAT_COURSE;
         } else {
             if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
-                $this->trace->output(get_string('info:skippingcourse', 'enrol_campusonline', ['course_uid' => $course_uid, 'elearning_type' => $elearning_type]));
+                $this->trace->output(
+                    get_string(
+                        'info:skippingcourse',
+                        'enrol_campusonline',
+                        [
+                            'course_uid' => $courseuid,
+                            'elearning_type' => $elearningtype,
+                        ]
+                    )
+                );
             }
             return null;
         }
@@ -304,15 +410,15 @@ class sync {
     public function get_enrolments($course) {
 
         $uids = explode(':', $course->idnumber);
-        $course_uid = $uids[0];
+        $courseuid = $uids[0];
         if (count($uids) > 1) {
-            $group_uid = $uids[1];
+            $groupuid = $uids[1];
         }
 
         // Get student enrolments.
         $endpoint = 'co-tm-core/course/api/registrations';
         $query = [
-            'course_uid' => $course_uid,
+            'course_uid' => $courseuid,
         ];
         $result = $this->rest_call($endpoint, $query);
 
@@ -320,13 +426,13 @@ class sync {
         if (property_exists($result, 'items')) {
             $enrolments = $result->items;
         } else {
-            $enrolments = array();
+            $enrolments = [];
         }
 
         // Get teacher enrolments.
         $endpoint = 'co-tm-core/course/api/lectureships';
         $query = [
-            'course_uid' => $course_uid,
+            'course_uid' => $courseuid,
         ];
         $result = $this->rest_call($endpoint, $query);
 
@@ -348,14 +454,14 @@ class sync {
         $result = $this->rest_call($endpoint);
 
         // Analyze response.
-        $lectureship_functions = array();
+        $lectureshipfunctions = [];
         if (property_exists($result, 'items')) {
             foreach ($result->items as $item) {
-                $lectureship_functions[] = $item->key;
+                $lectureshipfunctions[] = $item->key;
             }
         }
 
-        return $lectureship_functions;
+        return $lectureshipfunctions;
     }
 
     /**
@@ -374,7 +480,7 @@ class sync {
         // Get user id via uid in our user profile field.
         $fieldid = $this->customfieldids['campusonline_person_uid'];
         $sql = "SELECT * FROM {user_info_data} WHERE fieldid = ? AND data = ?";
-        $params = array('fieldid' => $fieldid, 'data' => $uid);
+        $params = ['fieldid' => $fieldid, 'data' => $uid];
         if ($records = $DB->get_records_sql($sql, $params)) {
             $record = reset($records);
             return $record->userid;
@@ -413,7 +519,7 @@ class sync {
                 $message = get_string('warning:couldnotgetpersondata', 'enrol_campusonline', $uid);
                 locallib::write_log('get_user_data', $message, 1, null, $this->trace, 3);
             }
-            return array();
+            return [];
         } else {
             $persondata = (array)$result->items[0];
         }
@@ -423,6 +529,8 @@ class sync {
 
     /**
      * Gets external keys for person for user identification.
+     *
+     * @param string $uid
      *
      * @return array
      */
@@ -442,16 +550,19 @@ class sync {
         if (property_exists($result, 'mappings')) {
             return (array)$result->mappings;
         } else {
-            return array();
+            return [];
         }
     }
 
     /**
      * Gets persons from CAMPUSonline.
      *
+     * @param string[] $personuids
+     * @param int $limit
+     *
      * @return array $persons
      */
-    public function get_persons($person_uids = null, $limit = null) {
+    public function get_persons($personuids = null, $limit = null) {
 
         // Get employees.
         $endpoint = "co-brm-core/pers/api/person-claims";
@@ -460,8 +571,8 @@ class sync {
             'limit' => $limit,
         ];
 
-        if ($person_uids) {
-            $query['person_uid'] = implode(',', $person_uids);
+        if ($personuids) {
+            $query['person_uid'] = implode(',', $personuids);
         }
 
         $result = $this->rest_call($endpoint, $query);
@@ -470,7 +581,7 @@ class sync {
         if (property_exists($result, 'items')) {
             $personobjects = $result->items;
         } else {
-            $personobjects = array();
+            $personobjects = [];
         }
 
         foreach ($personobjects as $personobject) {
@@ -494,7 +605,7 @@ class sync {
 
         $sourcefield = $this->config->sourcefield;
         $sourceclaim = $this->config->sourceclaim;
-        $max_attempts = (int) $this->config->idattempts;
+        $maxattempts = (int) $this->config->idattempts;
         if (str_contains($sourcefield, 'profile_field_')) {
             $sourcefield = str_replace('profile_field_', '', $sourcefield);
             $profilefield = true;
@@ -516,7 +627,17 @@ class sync {
         $number = count($users);
         if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
             if ($number > 1) {
-                $this->trace->output(get_string('info:identifyingusers', 'enrol_campusonline', ['number' => $number, 'total' => $total, 'skipped' => $skipped]));
+                $this->trace->output(
+                    get_string(
+                        'info:identifyingusers',
+                        'enrol_campusonline',
+                        [
+                            'number' => $number,
+                            'total' => $total,
+                            'skipped' => $skipped,
+                        ]
+                    )
+                );
             } else {
                 $this->trace->output(get_string('info:identifyinguser', 'enrol_campusonline'));
             }
@@ -534,9 +655,15 @@ class sync {
             // Skip users that have reached the maximum attempts.
             if (array_key_exists('campusonline_id_attempts', $user->profile)) {
                 $attempt = (int) $user->profile['campusonline_id_attempts'];
-                if ($attempt >= $max_attempts) {
+                if ($attempt >= $maxattempts) {
                     if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
-                        $this->trace->output(get_string('info:maxattemptsreached', 'enrol_campusonline', $userid));
+                        $this->trace->output(
+                            get_string(
+                                'info:maxattemptsreached',
+                                'enrol_campusonline',
+                                $userid
+                            )
+                        );
                     }
                     continue;
                 }
@@ -562,21 +689,38 @@ class sync {
                 $result = profile_save_data($user);
 
                 // Log.
-                $message = get_string('info:couldnotfinduidvalue', 'enrol_campusonline', ['sourcefield' => $sourcefield, 'userid' => $userid, 'attempt' => $attempt]);
+                $message = get_string(
+                    'info:couldnotfinduidvalue',
+                    'enrol_campusonline',
+                    [
+                        'sourcefield' => $sourcefield,
+                        'userid' => $userid,
+                        'attempt' => $attempt,
+                    ]
+                );
                 locallib::write_log('identify_user', $message, 0, null, $this->trace, 3);
                 continue;
             }
 
             // Skip users that have a uid that is already set to another Moodle user.
-            if ($moodle_user_id = $this->get_moodle_user_id($uid, false)) {
-                $message = get_string('warning:uidalreadyassigned', 'enrol_campusonline', ['uid' => $uid, 'moodle_user_id' => $moodle_user_id, 'userid' => $userid]);
+            if ($moodleuserid = $this->get_moodle_user_id($uid, false)) {
+                $message = get_string(
+                    'warning:uidalreadyassigned',
+                    'enrol_campusonline',
+                    [
+                        'uid' => $uid,
+                        'moodle_user_id' => $moodleuserid,
+                        'userid' => $userid,
+                    ]
+                );
                 locallib::write_log('identify_user', $message, 1, null, $this->trace, 3);
                 continue;
             }
 
-            // If source claim equals target claim, that means we already have the Person UID, and can try fetching the person to see if it is valid.
+            // If source claim equals target claim, that means we already have the Person UID,
+            // and can try fetching the person to see if it is valid.
             if ($this->config->sourceclaim == 'CO_CLAIM_PERSON_UID') {
-                if($this->get_person_data($uid, false)) {
+                if ($this->get_person_data($uid, false)) {
 
                     // Save Person UID to user profile.
                     $user->profile_field_campusonline_person_uid = $uid;
@@ -595,7 +739,7 @@ class sync {
                 $query = [
                     'target_claim' => 'CO_CLAIM_PERSON_UID',
                     'source_claim' => $sourceclaim,
-                    'uid' => $uid
+                    'uid' => $uid,
                 ];
                 if ($this->config->sourceclaim == 'CO_CLAIM_EXTERNAL_SYSTEM') {
                     $query['external_key'] = $this->config->externalkey;
@@ -608,14 +752,23 @@ class sync {
 
                     $mapping = $result->mappings;
                     if (property_exists($mapping, $uid)) {
-                        $person_uid = $mapping->$uid;
+                        $personuid = $mapping->$uid;
 
                         // Save Person UID to user profile.
-                        $user->profile_field_campusonline_person_uid = $person_uid;
+                        $user->profile_field_campusonline_person_uid = $personuid;
                         profile_save_data($user);
 
                         // Log success.
-                        $message = get_string('info:useridentifiedvia', 'enrol_campusonline', ['userid' => $userid, 'person_uid' => $person_uid, 'sourceclaim' => $sourceclaim, 'uid' => $uid]);
+                        $message = get_string(
+                            'info:useridentifiedvia',
+                            'enrol_campusonline',
+                            [
+                                'userid' => $userid,
+                                'person_uid' => $personuid,
+                                'sourceclaim' => $sourceclaim,
+                                'uid' => $uid,
+                            ]
+                        );
                         locallib::write_log('identify_user', $message, 0, null, $this->trace, 3);
                         continue;
                     }
@@ -624,10 +777,18 @@ class sync {
 
             // Update attempts.
             $user->profile_field_campusonline_id_attempts = $attempt + 1;
-            $result = profile_save_data($user);
+            profile_save_data($user);
 
             // Log.
-            $message = get_string('info:couldnotfindperson', 'enrol_campusonline', ['uid' => $uid, 'userid' => $userid, 'attempt' => $attempt]);
+            $message = get_string(
+                'info:couldnotfindperson',
+                'enrol_campusonline',
+                [
+                    'uid' => $uid,
+                    'userid' => $userid,
+                    'attempt' => $attempt,
+                ]
+            );
             locallib::write_log('identify_user', $message, 0, null, $this->trace, 3);
             continue;
 
@@ -640,7 +801,6 @@ class sync {
      * @return void
      */
     public function sync_course_delta() {
-
         // Set timeframe.
         $timeframe = $this->config->modificationtimeframe;
 
@@ -654,7 +814,7 @@ class sync {
         $semesters = explode(',', $semesters);
 
         // Get modified courses.
-        $course_uids = array();
+        $courseuids = [];
         $components = ['courses', 'registrations', 'lectureships'];
         foreach ($semesters as $semester) {
 
@@ -662,39 +822,38 @@ class sync {
                 $endpoint = "co-tm-core/course/api/$component/modifications";
                 $query = [
                     'since' => $date,
-                    'semestery_key' => $semester
+                    'semestery_key' => $semester,
                 ];
                 $result = $this->rest_call($endpoint, $query);
                 if (property_exists($result, 'items')) {
                     foreach ($result->items as $item) {
-                        $course_uids[$item->courseUid] = 'modified';
+                        $courseuids[$item->courseUid] = 'modified';
                     }
                 }
             }
         }
 
         // Sync modified courses.
-        $course_uids = array_keys($course_uids);
-        foreach ($course_uids as $course_uid) {
-            $this->sync_courses([$course_uid]);
+        $courseuids = array_keys($courseuids);
+        foreach ($courseuids as $courseuid) {
+            $this->sync_courses([$courseuid]);
         }
     }
 
     /**
      * Syncs courses.
      *
-     * @param string $course_uids if provided, only syncs these courses.
+     * @param string $courseuids if provided, only syncs these courses.
      * @return void
      */
-    public function sync_courses($course_uids = null) {
-
+    public function sync_courses($courseuids = null) {
         global $CFG, $DB;
 
         require_once("$CFG->dirroot/course/lib.php");
 
         // Get course(s).
-        if ($course_uids) {
-            $courses = $this->get_courses($course_uids);
+        if ($courseuids) {
+            $courses = $this->get_courses($courseuids);
         } else {
             $courses = $this->get_courses();
         }
@@ -712,14 +871,14 @@ class sync {
         // Sync courses.
         foreach ($courses as $coursedata) {
 
-            $course_uid = $coursedata['course:uid'];
+            $courseuid = $coursedata['course:uid'];
 
             // Skip courses that are not in the configured orgs.
             if ($orgfilter = $this->config->orgfilter) {
                 $orgs = explode(',', $orgfilter);
                 if (!in_array($coursedata['org:uid'], $orgs)) {
                     if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
-                        $this->trace->output(get_string('info:skippingcourseorgfilter', 'enrol_campusonline', $course_uid));
+                        $this->trace->output(get_string('info:skippingcourseorgfilter', 'enrol_campusonline', $courseuid));
                     }
                     continue;
                 }
@@ -732,24 +891,32 @@ class sync {
 
             // Start sync & log.
             if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
-                $this->trace->output(get_string('info:syncingcourse', 'enrol_campusonline', ['course_uid' => $course_uid, 'strategy' => $strategy]));
+                $this->trace->output(
+                    get_string('info:syncingcourse',
+                        'enrol_campusonline',
+                        [
+                            'course_uid' => $courseuid,
+                            'strategy' => $strategy,
+                        ]
+                    )
+                );
             }
 
             // Get groups if necessary.
             if ($strategy !== self::FLAT_COURSE) {
-                $groups = $this->get_course_groups($course_uid);
+                $groups = $this->get_course_groups($courseuid);
             } else {
                 $groups = [0 => 'dummy'];
             }
 
-            foreach ($groups as $group_uid => $group_name) {
+            foreach ($groups as $groupuid => $groupname) {
 
                 // Prepare new course data.
                 if ($strategy == self::GROUP_TO_COURSE) {
-                    $idnumber = "$course_uid:$group_uid";
-                    $newcourse = locallib::build_course($coursedata, $group_name, $group_uid);
+                    $idnumber = "$courseuid:$groupuid";
+                    $newcourse = locallib::build_course($coursedata, $groupname, $groupuid);
                 } else {
-                    $idnumber = $course_uid;
+                    $idnumber = $courseuid;
                     $newcourse = locallib::build_course($coursedata);
                 }
 
@@ -777,11 +944,26 @@ class sync {
 
                         // Log success.
                         if ($strategy == self::GROUP_TO_COURSE) {
-                            $this->set_moodle_course_url($course, $group_uid);
-                            $message = get_string('info:createdmoodlecoursegroup', 'enrol_campusonline', ['courseid' => $courseid, 'course_uid' => $course_uid, 'group_uid' => $group_uid]);
+                            $this->set_moodle_course_url($course, $groupuid);
+                            $message = get_string(
+                                'info:createdmoodlecoursegroup',
+                                'enrol_campusonline',
+                                [
+                                    'courseid' => $courseid,
+                                    'course_uid' => $courseuid,
+                                    'group_uid' => $groupuid,
+                                ]
+                            );
                         } else {
                             $this->set_moodle_course_url($course);
-                            $message = get_string('info:createdmoodlecourse', 'enrol_campusonline', ['courseid' => $courseid, 'course_uid' => $course_uid]);
+                            $message = get_string(
+                                'info:createdmoodlecourse',
+                                'enrol_campusonline',
+                                [
+                                    'courseid' => $courseid,
+                                    'course_uid' => $courseuid,
+                                ]
+                            );
                         }
                         locallib::write_log('create_course', $message, 0, $courseid, $this->trace, 3);
 
@@ -789,9 +971,16 @@ class sync {
 
                         // Log error.
                         if ($strategy == self::GROUP_TO_COURSE) {
-                            $message = get_string('error:couldnotcreatemoodlecoursegroup', 'enrol_campusonline', ['course_uid' => $course_uid, 'group_uid' => $group_uid]);
+                            $message = get_string(
+                                'error:couldnotcreatemoodlecoursegroup',
+                                'enrol_campusonline',
+                                [
+                                    'course_uid' => $courseuid,
+                                    'group_uid' => $groupuid,
+                                ]
+                            );
                         } else {
-                            $message = get_string('error:couldnotcreatemoodlecourse', 'enrol_campusonline', $course_uid);
+                            $message = get_string('error:couldnotcreatemoodlecourse', 'enrol_campusonline', $courseuid);
                         }
                         locallib::write_log('create_course', $message, 2, null, $this->trace, 3);
                     }
@@ -807,14 +996,14 @@ class sync {
                     // Update course URL in CAMPUSonline.
                     if ($updatecourseurls == 1) {
                         if ($strategy == self::GROUP_TO_COURSE) {
-                            $this->set_moodle_course_url($course, $group_uid);
+                            $this->set_moodle_course_url($course, $groupuid);
                         } else {
                             $this->set_moodle_course_url($course);
                         }
                     }
 
                     // Skip.
-                    if (!$course_uids && $updatecourses == 0) {
+                    if (!$courseuids && $updatecourses == 0) {
                         continue;
                     }
 
@@ -836,9 +1025,17 @@ class sync {
 
                         // Log success.
                         if ($strategy == self::GROUP_TO_COURSE) {
-                            $message = get_string('info:updatedmoodlecoursegroup', 'enrol_campusonline', ['courseid' => $courseid, 'course_uid' => $course_uid, 'group_uid' => $group_uid]);
+                            $message = get_string(
+                                'info:updatedmoodlecoursegroup',
+                                'enrol_campusonline',
+                                ['courseid' => $courseid, 'course_uid' => $courseuid, 'group_uid' => $groupuid]
+                            );
                         } else {
-                            $message = get_string('info:updatedmoodlecourse', 'enrol_campusonline', ['courseid' => $courseid, 'course_uid' => $course_uid]);
+                            $message = get_string(
+                                'info:updatedmoodlecourse',
+                                'enrol_campusonline',
+                                ['courseid' => $courseid, 'course_uid' => $courseuid]
+                            );
                         }
                         locallib::write_log('update_course', $message, 0, $courseid, $this->trace, 3);
                     }
@@ -882,7 +1079,7 @@ class sync {
              'name' => 'CAMPUSonline',
              'idnumber' => $course->idnumber,
             ])) {
-            $grouping_id = $grouping->id;
+            $groupingid = $grouping->id;
         } else {
             $grouping = new \stdClass();
             $grouping->courseid = $courseid;
@@ -890,8 +1087,8 @@ class sync {
             $grouping->idnumber = $course->idnumber;
             $grouping->timecreated = time();
             $grouping->timemodified = time();
-            $grouping_id = groups_create_grouping($grouping);
-            $course->defaultgroupingid = $grouping_id;
+            $groupingid = groups_create_grouping($grouping);
+            $course->defaultgroupingid = $groupingid;
             $DB->update_record('course', $course);
             $message = get_string('info:createdgrouping', 'enrol_campusonline', $courseid);
             locallib::write_log('sync_groups', $message, 0, $courseid, $this->trace, 3);
@@ -905,32 +1102,32 @@ class sync {
         }
 
         // Sum up existing enrolments in Moodle course, to save on DB queries.
-        $existing_enrolments = array();
-        $existing_enrolments_userids = array();
-        $existing_enrolments_raw = $DB->get_records('user_enrolments', ['enrolid' => $enrol->id]);
-        foreach ($existing_enrolments_raw as $existing_enrolment) {
-            $existing_enrolments[$existing_enrolment->userid] = $existing_enrolment;
+        $existingenrolments = [];
+        $existingenrolmentsuserids = [];
+        $existingenrolmentsraw = $DB->get_records('user_enrolments', ['enrolid' => $enrol->id]);
+        foreach ($existingenrolmentsraw as $existingenrolment) {
+            $existingenrolments[$existingenrolment->userid] = $existingenrolment;
         }
 
         // Get enrolments from CAMPUSonline.
-        $assigned_roles = array();
+        $assignedroles = [];
         $enrolments = $this->get_enrolments($course);
 
         // Check if this is a course for a single groups.
         $uids = explode(':', $course->idnumber);
-        $course_uid = $uids[0];
-        $group_uid = null;
+        $courseuid = $uids[0];
+        $groupuid = null;
         if (count($uids) > 1) {
-            $group_uid = $uids[1];
+            $groupuid = $uids[1];
         }
 
-        $group_members = array();
+        $groupmembers = [];
 
         foreach ($enrolments as $enrolment) {
 
             // Skip if enrolment is not for this group.
-            if ($group_uid) {
-                if (property_exists($enrolment, 'courseGroupUid') && $enrolment->courseGroupUid != $group_uid) {
+            if ($groupuid) {
+                if (property_exists($enrolment, 'courseGroupUid') && $enrolment->courseGroupUid != $groupuid) {
                     continue;
                 }
             }
@@ -974,7 +1171,7 @@ class sync {
             }
 
             // Create enrolment if needed.
-            if (!in_array($userid, array_keys($existing_enrolments))) {
+            if (!in_array($userid, array_keys($existingenrolments))) {
 
                 // Create enrolment.
                 $enrolment = new \stdClass();
@@ -987,22 +1184,26 @@ class sync {
                 $enrolment->timecreated = time();
                 $enrolment->timemodified = time();
                 $DB->insert_record('user_enrolments', $enrolment);
-                $existing_enrolments_userids[] = $userid;
+                $existingenrolmentsuserids[] = $userid;
 
                 // Log success.
                 $message = get_string('info:enrolleduser', 'enrol_campusonline', ['userid' => $userid, 'courseid' => $courseid]);
                 locallib::write_log('enrol_user', $message, 0, $courseid, $this->trace, 3);
 
-            // Activate enrolment if needed.
+                // Activate enrolment if needed.
             } else {
-                if ($existing_enrolments[$userid]->status == 1) {
-                    $enrolment = $existing_enrolments[$userid];
+                if ($existingenrolments[$userid]->status == 1) {
+                    $enrolment = $existingenrolments[$userid];
                     $enrolment->status = 0;
                     $enrolment->timemodified = time();
                     $DB->update_record('user_enrolments', $enrolment);
 
                     // Log success.
-                    $message = get_string('info:activatedenrolment', 'enrol_campusonline', ['userid' => $userid, 'courseid' => $courseid]);
+                    $message = get_string(
+                        'info:activatedenrolment',
+                        'enrol_campusonline',
+                        ['userid' => $userid, 'courseid' => $courseid]
+                    );
                     locallib::write_log('enrol_user', $message, 0, $courseid, $this->trace, 3);
                 }
             }
@@ -1010,26 +1211,30 @@ class sync {
             // Add role.
             if (!user_has_role_assignment($userid, $roleid, $context->id)) {
                 $success = role_assign($roleid, $userid, $context->id);
-                $message = get_string('info:assignedrole', 'enrol_campusonline', ['roleid' => $roleid, 'userid' => $userid, 'courseid' => $courseid]);
+                $message = get_string(
+                    'info:assignedrole',
+                    'enrol_campusonline',
+                    ['roleid' => $roleid, 'userid' => $userid, 'courseid' => $courseid]
+                );
                 locallib::write_log('enrol_user', $message, 0, $courseid, $this->trace, 3);
             }
 
             // Add to assigned roles for later cleanup.
-            $assigned_roles[$userid][] = $roleid;
+            $assignedroles[$userid][] = $roleid;
 
             // Add to group members, to process later.
             if ($groups && property_exists($enrolment, 'courseGroupUid')) {
-                $group_members[$enrolment->courseGroupUid][] = $userid;
+                $groupmembers[$enrolment->courseGroupUid][] = $userid;
             }
         }
 
         // Cleanup - remove roles and suspend empty enrolments.
         $enrolid = $DB->get_record('enrol', ['courseid' => $courseid, 'enrol' => 'campusonline'])->id;
-        $moodle_co_enrolments = $DB->get_records('user_enrolments', ['enrolid' => $enrolid, 'status' => 0]);
+        $moodlecoenrolments = $DB->get_records('user_enrolments', ['enrolid' => $enrolid, 'status' => 0]);
 
-        foreach ($moodle_co_enrolments as $moodle_co_enrolment) {
+        foreach ($moodlecoenrolments as $moodlecoenrolment) {
 
-            $userid = $moodle_co_enrolment->userid;
+            $userid = $moodlecoenrolment->userid;
 
             // Check if user is enrolled via our own enrolment method.
             if (!$DB->get_record('user_enrolments', ['enrolid' => $enrolid, 'userid' => $userid, 'status' => 0])) {
@@ -1039,9 +1244,13 @@ class sync {
             // Remove roles.
             $roles = get_user_roles($context, $userid);
             foreach ($roles as $role) {
-                if (!array_key_exists($userid, $assigned_roles) || !in_array($role->roleid, $assigned_roles[$userid])) {
-                    $success = role_unassign($role->roleid, $userid, $context->id);
-                    $message = get_string('info:removedrole', 'enrol_campusonline', ['roleid' => $role->roleid, 'userid' => $userid, 'courseid' => $courseid]);
+                if (!array_key_exists($userid, $assignedroles) || !in_array($role->roleid, $assignedroles[$userid])) {
+                    role_unassign($role->roleid, $userid, $context->id);
+                    $message = get_string(
+                        'info:removedrole',
+                        'enrol_campusonline',
+                        ['roleid' => $role->roleid, 'userid' => $userid, 'courseid' => $courseid]
+                    );
                     locallib::write_log('enrol_user', $message, 0, $courseid, $this->trace, 3);
                 }
             }
@@ -1052,65 +1261,81 @@ class sync {
                 $enrolment = $DB->get_record('user_enrolments', ['enrolid' => $enrolid, 'userid' => $userid]);
                 $enrolment->status = 1;
                 $DB->update_record('user_enrolments', $enrolment);
-                $message = get_string('info:suspendedenrolment', 'enrol_campusonline', ['userid' => $userid, 'courseid' => $courseid]);
+                $message = get_string(
+                    'info:suspendedenrolment',
+                    'enrol_campusonline',
+                    ['userid' => $userid, 'courseid' => $courseid]
+                );
                 locallib::write_log('enrol_user', $message, 0, $courseid, $this->trace, 3);
             }
         }
 
         // Create/update groups.
-        foreach ($group_members as $group_uid => $members) {
+        foreach ($groupmembers as $groupuid => $members) {
 
             // Get group.
-            if ($group = $DB->get_record('groups', ['courseid' => $courseid, 'idnumber' => $group_uid])) {
+            if ($group = $DB->get_record('groups', ['courseid' => $courseid, 'idnumber' => $groupuid])) {
                 $groupid = $group->id;
             } else {
 
                 // Create group.
                 $group = new \stdClass();
                 $group->courseid = $courseid;
-                $group->name = $groups[$group_uid];
-                $group->idnumber = $group_uid;
+                $group->name = $groups[$groupuid];
+                $group->idnumber = $groupuid;
                 $group->description = self::CREATED_BY;
                 $group->timecreated = time();
                 $group->timemodified = time();
                 $groupid = groups_create_group($group);
 
                 // Add to grouping.
-                if (!$DB->get_record('groupings_groups', ['groupid' => $groupid, 'groupingid' => $grouping_id])) {
+                if (!$DB->get_record('groupings_groups', ['groupid' => $groupid, 'groupingid' => $groupingid])) {
                     $groupinggroup = new \stdClass();
                     $groupinggroup->groupid = $groupid;
-                    $groupinggroup->groupingid = $grouping_id;
+                    $groupinggroup->groupingid = $groupingid;
                     $groupinggroup->timeadded = time();
                     $DB->insert_record('groupings_groups', $groupinggroup);
                 }
 
-                $message = get_string('info:createdmoodlegroup', 'enrol_campusonline', ['groupname' => $group->name, 'group_uid' => $group_uid]);
+                $message = get_string(
+                    'info:createdmoodlegroup',
+                    'enrol_campusonline',
+                    ['groupname' => $group->name, 'group_uid' => $groupuid]
+                );
                 locallib::write_log('sync_groups', $message, 0, $courseid, $this->trace, 3);
             }
 
             // Add to array with moodle group ids for later cleanup.
-            $group_members_moodle[$groupid] = $members;
+            $groupmembersmoodle[$groupid] = $members;
 
             // Add members.
             foreach ($members as $userid) {
                 if (!groups_is_member($groupid, $userid)) {
                     groups_add_member($groupid, $userid);
-                    $message = get_string('info:addedusertogroup', 'enrol_campusonline', ['userid' => $userid, 'groupname' => $group->name]);
+                    $message = get_string(
+                        'info:addedusertogroup',
+                        'enrol_campusonline',
+                        ['userid' => $userid, 'groupname' => $group->name]
+                    );
                     locallib::write_log('sync_groups', $message, 0, $courseid, $this->trace, 3);
                 }
             }
         }
 
         // Remove members.
-        $course_groups = $DB->get_records('groupings_groups', ['groupingid' => $grouping_id]);
-        foreach ($course_groups as $course_group) {
-            $groupid = $course_group->groupid;
+        $coursegroups = $DB->get_records('groupings_groups', ['groupingid' => $groupingid]);
+        foreach ($coursegroups as $coursegroup) {
+            $groupid = $coursegroup->groupid;
 
             $members = groups_get_members($groupid);
             foreach ($members as $member) {
-                if (!array_key_exists($groupid, $group_members_moodle) || !in_array($member->id, $group_members_moodle[$groupid])) {
+                if (!array_key_exists($groupid, $groupmembersmoodle) || !in_array($member->id, $groupmembersmoodle[$groupid])) {
                     groups_remove_member($groupid, $member->id);
-                    $message = get_string('info:removeduserfromgroup', 'enrol_campusonline', ['userid' => $member->id, 'groupname' => $group->name]);
+                    $message = get_string(
+                        'info:removeduserfromgroup',
+                        'enrol_campusonline',
+                        ['userid' => $member->id, 'groupname' => $group->name]
+                    );
                     locallib::write_log('sync_groups', $message, 0, $courseid, $this->trace, 3);
                 }
             }
@@ -1128,7 +1353,7 @@ class sync {
         $this->get_org_data();
 
         // Get selected organisations.
-        $orgids = array();
+        $orgids = [];
         $endpoint = 'co-brm-core/org/api/selected-organisation-uids';
         $key = $this->config->orgkey;
         $query = ['key' => $key];
@@ -1149,7 +1374,7 @@ class sync {
 
         // Sort selected organisations by number of parents that are also selected,
         // so that sync progresses in the correct order.
-        $sorted_orgids = array();
+        $sortedorgids = [];
         foreach ($orgids as $orgid) {
             $parents = 0;
             $org = $this->orgdata[$orgid];
@@ -1158,12 +1383,12 @@ class sync {
                 $org = $this->orgdata[$parentid];
                 $parents++;
             }
-            $sorted_orgids[$parents][] = $orgid;
+            $sortedorgids[$parents][] = $orgid;
         }
-        asort($sorted_orgids);
+        asort($sortedorgids);
 
         // Sync organisations.
-        foreach ($sorted_orgids as $orgids) {
+        foreach ($sortedorgids as $orgids) {
             foreach ($orgids as $orgid) {
                 $this->sync_org($orgid);
             }
@@ -1183,16 +1408,20 @@ class sync {
 
         // Get org.
         $org = $this->orgdata[$orgid];
-        $org_uid = $org->uid;
+        $orguid = $org->uid;
 
         // Get parent.
         if (property_exists($org, 'parentUid')) {
             $parentid = $org->parentUid;
-            if ($parent_cat = $DB->get_record('course_categories', ['idnumber' => $parentid])) {
-                $parent = $parent_cat->id;
+            if ($parentcat = $DB->get_record('course_categories', ['idnumber' => $parentid])) {
+                $parent = $parentcat->id;
             } else {
                 // Log error.
-                $message = get_string('error:couldnotcreatecategory', 'enrol_campusonline', ['org_uid' => $org_uid, 'parentid' => $parentid]);
+                $message = get_string(
+                    'error:couldnotcreatecategory',
+                    'enrol_campusonline',
+                    ['org_uid' => $orguid, 'parentid' => $parentid]
+                );
                 locallib::write_log('sync_org', $message, 2, null, $this->trace, 3);
                 return;
             }
@@ -1201,14 +1430,14 @@ class sync {
         }
 
         // Get course category.
-        if ($category = $DB->get_record('course_categories', ['idnumber' => $org_uid])) {
+        if ($category = $DB->get_record('course_categories', ['idnumber' => $orguid])) {
 
             // Get category object.
             $categoryid = $category->id;
             $cat = \core_course_category::get($categoryid);
 
             // Check if something needs updating.
-            $actions = array();
+            $actions = [];
             $name = locallib::normalize_value($org->name);
             if ($category->name != $name) {
                 $cat->__set('name', $name);
@@ -1224,10 +1453,18 @@ class sync {
             if (count($actions) > 0) {
                 $actions = implode('&', $actions);
                 $actions = ucfirst($actions);
-                $message = get_string('info:updatedcategory', 'enrol_campusonline', ['actions' => $actions, 'categoryid' => $category->id, 'org_uid' => $org_uid, 'categoryname' => $category->name]);
+                $message = get_string(
+                    'info:updatedcategory',
+                    'enrol_campusonline',
+                    ['actions' => $actions, 'categoryid' => $category->id, 'org_uid' => $orguid, 'categoryname' => $category->name]
+                );
                 locallib::write_log('sync_org', $message, 0, null, $this->trace, 3);
             } else {
-                $message = get_string('info:categoryexists', 'enrol_campusonline', ['categoryid' => $category->id, 'org_uid' => $org_uid, 'categoryname' => $category->name]);
+                $message = get_string(
+                    'info:categoryexists',
+                    'enrol_campusonline',
+                    ['categoryid' => $category->id, 'org_uid' => $orguid, 'categoryname' => $category->name]
+                );
                 locallib::write_log('sync_org', $message, 0, null, $this->trace, 3);
             }
 
@@ -1237,55 +1474,60 @@ class sync {
             $data = new \stdClass();
             $data->name = locallib::normalize_value($org->name);
             $data->parent = $parent;
-            $data->idnumber = $org_uid;
+            $data->idnumber = $orguid;
             $data->description = self::CREATED_BY;
             $data->timecreated = time();
             $data->timemodified = time();
             if ($category = \core_course_category::create($data)) {
-                $message = get_string('info:createdcategory', 'enrol_campusonline', ['categoryid' => $category->id, 'org_uid' => $org_uid, 'categoryname' => $category->name]);
+                $message = get_string(
+                    'info:createdcategory',
+                    'enrol_campusonline',
+                    ['categoryid' => $category->id, 'org_uid' => $orguid, 'categoryname' => $category->name]
+                );
                 locallib::write_log('sync_org', $message, 0, null, $this->trace, 3);
             } else {
-                $message = get_string('error:couldnotcreatecategorysimple', 'enrol_campusonline', $org_uid);
+                $message = get_string('error:couldnotcreatecategorysimple', 'enrol_campusonline', $orguid);
                 locallib::write_log('sync_org', $message, 2, null, $this->trace, 3);
             }
         }
 
         // Sync org enrollments.
         if ($this->config->syncorgroles && $this->orgroles) {
-            $this->sync_org_enrolments($org_uid, $category->id);
+            $this->sync_org_enrolments($orguid, $category->id);
         }
     }
 
     /**
      * Syncs role assignments for a single organisation.
      *
-     * @param string $org_uid
+     * @param string $orguid
      * @param string $categoryid
      *
      * @return void
      */
-    public function sync_org_enrolments($org_uid, $categoryid) {
+    public function sync_org_enrolments($orguid, $categoryid) {
 
         global $DB;
 
         foreach ($this->orgroles as $roleid => $rolename) {
 
-            $userids = array();
+            $userids = [];
 
             // Convert moodle rolename to CO rolename.
-            $co_role = strtoupper(substr($rolename, 3));
+            $corole = strtoupper(substr($rolename, 3));
 
             // Get role assignments from CO.
             $endpoint = 'co-auth/auth/api/person-uids';
             $query = [
                 'role_name' => $rolename,
-                'context' => "org-$org_uid"
+                'context' => "org-$orguid",
             ];
-            if ($result = $this->rest_call($endpoint, $query))
-            if (property_exists($result, 'items')) {
-                foreach ($result->items as $uid) {
-                    if ($userid = $this->get_moodle_user_id($uid)) {
-                        $userids[] = $userid;
+            if ($result = $this->rest_call($endpoint, $query)) {
+                if (property_exists($result, 'items')) {
+                    foreach ($result->items as $uid) {
+                        if ($userid = $this->get_moodle_user_id($uid)) {
+                            $userids[] = $userid;
+                        }
                     }
                 }
             }
@@ -1296,7 +1538,11 @@ class sync {
             foreach ($users as $user) {
                 if (!in_array($user->id, $userids)) {
                     role_unassign($roleid, $user->id, $context->id);
-                    $message = get_string('info:removedrolefromuser', 'enrol_campusonline', ['roleid' => $roleid, 'userid' => $user->id, 'org_uid' => $org_uid]);
+                    $message = get_string(
+                        'info:removedrolefromuser',
+                        'enrol_campusonline',
+                        ['roleid' => $roleid, 'userid' => $user->id, 'org_uid' => $orguid]
+                    );
                     locallib::write_log('sync_org_roles', $message, 0, null, $this->trace, 5);
                 }
             }
@@ -1305,7 +1551,11 @@ class sync {
             foreach ($userids as $userid) {
                 if (!user_has_role_assignment($userid, $roleid, $context->id)) {
                     $success = role_assign($roleid, $userid, $context->id);
-                    $message = get_string('info:assignedroletouser', 'enrol_campusonline', ['roleid' => $roleid, 'userid' => $userid, 'org_uid' => $org_uid]);
+                    $message = get_string(
+                        'info:assignedroletouser',
+                        'enrol_campusonline',
+                        ['roleid' => $roleid, 'userid' => $userid, 'org_uid' => $orguid]
+                    );
                     locallib::write_log('sync_org_roles', $message, 0, null, $this->trace, 5);
                 }
             }
@@ -1339,7 +1589,7 @@ class sync {
 
                     // Log warning.
                     $message = get_string('warning:skippedsyncinguserdata', 'enrol_campusonline', $uid);
-                    locallib::write_log('sync_user', $message, 1, $courseid, $this->trace, 3);
+                    locallib::write_log('sync_user', $message, 1, null, $this->trace, 3);
                     continue;
                 }
             }
@@ -1402,7 +1652,13 @@ class sync {
 
             // Write trace output that no update is necessary.
             if (array_key_exists('traceoutput', $_GET)) {
-                $this->trace->output(get_string('info:noupdatenecessary', 'enrol_campusonline', ['userid' => $user->id, 'uid' => $uid]));
+                $this->trace->output(
+                    get_string(
+                        'info:noupdatenecessary',
+                        'enrol_campusonline',
+                        ['userid' => $user->id, 'uid' => $uid]
+                        )
+                    );
             }
         }
     }
@@ -1412,9 +1668,9 @@ class sync {
      *
      * @param string $uid
      *
-     * @return int $userid
+     * @return int|null $userid
      */
-    private function create_moodle_user($uid) {
+    private function create_moodle_user($uid): int|null {
 
         global $CFG, $DB;
 
@@ -1477,21 +1733,21 @@ class sync {
      *
      * @return array $courses
      */
-    private function enrich_courses($courses) {
+    private function enrich_courses($courses): array {
 
         $this->get_org_data();
         $this->get_semester_data();
 
-        $enriched_courses = array();
+        $enrichedcourses = [];
         foreach ($courses as $course) {
 
-            $sanitized_course = array();
+            $sanitizedcourse = [];
             $course = (array)$course;
 
             // Values from course endpoint.
             foreach ($course as $key => $value) {
                 $value = locallib::normalize_value($value);
-                $sanitized_course["course:$key"] = $value;
+                $sanitizedcourse["course:$key"] = $value;
             }
 
             // Attach values from org endpoint.
@@ -1500,7 +1756,7 @@ class sync {
 
             foreach ($org as $key => $value) {
                 $value = locallib::normalize_value($value);
-                $sanitized_course["org:$key"] = $value;
+                $sanitizedcourse["org:$key"] = $value;
             }
 
             // Attach values from semester endpoint.
@@ -1509,19 +1765,21 @@ class sync {
 
             foreach ($semester as $key => $value) {
                 $value = locallib::normalize_value($value);
-                $sanitized_course["semester:$key"] = $value;
+                $sanitizedcourse["semester:$key"] = $value;
             }
 
-            $enriched_courses[] = $sanitized_course;
+            $enrichedcourses[] = $sanitizedcourse;
         }
 
-        return $enriched_courses;
+        return $enrichedcourses;
     }
 
     /**
      * Gets org data from CAMPUSonline.
+     *
+     * @return void
      */
-    private function get_org_data() {
+    private function get_org_data(): void {
 
         if ($this->orgdata) {
             return;
@@ -1531,7 +1789,7 @@ class sync {
         $result = $this->rest_call($endpoint, null, 'GET', true);
 
         // Add to class property.
-        $this->orgdata = array();
+        $this->orgdata = [];
         if (property_exists($result, 'items')) {
             foreach ($result->items as $item) {
                 $this->orgdata[$item->uid] = $item;
@@ -1542,7 +1800,7 @@ class sync {
     /**
      * Gets semester data from CAMPUSonline.
      */
-    private function get_semester_data() {
+    private function get_semester_data(): void {
 
         if ($this->semesterdata) {
             return;
@@ -1552,7 +1810,7 @@ class sync {
         $result = $this->rest_call($endpoint, null, 'GET', true);
 
         // Add to class property.
-        $this->semesterdata = array();
+        $this->semesterdata = [];
         if (property_exists($result, 'items')) {
             foreach ($result->items as $item) {
                 $this->semesterdata[$item->key] = $item;
@@ -1588,9 +1846,9 @@ class sync {
         }
 
         // Initialize variables.
-        $all_items = [];
+        $allitems = [];
         $cursor = null;
-        $response_object = new \stdClass();
+        $responseobject = new \stdClass();
         $page = !array_key_exists('limit', $_GET) || $alwayspage;
 
         do {
@@ -1601,8 +1859,14 @@ class sync {
 
                 // Debug message.
                 if ($this->config->restcalls && PHP_SAPI === 'cli') {
-                    $count = count($all_items);
-                    $this->trace->output(get_string('info:pagingcursor', 'enrol_campusonline', ['cursor' => $cursor, 'count' => $count]));
+                    $count = count($allitems);
+                    $this->trace->output(
+                        get_string(
+                            'info:pagingcursor',
+                            'enrol_campusonline',
+                            ['cursor' => $cursor, 'count' => $count]
+                        )
+                    );
                 }
             }
 
@@ -1619,34 +1883,40 @@ class sync {
                     // Debug message.
                     if ($this->config->restcalls && PHP_SAPI === 'cli') {
                         if ($query) {
-                            $json_query = json_encode($query);
+                            $jsonquery = json_encode($query);
                         } else {
-                            $json_query = '';
+                            $jsonquery = '';
                         }
-                        $this->trace->output(get_string('info:apirequest', 'enrol_campusonline', ['method' => $method, 'endpoint' => $endpoint, 'query' => $json_query]));
+                        $this->trace->output(
+                            get_string(
+                                'info:apirequest',
+                                'enrol_campusonline',
+                                ['method' => $method, 'endpoint' => $endpoint, 'query' => $jsonquery]
+                            )
+                        );
                     }
 
                     $response = $client->request($method, $url, [
                         'headers' => [
                             'accept' => 'application/json',
                             'Content-Type' => 'application/json',
-                            'Authorization' => 'Bearer ' . $this->token
+                            'Authorization' => 'Bearer ' . $this->token,
                         ],
-                        $payload => $query
+                        $payload => $query,
                     ]);
 
                     // Decode the response.
-                    $response_body = $response->getBody()->getContents();
-                    $response_object = json_decode($response_body, false);
+                    $responsebody = $response->getBody()->getContents();
+                    $responseobject = json_decode($responsebody, false);
 
                     // Merge the current page's items with the collected items.
-                    if (property_exists($response_object, 'items')) {
-                        $all_items = array_merge($all_items, $response_object->items);
+                    if (property_exists($responseobject, 'items')) {
+                        $allitems = array_merge($allitems, $responseobject->items);
                     }
 
                     // Check if there is a next cursor for pagination.
-                    if (property_exists($response_object, 'nextCursor')) {
-                        $cursor = $response_object->nextCursor;
+                    if (property_exists($responseobject, 'nextCursor')) {
+                        $cursor = $responseobject->nextCursor;
                     } else {
                         $cursor = null;
                     }
@@ -1654,10 +1924,10 @@ class sync {
                     // Determine if we need to keep paging.
                     $page = !array_key_exists('limit', $_GET) || $alwayspage;
 
-                    // Exit the loop on success
+                    // Exit the loop on success.
                     break;
 
-                // Error handling.
+                    // Error handling.
                 } catch (\Throwable $e) {
                     $retry++;
                     if ($retry > $retries) {
@@ -1666,11 +1936,19 @@ class sync {
                         locallib::write_log('error', $message, 2, null, $this->trace);
 
                         // Create object with exception message.
-                        $response_object = new \stdClass();
-                        $response_object->exception = $error;
-                        return $response_object;
+                        $responseobject = new \stdClass();
+                        $responseobject->exception = $error;
+                        return $responseobject;
                     } else {
-                        locallib::write_log('warning', get_string('warning:retryingfailedrequest', 'enrol_campusonline', $e->getMessage()), 1, null, $this->trace);
+                        locallib::write_log(
+                            'warning',
+                            get_string('warning:retryingfailedrequest',
+                            'enrol_campusonline',
+                            $e->getMessage()),
+                            1,
+                            null,
+                            $this->trace
+                        );
                         sleep(3);
                     }
                 }
@@ -1679,29 +1957,29 @@ class sync {
         } while ($page && $cursor !== null);
 
         // Return the complete collection of items.
-        if ($all_items) {
+        if ($allitems) {
             return (object)[
-                'items' => $all_items
+                'items' => $allitems,
             ];
         }
-        return ($response_object);
+        return ($responseobject);
     }
 
     /**
      * Sets the moodle course URL in CAMPUSonline.
      *
      * @param object $course
-     * @param string $group_uid
+     * @param string $groupuid
      *
      * @return void
      */
-    private function set_moodle_course_url($course, $group_uid = null) {
+    private function set_moodle_course_url($course, $groupuid = null) {
 
         global $DB;
 
         // Add own uid.
-        $course_uid = explode(':', $course->idnumber)[0];
-        $course_uids[] = $course_uid;
+        $courseuid = explode(':', $course->idnumber)[0];
+        $courseuids[] = $courseuid;
 
         // Add other uids.
         $handler = \core_customfield\handler::get_handler('core_course', 'course');
@@ -1716,38 +1994,46 @@ class sync {
         }
 
         // Get course custom field directly via DB, to avoid having to deal with custom field API.
-        $other_uids = $DB->get_field('customfield_data', 'charvalue',
+        $otheruids = $DB->get_field('customfield_data', 'charvalue',
             ['instanceid' => $course->id, 'fieldid' => $this->customfieldids['campusonline_other_co_course_uids']]);
-        if ($other_uids) {
-            $other_uids = preg_split('/\s*,\s*/', $other_uids);
-            $course_uids = array_merge($course_uids, $other_uids);
+        if ($otheruids) {
+            $otheruids = preg_split('/\s*,\s*/', $otheruids);
+            $courseuids = array_merge($courseuids, $otheruids);
         }
 
         // Create URL.
         $endpoint = 'co-tm-core/course/api/e-learning-infos';
-        $moodle_url = new moodle_url('/course/view.php', array('id' => $course->id));
-        $url = $moodle_url->__toString();
+        $moodleurl = new moodle_url('/course/view.php', ['id' => $course->id]);
+        $url = $moodleurl->__toString();
 
         $query['externalUrl'] = $url;
-        if ($group_uid) {
-            $query['courseGroupUid'] = $group_uid;
+        if ($groupuid) {
+            $query['courseGroupUid'] = $groupuid;
         }
 
         // Set Moodle course URL in CAMPUSonline.
-        foreach ($course_uids as $course_uid) {
-            $query['courseUid'] = $course_uid;
+        foreach ($courseuids as $courseuid) {
+            $query['courseUid'] = $courseuid;
 
             // Log success.
             if ($result = $this->rest_call($endpoint, $query, 'POST')) {
                 if (property_exists($result, 'externalUrl')) {
                     $url = $result->externalUrl;
-                    $message = get_string('info:updatedcampuscourse', 'enrol_campusonline', ['course_uid' => $course_uid, 'url' => $url]);
+                    $message = get_string(
+                        'info:updatedcampuscourse',
+                        'enrol_campusonline',
+                        ['course_uid' => $courseuid, 'url' => $url]
+                    );
                     locallib::write_log('update_course', $message, 0, $course->id, $this->trace, 3);
                     continue;
                 }
 
                 // Error.
-                $message = get_string('error:couldnotupdatecampuscourse', 'enrol_campusonline', ['course_uid' => $course_uid, 'url' => $url]);
+                $message = get_string(
+                    'error:couldnotupdatecampuscourse',
+                    'enrol_campusonline',
+                    ['course_uid' => $courseuid, 'url' => $url]
+                );
                 locallib::write_log('update_course', $message, 2, $course->id, $this->trace, 3);
             }
         }
@@ -1756,9 +2042,9 @@ class sync {
     /**
      * Gets access token for REST calls.
      *
-     * @return string $token
+     * @return void
      */
-    private function update_token() {
+    private function update_token(): void {
 
         $path = $this->config->endpoint;
         $clientid = $this->config->clientid;
@@ -1786,25 +2072,25 @@ class sync {
                 'form_params' => [
                     'grant_type' => 'client_credentials',
                     'client_id' => $clientid,
-                    'client_secret' => $secret
-                ]
+                    'client_secret' => $secret,
+                ],
             ]);
 
             // Analyze response.
-            $response_body = $response->getBody()->getContents();
-            $response_object = json_decode($response_body, false);
-            $response_array = (array)$response_object;
+            $responsebody = $response->getBody()->getContents();
+            $responseobject = json_decode($responsebody, false);
+            $responsearray = (array)$responseobject;
 
             // Analyze response.
-            if (array_key_exists('error', $response_array)) {
-                $this->error = $response_array['error'] . ': ' . $response_array['error_description'];
-            } elseif (array_key_exists('access_token', $response_array)) {
-                $this->token = $response_array['access_token'];
+            if (array_key_exists('error', $responsearray)) {
+                $this->error = $responsearray['error'] . ': ' . $responsearray['error_description'];
+            } else if (array_key_exists('access_token', $responsearray)) {
+                $this->token = $responsearray['access_token'];
             } else {
-                $this->error = $response_array['error'] . ': ' . get_string('error:unknown', 'enrol_campusonline');
+                $this->error = $responsearray['error'] . ': ' . get_string('error:unknown', 'enrol_campusonline');
             }
 
-        // Error handling.
+            // Error handling.
         } catch (\Throwable $e) {
 
             $error = $e->getMessage();

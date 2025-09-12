@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Moodle page for controlling the course synchronization.
+ *
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
  * @author     think-modular (stefan.weber@think-modular.com)
@@ -24,7 +26,6 @@
 require_once('../../config.php');
 
 use enrol_campusonline\sync;
-use enrol_campusonline\locallib;
 
 global $DB;
 
@@ -38,7 +39,7 @@ require_capability('enrol/campusonline:synccourse', $context);
 // Set page.
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('incourse');
-$PAGE->set_url('/enrol/campusonline/sync_course.php', array('courseid' => $courseid));
+$PAGE->set_url('/enrol/campusonline/sync_course.php', ['courseid' => $courseid]);
 $PAGE->set_title(get_string('syncthiscourse', 'enrol_campusonline'));
 $PAGE->set_heading(get_string('syncthiscourse', 'enrol_campusonline'));
 
@@ -54,8 +55,8 @@ echo "<pre>";
 if ($sync->is_connected()) {
 
     // Sync course.
-    $course_uid = explode(':', $course->idnumber)[0];
-    $sync->sync_courses([$course_uid]);
+    $courseuid = explode(':', $course->idnumber)[0];
+    $sync->sync_courses([$courseuid]);
 
 } else {
 
@@ -67,8 +68,8 @@ if ($sync->is_connected()) {
 echo "</pre>";
 
 // Back to course button.
-$url = new moodle_url('/user/index.php', array('id' => $courseid));
-echo html_writer::link($url, get_string('back'), array('class' => 'btn btn-secondary m-1'));
+$url = new moodle_url('/user/index.php', ['id' => $courseid]);
+echo html_writer::link($url, get_string('back'), ['class' => 'btn btn-secondary m-1']);
 echo $OUTPUT->footer();
 
 

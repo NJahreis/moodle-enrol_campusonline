@@ -14,22 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace enrol_campusonline\observer;
+
+use enrol_campusonline\sync;
+use enrol_campusonline\locallib;
+
 /**
- * CAMPUSonline enrolment plugin.
+ * Class defining handler for the '\core\event\user_loggedin' event.
  *
  * @package    enrol_campusonline
  * @copyright  2024, TU Graz
  * @author     think-modular (stefan.weber@think-modular.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-namespace enrol_campusonline\observer;
-
-defined('MOODLE_INTERNAL') || die();
-
-use enrol_campusonline\sync;
-use enrol_campusonline\locallib;
-
 class login_observer {
 
     /**
@@ -38,8 +35,6 @@ class login_observer {
      * @param object $event
      */
     public static function event($event) {
-        global $DB;
-
         if (get_config('enrol_campusonline', 'syncusersonlogin') == 0) {
             return;
         }
@@ -49,10 +44,10 @@ class login_observer {
         $user = \core_user::get_user($userid);
 
         // Get person UID.
-        if (!$person_uid = locallib::get_person_uid($userid)) {
+        if (!$personuid = locallib::get_person_uid($userid)) {
             return;
         }
-        $person_uids = [$person_uid];
+        $personuids = [$personuid];
 
         // Initialize sync.
         $trace = new \text_progress_trace();
@@ -61,7 +56,7 @@ class login_observer {
         if ($sync->is_connected()) {
 
             // Sync user.
-            $persons = $sync->get_persons($person_uids);
+            $persons = $sync->get_persons($personuids);
             $person = reset($persons);
             $sync->update_moodle_user($user, $person);
 

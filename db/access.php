@@ -25,34 +25,34 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$capabilities = array(
-    'enrol/campusonline:unenrol' => array(
+$capabilities = [
+    'enrol/campusonline:unenrol' => [
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'archetypes' => array(
+        'archetypes' => [
             'manager' => CAP_ALLOW,
-        )
-    ),
-    'enrol/campusonline:config' => array(
+        ],
+    ],
+    'enrol/campusonline:config' => [
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'archetypes' => array(
+        'archetypes' => [
             'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
-        )
-    ),
-    'enrol/campusonline:synccourse' => array(
+        ],
+    ],
+    'enrol/campusonline:synccourse' => [
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'archetypes' => array(
+        'archetypes' => [
             'manager' => CAP_ALLOW,
-        )
-    ),
-    'enrol/campusonline:syncuser' => array(
+        ],
+    ],
+    'enrol/campusonline:syncuser' => [
         'captype' => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
+        'archetypes' => [
             'manager' => CAP_ALLOW,
-        )
-    ),
-);
+        ],
+    ],
+];

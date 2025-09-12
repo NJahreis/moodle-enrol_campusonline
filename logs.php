@@ -38,7 +38,7 @@ $PAGE->set_url('/enrol/campusonline/logs.php');
 
 // Create table.
 $download = optional_param('download', '', PARAM_ALPHA);
-$table = new \enrol_campusonline\log_table('enrol_campusonline', $PAGE->url, []);
+$table = new \enrol_campusonline\log_table('enrol_campusonline', $PAGE->url);
 $table->is_downloading($download, 'test', 'campusonline_logs');
 
 if (!$table->is_downloading()) {
@@ -51,7 +51,7 @@ if (!$table->is_downloading()) {
 
 // Back to menu settings link.
 $url = new moodle_url('/admin/settings.php?section=enrolsettingscampusonline');
-echo html_writer::link($url, get_string('backtosettings', 'enrol_campusonline'), array('class' => 'btn btn-secondary m-1'));
+echo html_writer::link($url, get_string('backtosettings', 'enrol_campusonline'), ['class' => 'btn btn-secondary m-1']);
 
 // Work out the sql for the table.
 $table->set_sql('*', "{enrol_campusonline_logs}", '1=1');
