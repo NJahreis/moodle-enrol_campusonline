@@ -225,8 +225,8 @@ class locallib {
 
         $customfields = [];
         $handler = \core_customfield\handler::get_handler('core_course', 'course');
-        if ($customfields = $handler->get_fields()) {
-            foreach ($customfields as $field) {
+        if ($ccfs = $handler->get_fields()) {
+            foreach ($ccfs as $field) {
                 $name = $field->get('shortname');
                 if (!empty($coursedata)) {
                     $customfields[$name] = self::get_field_value('course_customfield_' . $name, $coursedata);
