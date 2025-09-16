@@ -219,7 +219,7 @@ $string['studentrole'] = 'Students';
 $string['students'] = 'Students';
 $string['subcategories'] = 'Subcategories';
 $string['subcategories_desc'] = 'Specify how to build the <strong>subcategory structure</strong>.
-    <li>Use tokens to build the category names, and backslashes to separate categories, eg: "{org:code}\{course:semesterKey}\{course:courseClassificationKey}"</li>
+    <li>Use tokens to build the category names, and backslashes to separate categories, eg: "{org:code}\\\{course:semesterKey}\\\{course:courseClassificationKey}"</li>
     <li>Make sure that no subcategory name ends up being empty</li>
     <li>Show raw data from CAMPUSonline to see available fields/tokens</li>';
 $string['success:connected'] = 'Successfully connected to CAMPUSonline endpoint.';
