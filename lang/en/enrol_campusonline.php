@@ -79,10 +79,14 @@ $string['coursesyncsettings_desc'] = '<ul>
     <li>Show raw data from CAMPUSonline to see available fields/tokens</li></ul>';
 $string['createcoursecategories'] = 'Create course categories';
 $string['createcoursecategories_desc'] = 'Allows the course & enrolment sync task to create course categories if they do not exist.';
+$string['customquery'] = 'Custom API query';
+$string['customquery_desc'] = '<p>This allows you to get raw data from CAMPUSonline for any endpoint. You can use this to test queries, or to get data that is not (yet) used by the sync tasks.</p>
+<p>Please see <a href="https://coreview.tugraz.at/review/co/public/app/openapi/public" target="_blank">the CAMPUSonline API documentation</a> for available endpoints and parameters.</p>';
 $string['deletedcourse'] = 'deleted course (id: {$a})';
 $string['donotsyncrole'] = '- do not sync this role -';
 $string['employees'] = 'Employees';
 $string['endpoint'] = 'CAMPUSonline endpoint';
+$string['endpoint_help'] = 'Endpoint for the API, eg "co-tm-core/course/api/courses"';
 $string['endpoint_desc'] = 'Address of the CAMPUSonline oauth2 endpoint';
 $string['enrolmentsyncsettings'] = 'Course & enrolment sync';
 $string['enrolmentsyncsettings_desc'] = '<ul>
@@ -189,6 +193,8 @@ $string['orgsyncsettings_desc'] = '<ul><li>This task syncs <strong>selected orga
     <li>Alternatively, you can also build your own structure in Moodle, using the settings in <strong>Subcategories for courses</strong></li>
     <li>All organisations that hold Moodle courses should be selected, otherwise their Moodle courses will be put directly into the root course category</li>
     </ul>';
+$string['parameters'] = 'Parameters';
+$string['parameters_help'] = 'Parameters for the query in JSON format, eg: {"only_elearning_courses": "true", "semester_key": "2025W"}';
 $string['phplogging'] = 'Log to PHP log';
 $string['pluginname'] = 'CAMPUSonline enrolment';
 $string['previewcourses'] = 'Preview courses with these settings';

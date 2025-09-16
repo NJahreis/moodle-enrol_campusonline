@@ -42,12 +42,15 @@ if ($ADMIN->fulltree) {
 
     // Connection settings.
     $url = new moodle_url('/enrol/campusonline/test.php', ['function' => 'testconnection']);
-    $button = html_writer::link($url, get_string('testconnection', 'enrol_campusonline'),
+    $buttons = html_writer::link($url, get_string('testconnection', 'enrol_campusonline'),
+        ['class' => 'btn btn-secondary m-1']);
+    $url = new moodle_url('/enrol/campusonline/customquery.php');
+    $buttons .= html_writer::link($url, get_string('customquery', 'enrol_campusonline'),
         ['class' => 'btn btn-secondary m-1']);
     $settings->add(new admin_setting_heading(
         'enrol_campusonline/connectionsettings',
         get_string('connectionsettings', 'enrol_campusonline'),
-        $button . '<br>' . get_string('connectionsettings_desc', 'enrol_campusonline',
+        $buttons . '<br>' . get_string('connectionsettings_desc', 'enrol_campusonline',
             new moodle_url('/admin/settings.php', ['section' => 'manageenrols']))));
 
     // ... CO endpoint.
