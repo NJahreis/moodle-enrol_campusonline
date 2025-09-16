@@ -1,6 +1,10 @@
 stages:
+  - test
   - build
   - package
+
+include:
+  - local: 'moodle-ci.yml'
 
 variables:
   DEBIAN_FRONTEND: 'noninteractive'

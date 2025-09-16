@@ -1,0 +1,26 @@
+# moodle-ci.yml (GitLab-compatible)
+moodle_plugin_ci:
+  stage: test
+  image: moodlehq/moodle-php-apache:8.3
+  services:
+    - postgres:15
+  variables:
+    POSTGRES_USER: postgres
+    POSTGRES_HOST_AUTH_METHOD: trust
+    DB: pgsql
+    MOODLE_BRANCH: MOODLE_405_STABLE
+  before_script:
+    - apt-get update && apt-get install -y unzip git mariadb-client
+    - composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
+    - export PATH="$(cd ci/bin; pwd):$(cd ci/vendor/bin; pwd):$PATH"
+    - moodle-plugin-ci install --plugin . --db-host=postgres
+  script:
+    - moodle-plugin-ci phplint .
+    - moodle-plugin-ci phpmd
+    - moodle-plugin-ci phpcs --max-warnings 0
+    - moodle-plugin-ci phpdoc --max-warnings 0
+    - moodle-plugin-ci validate
+    - moodle-plugin-ci savepoints .
+    - moodle-plugin-ci mustache .
+    - moodle-plugin-ci grunt --max-lint-warnings 0
+    - moodle-plugin-ci phpunit --fail-on-warning
