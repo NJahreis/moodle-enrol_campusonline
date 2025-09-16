@@ -584,6 +584,7 @@ class sync {
             $personobjects = [];
         }
 
+        $persons = [];
         foreach ($personobjects as $personobject) {
             $persons[] = (array) $personobject;
         }
@@ -1828,7 +1829,7 @@ class sync {
      *
      * @return object All collected items from paginated API responses.
      */
-    private function rest_call($endpoint, $query = null, $method = 'GET', $alwayspage = false) {
+    public function rest_call($endpoint, $query = null, $method = 'GET', $alwayspage = false) {
 
         // Set base URL and initialize the HTTP client.
         $url = $this->config->endpoint . '/' . $endpoint;
