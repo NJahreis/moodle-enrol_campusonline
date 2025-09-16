@@ -42,8 +42,8 @@ $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/enrol/campusonline/test.php');
 $PAGE->set_title(get_string('pluginname', 'enrol_campusonline'));
-// phpcs:ignore MDLCode(cannot-parse-string)
-$PAGE->set_heading(get_string($function, 'enrol_campusonline')); // phpcs:ignore MDLCode(cannot-parse-string)
+$PAGE->set_heading(get_string($function, 'enrol_campusonline'));
+
 // Init sync.
 $trace = new \text_progress_trace();
 $sync = new sync($trace);
@@ -79,8 +79,24 @@ $orgs = explode(',', $orgfilter);
 // Show raw course data.
 if ($function == 'showrawcoursedata') {
 
+    // Embed UID form.
+    $mform = new \enrol_campusonline\form\uid_form();
+    $mform->set_data([
+        'function' => $function,
+        'limit' => $limit,
+    ]);
+
+    // Get all courses or only for specific UID.
+    if ($formdata = $mform->get_data()) {
+        $courseuids = [$formdata->uid];
+    } else {
+        $courseuids = null;
+    }
+
+    $mform->display();
+
     // Count and get tokens.
-    $courses = $sync->get_courses(null, $limit);
+    $courses = $sync->get_courses($courseuids, $limit);
     $count = 0;
     $tokens = [];
     $skipped = 0;
@@ -242,11 +258,26 @@ if ($function == 'showrawcoursedata') {
         ['co' => count($courses), 'moodle' => $count]));
     echo html_writer::table($table);
 
-    // Show raw user data.
 } else if ($function == 'showrawuserdata') {
 
+    // Embed UID form.
+    $mform = new \enrol_campusonline\form\uid_form();
+    $mform->set_data([
+        'function' => $function,
+        'limit' => $limit,
+    ]);
+
+    // Get all persons or only for specific UID.
+    if ($formdata = $mform->get_data()) {
+        $personuids = [$formdata->uid];
+    } else {
+        $personuids = null;
+    }
+
+    $mform->display();
+
     // Count and get tokens.
-    $persons = $sync->get_persons(null, $limit);
+    $persons = $sync->get_persons($personuids, $limit);
     $tokens = [];
     foreach ($persons as $person) {
         $person = (array) $person;
@@ -278,7 +309,6 @@ if ($function == 'showrawcoursedata') {
         echo '<br>';
     }
 
-    // Preview user sync.
 } else if ($function == 'previewusers') {
 
     // Table header.

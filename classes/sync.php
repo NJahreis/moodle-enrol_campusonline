@@ -584,6 +584,7 @@ class sync {
             $personobjects = [];
         }
 
+        $persons = [];
         foreach ($personobjects as $personobject) {
             $persons[] = (array) $personobject;
         }
