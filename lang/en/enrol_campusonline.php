@@ -119,6 +119,8 @@ $string['externalsystemkey'] = 'External system key';
 $string['externalsystemkey_desc'] = 'When using <strong>EXTERNAL_SYSTEM_UID</strong> to identify your users, you need to provide the external_system_key and the external_key to fetch it from CAMPUSonline.';
 $string['flatcourse'] = 'Course without groups';
 $string['flatcourse_desc'] = 'Comma-separated list of elearningEventTypeKeys. For these elearning Event types, Moodle courses will be created, but groups ignored.';
+$string['getcoursedescription'] = 'Get course description from CAMPUSonline';
+$string['getcoursedescription_desc'] = 'The course object can be enriched with a token holding the course description. Be aware that this will need an additional separate API call for each course, and this will <b>slow down the sync tasks considerably</b>.';
 $string['groupsyncsettings'] = 'Course group mode';
 $string['groupsyncsettings_desc'] = '<ul>
     <li>CAMPUSonline <strong>groups</strong> can either be synced into Moodle course groups, or <strong>separate courses</strong> can be created for each group</li>

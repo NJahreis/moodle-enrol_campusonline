@@ -281,6 +281,34 @@ class sync {
     }
 
     /**
+     * Gets course description.
+     *
+     * @param string $courseuid
+     *
+     * @return array $descriptions
+     */
+    public function get_course_descriptions($courseuid) {
+
+        $endpoint = "co-tm-core/course/api/course-descriptions";
+        $query = [
+            'course_uid' => $courseuid,
+        ];
+        $result = $this->rest_call($endpoint, $query);
+
+        // Analyze response.
+        $descriptions = [];
+        if (property_exists($result, 'items')) {
+            foreach ($result->items as $item) {
+                unset($item->uid);
+                $item = (array)$item;
+                $descriptions = $item;
+            }
+        }
+
+        return $descriptions;
+    }
+
+    /**
      * Gets groups for a course.
      *
      * @param string $courseuid
@@ -288,8 +316,8 @@ class sync {
      */
     public function get_course_groups($courseuid) {
 
-        $endpoint = "co-tm-core/course/api/courses/$courseuid/groups";
-        $result = $this->rest_call($endpoint, null);
+            $endpoint = "co-tm-core/course/api/courses/$courseuid/groups";
+            $result = $this->rest_call($endpoint, null);
 
         // Analyze response.
         $groups = [];
@@ -1767,6 +1795,23 @@ class sync {
             foreach ($semester as $key => $value) {
                 $value = locallib::normalize_value($value);
                 $sanitizedcourse["semester:$key"] = $value;
+            }
+
+            // Get values from course description endpoint.
+            if ($this->config->getcoursedescription) {
+                $descriptions = $this->get_course_descriptions($course['uid']);
+                foreach ($descriptions as $itemkey => $content) {
+                    $content = (array)$content;
+                    if (!array_key_exists('value', $content)) {
+                        continue;
+                    }
+                    $values = $content['value'];
+                    foreach ($values as $lang => $value) {
+                        $value = locallib::normalize_value($value);
+                        $key = "description:$itemkey:$lang";
+                        $sanitizedcourse[$key] = $value;
+                    }
+                }
             }
 
             $enrichedcourses[] = $sanitizedcourse;
