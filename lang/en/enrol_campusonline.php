@@ -255,7 +255,7 @@ $string['usersyncsettings_desc'] = '<ul>
     <li>The mapping settings will also be applied to <strong>user creation</strong> by the course sync</li>
     <li><strong>Usernames need to be unique</strong>, and fields are filled with valid values for their respective field types, or there will be errors creating users!</li>
     <li>These values are <strong>required</strong>, otherwise user creation will fail: user_auth, user_password, user_username, user_email</li>
-    <li>CAMPUSonline <strong>person UID</strong>, <strong>student UID</strong> and <strong>employee UID</strong> will be automatically synced in the respective user profile fields</li>
+    <li>CAMPUSonline <strong>person UID</strong> will be automatically synced in the respective user profile field</li>
     <li>Click on <strong>Show tokens and raw data</strong> to see available fields/tokens</li></ul>';
 $string['usersyncsingle'] = 'Sync this user with CAMPUSonline';
 $string['viewlogs'] = 'View logs';

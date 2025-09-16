@@ -242,8 +242,7 @@ if ($function == 'showrawcoursedata') {
         ['co' => count($courses), 'moodle' => $count]));
     echo html_writer::table($table);
 
-    // Show raw user data.
-} else if ($function == 'showrawuserdata') {
+} else if ($function == 'showrawuserdata') { // Show raw user data.
 
     // Count and get tokens.
     $persons = $sync->get_persons(null, $limit);
@@ -278,8 +277,7 @@ if ($function == 'showrawcoursedata') {
         echo '<br>';
     }
 
-    // Preview user sync.
-} else if ($function == 'previewusers') {
+} else if ($function == 'previewusers') { // Preview user sync.
 
     // Table header.
     $table = new html_table();
