@@ -24,6 +24,8 @@
  */
 namespace enrol_campusonline\form;
 
+defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->libdir . '/formslib.php');
 
 /**
@@ -35,11 +37,21 @@ require_once($CFG->libdir . '/formslib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class customquery_form extends \moodleform {
+
+    /**
+     * Form definition.
+     */
     public function definition() {
         $mform = $this->_form;
 
         // Explanation.
-        $mform->addElement('static', 'description', '', get_string('customquery_desc', 'enrol_campusonline'));
+        $description = '<p>' . get_string('customquery_desc', 'enrol_campusonline') . '</p>';
+        if ($endpoint = get_config('enrol_campusonline', 'endpoint')) {
+            $description .= '<p>' . get_string('customquery_desc_url', 'enrol_campusonline', $endpoint) . '</p>';
+        } else {
+            $description .= '<p>' . get_string('customquery_desc_nourl', 'enrol_campusonline') . '</p>';
+        }
+        $mform->addElement('static', 'description', '', $description);
 
         // Endpoint.
         $mform->addElement('text', 'endpoint', get_string('endpoint', 'enrol_campusonline'), ['size' => '80']);

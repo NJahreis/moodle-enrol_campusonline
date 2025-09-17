@@ -24,6 +24,8 @@
  */
 namespace enrol_campusonline\form;
 
+defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->libdir . '/formslib.php');
 
 /**
@@ -35,6 +37,10 @@ require_once($CFG->libdir . '/formslib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class uid_form extends \moodleform {
+
+    /**
+     * Form definition.
+     */
     public function definition() {
         $mform = $this->_form;
 

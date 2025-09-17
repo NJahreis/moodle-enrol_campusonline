@@ -163,7 +163,7 @@ class locallib {
         }
 
         // Map additional fields.
-        foreach (self::COURSE_FIELDS as $field => $default) {
+        foreach (array_keys(self::COURSE_FIELDS) as $field) {
             $course[$field] = self::get_field_value('course_' . $field, $coursedata);
         }
 
@@ -189,7 +189,7 @@ class locallib {
         }
 
         // Map additional fields.
-        foreach (self::USER_FIELDS as $field => $default) {
+        foreach (array_keys(self::USER_FIELDS) as $field) {
             $value = self::get_field_value('user_' . $field, $userdata);
 
             // Sanitize usernames.
@@ -405,7 +405,6 @@ class locallib {
 
         global $DB;
 
-        $updated = false;
         $course = get_course($courseid);
         $context = context_course::instance($courseid);
         $customfields = self::get_custom_course_field_data($coursedata);
@@ -462,7 +461,7 @@ class locallib {
         }
 
         // Update profile fields.
-        foreach ($profilefields as $profilefield => $name) {
+        foreach (array_keys($profilefields) as $profilefield) {
 
             $fieldname = "profile_field_$profilefield";
 
