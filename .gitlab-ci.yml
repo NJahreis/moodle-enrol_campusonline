@@ -50,7 +50,7 @@ build:snapshot:
     - 'curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer'
     - composer create-project -n --no-dev --no-progress --no-ansi moodlehq/moodle-plugin-ci /opt/mci ^4
     - export PATH="/opt/mci/bin:/opt/mci/vendor/bin:$PATH"
-    - moodle-plugin-ci install --db-host db
+    - moodle-plugin-ci install --db-host db --db-name moodleci
     - '{ php -S 0.0.0.0:8000 -t "$CI_PROJECT_DIR/moodle" >/dev/null 2>&1 & }'
   script:
     - moodle-plugin-ci phplint
