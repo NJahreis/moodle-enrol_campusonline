@@ -56,12 +56,14 @@ class customquery_form extends \moodleform {
         // Endpoint.
         $mform->addElement('text', 'endpoint', get_string('endpoint', 'enrol_campusonline'), ['size' => '80']);
         $mform->setType('endpoint', PARAM_TEXT);
+        $mform->setDefault('endpoint', 'co-tm-core/course/api/courses');
         $mform->addHelpButton('endpoint', 'endpoint', 'enrol_campusonline');
         $mform->addRule('endpoint', null, 'required', null, 'client');
 
         // Parameters.
         $mform->addElement('textarea', 'parameters', get_string('parameters', 'enrol_campusonline'));
         $mform->setType('parameters', PARAM_TEXT);
+        $mform->setDefault('parameters', '{"only_elearning_courses": "true", "semester_key": "2025W"}');
         $mform->addHelpButton('parameters', 'parameters', 'enrol_campusonline');
 
         $this->add_action_buttons(true, get_string('submit'));

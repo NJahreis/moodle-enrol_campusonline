@@ -157,8 +157,68 @@ if ($function == 'showrawcoursedata') {
     }
     echo '</pre>';
 
-    // Preview course sync.
+
+} else if ($function == 'previeworgs') {
+
+    // Preview org sync.
+    $orgs = $sync->sync_orgs(true);
+    if (!$orgs) {
+        echo \html_writer::div(
+            get_string('noorgsfound', 'enrol_campusonline'),
+            'alert alert-warning',
+            ['role' => 'alert']
+        );
+    }
+
+    $sortedorgids = $orgs['sortedorgids'];
+    $orgdata = $orgs['orgdata'];
+    $sorted_orgs = [];
+
+    // Sort orgs by path.
+    foreach ($sortedorgids as $level => $orgids) {
+        foreach ($orgids as $orgid) {
+            $org = $orgdata[$orgid];
+            $parent = $org->parentUid ?? 'root';
+            $key = locallib::normalize_value($org->path);
+            $name = locallib::normalize_value($org->name);
+            $sorted_orgs[$key] = [
+                'level' => $level,
+                'id' => $orgid,
+                'parent' => $parent,
+                'name' => $name,
+            ];
+        }
+    }
+    ksort($sorted_orgs);
+
+    // Print org tree.
+    echo '<pre>'; // keep monospaced font
+    echo '<br>';
+
+    $lastLevels = []; // track last child per level
+
+    foreach ($sorted_orgs as $org) {
+        $level = $org['level'];
+
+        // indent for each level
+        $indent = '';
+        for ($i = 1; $i < $level; $i++) {
+            $indent .= '│   '; // vertical line for intermediate levels
+        }
+
+        // choose branch symbol
+        $branch = $level ? '└── ' : ''; // root has no branch
+
+        echo $indent . $branch;
+        echo '<strong>' . htmlspecialchars($org['name']) . '</strong> (' . $org['id'] . ')';
+        echo "\n";
+    }
+
+    echo '</pre>';
+
 } else if ($function == 'previewcourses') {
+
+    // Preview course sync.
 
     // Table header.
     $table = new html_table();

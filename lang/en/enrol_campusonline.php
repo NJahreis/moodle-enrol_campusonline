@@ -32,7 +32,9 @@ $string['allowusernameupdate'] = 'User sync can change username';
 $string['allowusernameupdate_desc'] = 'Allows the user sync to change existing user\'s usernames. Be aware, that this might lead login problems for users.';
 $string['authmethod'] = 'Authentication method';
 $string['autoidnewusers'] = 'Auto-identify new users';
-$string['autoidnewusers_desc'] = 'Will automatically try to identify any newly created users. Useful if users are created via SSO.';
+$string['autoidnewusers_desc'] = 'Will automatically try to identify any newly created users. <ul>
+<li>Useful if users are created via SSO</li>
+<li>Not recommended if users are created via the course & enrolment sync</li></ul>';
 $string['availabletokens'] = 'Available tokens';
 $string['availabletokens_disclaimer'] = 'Some of these might only be available for employees or students, but not for both.';
 $string['backtosettings'] = 'Back to module settings';
@@ -74,20 +76,21 @@ $string['coursesyncsettings'] = 'Course values';
 $string['coursesyncsettings_desc'] = '<ul>
     <li>Moodle course <strong>idnumber</strong> will always be filled with the CAMPUSonline course <strong>uid</strong></li>
     <li>Make sure the course <strong>shortnames</strong> are unique, and fields are filled with valid values for their respective field types, or there will be errors creating courses!</li>
-    <li>These values are <strong>required</strong>, otherwise course creation will fail: course_fullname, course_shortname, course_format</li>
     <li>Choose values for other course fields (including course custom fields) by combining text and <strong>tokens</strong> for CAMPUSonline fields, eg: "CAMPUSonline_COURSE_{title}</li>
-    <li>Show raw data from CAMPUSonline to see available fields/tokens</li></ul>';
+    <li>These values are <strong>required</strong>, otherwise course creation will fail: course_fullname, course_shortname, course_format</li>
+    <li><a href="{$a}">Show raw data from CAMPUSonline</a> to see available fields/tokens</a></li></ul>';
 $string['createcoursecategories'] = 'Create course categories';
 $string['createcoursecategories_desc'] = 'Allows the course & enrolment sync task to create course categories if they do not exist.';
 $string['customquery'] = 'Custom API query';
-$string['customquery_desc'] = '<p>This allows you to get raw data from CAMPUSonline for any endpoint. You can use this to test queries, or to get data that is not (yet) used by the sync tasks.</p>
-<p>Please see <a href="https://coreview.tugraz.at/review/co/public/app/openapi/public" target="_blank">the CAMPUSonline API documentation</a> for available endpoints and parameters.</p>';
+$string['customquery_desc'] = 'This allows you to get raw data from CAMPUSonline for any endpoint. You can use this to test queries, or to get data that is not (yet) used by the sync tasks.';
+$string['customquery_desc_url'] = 'Please see <a href="{$a}/public/app/openapi/public" target="_blank">the CAMPUSonline API documentation</a> of your configured CAMPUSonline instance for available endpoints and parameters.';
+$string['customquery_desc_nourl'] = 'Please configure your CAMPUSonline endpoint in the plugin settings first.';
 $string['deletedcourse'] = 'deleted course (id: {$a})';
 $string['donotsyncrole'] = '- do not sync this role -';
 $string['employees'] = 'Employees';
 $string['endpoint'] = 'CAMPUSonline endpoint';
-$string['endpoint_help'] = 'Endpoint for the API, eg "co-tm-core/course/api/courses"';
 $string['endpoint_desc'] = 'Address of the CAMPUSonline oauth2 endpoint';
+$string['endpoint_help'] = 'Baseurl & endpoint for the API, eg "co-tm-core/course/api/courses"';
 $string['enrolmentsyncsettings'] = 'Course & enrolment sync';
 $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>These sync tasks create and update <strong>courses</strong> and their <strong>enrolments</strong></li>
@@ -95,7 +98,9 @@ $string['enrolmentsyncsettings_desc'] = '<ul>
     <li>To improve performance, it is recommended to run a <strong>full sync</strong> manually or weekly, and schedule only the <strong>modification sync</strong> task.
     <li>In addition, you can <strong>sync a single course</strong>, using the "Sync course with CAMPUSonline" button on the course participants page (only available for courses created via CAMPUSonline, and requires the permission enrol/CAMPUSonline:synccourse</li></ul>';
 $string['enrolsynccreateusers'] = 'Create users';
-$string['enrolsynccreateusers_desc'] = 'Allows the course sync task to create users that do not exist or cannot be found in Moodle. <strong>Only activate this after making sure that user identification works correctly</strong>, otherwise you might end up with a lot of duplicate users in Moodle!';
+$string['enrolsynccreateusers_desc'] = 'Allows the course sync task to create users that do not exist or cannot be found in Moodle.
+<p>If your users can be created in Moodle in other ways, then only activate this after making sure that user identification works correctly, otherwise you might end up with a lot of duplicate users in Moodle!</p>
+<p>Turn off <strong>auto-identify new users</strong> (autoidnewusers) if you activate this, to avoid unnecessary API calls.</p>';
 $string['error:cannotconnect'] = 'Cannot connect to CAMPUSonline endpoint. Error: {$a}';
 $string['error:config'] = 'ERROR: Missing connection configuration.';
 $string['error:couldnotcreatecategory'] = 'ERROR: could not create Moodle course category for CAMPUSonline org {$a->org_uid} - category for parent org {$a->parentid} does not exist.';
@@ -200,6 +205,7 @@ $string['parameters_help'] = 'Parameters for the query in JSON format, eg: {"onl
 $string['phplogging'] = 'Log to PHP log';
 $string['pluginname'] = 'CAMPUSonline enrolment';
 $string['previewcourses'] = 'Preview courses with these settings';
+$string['previeworgs'] = 'Preview orgs with these settings';
 $string['previewusers'] = 'Preview users with these settings';
 $string['privacy:metadata'] = 'The CAMPUSonline enrolment plugin does not store any personal data.';
 
@@ -211,12 +217,16 @@ $string['rolemappings_desc'] = '<ul><li>Select Moodle roles to use for CAMPUSonl
     <li>Roles must be assignable in <strong>course context</strong></li></ul>';
 $string['rolemappings_notconnected'] = 'Could not connect to CAMPUSonline. Check your connection settings and reload this page, to add mappings for CAMPUSonline roles.';
 $string['rootcoursecategory'] = 'Root course category';
-$string['rootcoursecategory_desc'] = 'Course category to build the CAMPUSonline organisation tree in. <p>Will also be used as root for the <strong>course & enrolment sync</strong> that is configured forther down.</p>';
+$string['rootcoursecategory_desc'] = 'Course category to build the CAMPUSonline organisation tree in. <p>Will also be used as root for the <strong>course & enrolment sync</strong> that is configured further down.</p>';
 $string['runtask'] = 'Run scheduled task';
 $string['runtask_delta'] = 'Run scheduled task for MODIFICATIONS sync';
 $string['runtask_full'] = 'Run scheduled task for FULL sync';
 $string['semester'] = 'Semester';
 $string['semester_desc'] = 'Semester(s) to be synced. For multiple semesters, separate them with a comma.';
+$string['separateusers'] = 'Separate staff and student users';
+$string['separateusers_desc'] = 'Will create two separate users in Moodle for <strong>staff</strong> and <strong>students</strong> in CAMPUSonline. This is useful if your Moodle site uses a SSO which also has separate users for staff and students. A staff_ or student_ prefix will be added to the person UID.
+<p><strong>This does not work when using user identification to identify existing users, or user sync to sync users directly from CAMPUSonline, as the role (staff/student) is only defined in the context of an enrolment. Only use this if your users are <strong>only</strong> created by the course & enrolment sync, and turn off <strong>auto-identify new users</strong> (autoidnewusers)!</p>
+<p>Changing this setting after users are already created will lead to errors and/or duplicate users!</strong></p>';
 $string['showrawcoursedata'] = 'Show tokens and raw course data';
 $string['showrawuserdata'] = 'Show tokens and raw user data';
 $string['skip'] = 'Skipped - ELearningEventTypeKey <strong>{$a}</strong> not configured for sync';
@@ -231,7 +241,7 @@ $string['subcategories'] = 'Subcategories';
 $string['subcategories_desc'] = 'Specify how to build the <strong>subcategory structure</strong>.
     <li>Use tokens to build the category names, and backslashes to separate categories, eg: "{org:code}\\\{course:semesterKey}\\\{course:courseClassificationKey}"</li>
     <li>Make sure that no subcategory name ends up being empty</li>
-    <li>Show raw data from CAMPUSonline to see available fields/tokens</li>';
+    <li><a href="{$a}">Show raw data from CAMPUSonline</a> from CAMPUSonline to see available fields/tokens</li>';
 $string['success:connected'] = 'Successfully connected to CAMPUSonline endpoint.';
 $string['syncingcourse'] = 'Syncing Moodle course with CAMPUSonline...';
 $string['syncinguser'] = 'Syncing user data with CAMPUSonline...';
@@ -256,17 +266,17 @@ $string['useridsettings'] = 'Identification of existing users';
 $string['useridsettings_desc'] = '<ul>
     <li>This sync task matches existing Moodle users to CAMPUSonline users, it is not scheduled by default, and should only be run manually</li>
     <li>It uses the CAMPUSonline person-identifiers/mappings endpoint to retrieve the <strong>Person UID</strong> via any other ID.</li>
-    <li>Once identified, the CAMPUSonline person UID will be set in the custom user profile field <strong>CAMPUSonline_person_uid</strong> (created upon plugin installation)</li></ul>';
+    <li>Once identified, the CAMPUSonline person UID will be set in the custom user profile field <strong>campusonline_person_uid</strong> (created upon plugin installation)</li></ul>';
 $string['usermoodlefield'] = 'Custom field as callback for user identification';
 $string['usermoodlefield_desc'] = 'If a user is not found via any other means (see above), this field will be used to find the user in Moodle.';
 $string['usersyncsettings'] = 'User sync & values';
 $string['usersyncsettings_desc'] = '<ul>
-    <li>You can sync user data on user login, or sync single users manually by clicking the <strong>sync this user with CAMPUSonline</strong> button on the user profile page</li>
-    <li>The mapping settings will also be applied to <strong>user creation</strong> by the course sync</li>
+    <li>You can sync single users manually by clicking the <strong>sync this user with CAMPUSonline</strong> button on the user profile page</li>
+    <li>The user field settings will also be applied to <strong>user creation</strong> by the course sync</li>
     <li><strong>Usernames need to be unique</strong>, and fields are filled with valid values for their respective field types, or there will be errors creating users!</li>
     <li>These values are <strong>required</strong>, otherwise user creation will fail: user_auth, user_password, user_username, user_email</li>
-    <li>CAMPUSonline <strong>person UID</strong> will be automatically synced in the respective user profile field</li>
-    <li>Click on <strong>Show tokens and raw data</strong> to see available fields/tokens</li></ul>';
+    <li>CAMPUSonline <strong>person UID</strong> will be automatically synced in the user profile field <strong>campusonline_person_uid</strong> which was created by this plugin</li>
+    <li><a href="{$a}">Show raw data from CAMPUSonline</a> to see available fields/tokens</li></ul>';
 $string['usersyncsingle'] = 'Sync this user with CAMPUSonline';
 $string['viewlogs'] = 'View logs';
 $string['warning:couldnotgetpersondata'] = 'WARNING: could not get full person data for CAMPUSonline user {$a}.';

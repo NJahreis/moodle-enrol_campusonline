@@ -28,7 +28,7 @@ namespace enrol_campusonline;
 use moodle_url;
 use GuzzleHttp\Client;
 
-defined('MOODLE_INTERNAL') || die;
+defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/user/lib.php');
 
@@ -497,13 +497,19 @@ class sync {
      *
      * @param string $uid
      * @param bool $log
+     * @param string|null $usertype Optional type of user, used for config option separateusers.
      *
      * @return mixed $userid
      */
-    public function get_moodle_user_id($uid, $log = true) {
+    public function get_moodle_user_id($uid, $log = true, $usertype = null) {
 
         global $DB;
         $userid = null;
+
+        // If configured, create separate users for staff and students.
+        if ($this->config->separateusers && $usertype) {
+            $uid = $usertype . '_' . $uid;
+        }
 
         // Get user id via uid in our user profile field.
         $fieldid = $this->customfieldids['campusonline_person_uid'];
@@ -517,7 +523,7 @@ class sync {
         // Log warning.
         if ($log) {
             $message = get_string('warning:moodleusernotfound', 'enrol_campusonline', $uid);
-            locallib::write_log('get_user', $message, 1, null, $this->trace, 5);
+            locallib::write_log('get_user', $message, 1, null, $this->trace);
         }
 
         return null;
@@ -920,6 +926,7 @@ class sync {
 
             // Start sync & log.
             if (PHP_SAPI == 'cli' || array_key_exists('traceoutput', $_GET)) {
+                $this->trace->output('----------------------------------------------------------------');
                 $this->trace->output(
                     get_string('info:syncingcourse',
                         'enrol_campusonline',
@@ -929,6 +936,7 @@ class sync {
                         ]
                     )
                 );
+                $this->trace->output('----------------------------------------------------------------');
             }
 
             // Get groups if necessary.
@@ -1132,7 +1140,6 @@ class sync {
 
         // Sum up existing enrolments in Moodle course, to save on DB queries.
         $existingenrolments = [];
-        $existingenrolmentsuserids = [];
         $existingenrolmentsraw = $DB->get_records('user_enrolments', ['enrolid' => $enrol->id]);
         foreach ($existingenrolmentsraw as $existingenrolment) {
             $existingenrolments[$existingenrolment->userid] = $existingenrolment;
@@ -1140,7 +1147,7 @@ class sync {
 
         // Get enrolments from CAMPUSonline.
         $assignedroles = [];
-        $enrolments = $this->get_enrolments($course);
+        $co_enrolments = $this->get_enrolments($course);
 
         // Check if this is a course for a single groups.
         $uids = explode(':', $course->idnumber);
@@ -1151,25 +1158,26 @@ class sync {
         }
 
         $groupmembers = [];
-
-        foreach ($enrolments as $enrolment) {
+        foreach ($co_enrolments as $co_enrolment) {
 
             // Skip if enrolment is not for this group.
             if ($groupuid) {
-                if (property_exists($enrolment, 'courseGroupUid') && $enrolment->courseGroupUid != $groupuid) {
+                if (property_exists($co_enrolment, 'courseGroupUid') && $co_enrolment->courseGroupUid != $groupuid) {
                     continue;
                 }
             }
 
             // Get role.
-            if (property_exists($enrolment, 'functionKey')) {
-                $rolekey = 'role_' . $enrolment->functionKey;
+            if (property_exists($co_enrolment, 'functionKey')) {
+                $usertype = 'staff';
+                $rolekey = 'role_' . $co_enrolment->functionKey;
                 if (property_exists($this->config, $rolekey)) {
                     $roleid = $this->config->$rolekey;
                 } else {
                     continue;
                 }
             } else {
+                $usertype = 'student';
                 $roleid = $this->config->studentrole;
             }
 
@@ -1178,15 +1186,18 @@ class sync {
                 continue;
             }
 
+            // Only log errors finding users if enrolment sync is not allowed to create users.
+            $log = !$this->config->enrolsynccreateusers;
+
             // Get Moodle user.
-            $uid = $enrolment->personUid;
-            $userid = $this->get_moodle_user_id($uid);
+            $uid = $co_enrolment->personUid;
+            $userid = $this->get_moodle_user_id($uid, $log, $usertype);
 
             // Create new user if needed & allowed.
             if (!$userid) {
                 if ($this->config->enrolsynccreateusers) {
 
-                    if (!$userid = $this->create_moodle_user($uid)) {
+                    if (!$userid = $this->create_moodle_user($uid, $usertype)) {
                         continue;
                     }
 
@@ -1213,14 +1224,15 @@ class sync {
                 $enrolment->timecreated = time();
                 $enrolment->timemodified = time();
                 $DB->insert_record('user_enrolments', $enrolment);
-                $existingenrolmentsuserids[] = $userid;
+                $existingenrolments[$userid] = $enrolment;
 
                 // Log success.
                 $message = get_string('info:enrolleduser', 'enrol_campusonline', ['userid' => $userid, 'courseid' => $courseid]);
                 locallib::write_log('enrol_user', $message, 0, $courseid, $this->trace, 3);
 
-                // Activate enrolment if needed.
             } else {
+
+                // Activate enrolment if needed.
                 if ($existingenrolments[$userid]->status == 1) {
                     $enrolment = $existingenrolments[$userid];
                     $enrolment->status = 0;
@@ -1252,8 +1264,8 @@ class sync {
             $assignedroles[$userid][] = $roleid;
 
             // Add to group members, to process later.
-            if ($groups && property_exists($enrolment, 'courseGroupUid')) {
-                $groupmembers[$enrolment->courseGroupUid][] = $userid;
+            if ($groups && property_exists($co_enrolment, 'courseGroupUid')) {
+                $groupmembers[$co_enrolment->courseGroupUid][] = $userid;
             }
         }
 
@@ -1374,9 +1386,11 @@ class sync {
     /**
      * Syncs selected organisations from CAMPUSonline.
      *
-     * @return void
+     * @param bool $previewonly if true, only returns sorted org ids without syncing
+     *
+     * @return array|void
      */
-    public function sync_orgs() {
+    public function sync_orgs($previewonly = false) {
 
         // Get all organisations.
         $this->get_org_data();
@@ -1415,6 +1429,14 @@ class sync {
             $sortedorgids[$parents][] = $orgid;
         }
         asort($sortedorgids);
+
+        // If preview only, return sorted org ids.
+        if ($previewonly) {
+            return [
+                'orgdata' => $this->orgdata,
+                'sortedorgids' => $sortedorgids,
+                ];
+        }
 
         // Sync organisations.
         foreach ($sortedorgids as $orgids) {
@@ -1696,15 +1718,22 @@ class sync {
      * Creates a new Moodle user.
      *
      * @param string $uid
+     * @param string|null $usertype
      *
      * @return int|null $userid
      */
-    private function create_moodle_user($uid): int|null {
+    private function create_moodle_user($uid, $usertype = null): int|null {
 
         global $CFG, $DB;
 
         // Get full person data from CAMPUSonline.
         $userdata = $this->get_person_data($uid);
+
+        // When separate users for students and staff are enabled in config, prefix the person uid.
+        if ($this->config->separateusers && $usertype) {
+            $uid = $usertype . '_' . $uid;
+            $userdata['uid'] = $uid;
+        }
 
         // Build user.
         $user = locallib::build_user($userdata);
@@ -1752,6 +1781,7 @@ class sync {
         // Update custom fields.
         $user = \core_user::get_user($userid);
         locallib::set_custom_user_fields($user, $userdata);
+
         return $userid;
     }
 
