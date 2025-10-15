@@ -122,12 +122,15 @@ function enrol_campusonline_create_other_co_course_uids_field(): void {
         ['name' => 'CAMPUSonline', 'component' => 'core_course', 'area' => 'course'])) {
         $categoryid = reset($category)->id;
     } else {
+        // Get required parameters for customfield category
+        $systemcontext = \context_system::instance();
+
         $category = new stdClass();
         $category->name = 'CAMPUSonline';
         $category->component = 'core_course';
         $category->area = 'course';
         $category->sortorder = 99;
-        $category->contextid = 1;
+        $category->contextid = $systemcontext->id;
         $category->itemid = 0;
         $category->timecreated = time();
         $category->timemodified = time();
